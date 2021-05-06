@@ -73,6 +73,7 @@ public protocol AspectReducerWrapper : DependentReducer {
 
 public extension AspectReducerWrapper where State : Emptyable {
     
+    @inlinable
     func apply<Action : ActionProtocol>(_ action: Action,
                        to state: inout State,
                        environment: Environment) {
@@ -83,6 +84,27 @@ public extension AspectReducerWrapper where State : Emptyable {
     
 }
 
+
+public struct PrismReducer<State : Emptyable, Reducer : DependentReducer> : AspectReducerWrapper {
+    
+    public let casePath : CasePath<State, Reducer.State>
+    public let body : Reducer
+    
+    @inlinable
+    public init(_ casePath: CasePath<State, Reducer.State>,
+                reducer: Reducer){
+        self.casePath = casePath
+        self.body = reducer
+    }
+    
+    @inlinable
+    public init(_ casePath: CasePath<State, Reducer.State>,
+                build: @escaping () -> Reducer){
+        self.casePath = casePath
+        self.body = build()
+    }
+    
+}
 
 public protocol DependentClassCaseReducer : DependentReducer {
     
@@ -155,6 +177,28 @@ public extension ClassCaseReducerWrapper {
         casePath.mutate(state){aspect in
             body.apply(action, to: aspect, environment: environment)
         }
+    }
+    
+}
+
+
+public struct ClassPrismReducer<State, Reducer : DependentClassReducer> : ClassCaseReducerWrapper {
+    
+    public let casePath: CasePath<State, Reducer.State>
+    public let body : Reducer
+    
+    @inlinable
+    public init(_ casePath: CasePath<State, Reducer.State>,
+                reducer: Reducer){
+        self.casePath = casePath
+        self.body = reducer
+    }
+    
+    @inlinable
+    public init(_ casePath: CasePath<State, Reducer.State>,
+                build: @escaping () -> Reducer){
+        self.casePath = casePath
+        self.body = build()
     }
     
 }

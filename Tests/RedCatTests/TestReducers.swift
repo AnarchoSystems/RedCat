@@ -19,7 +19,7 @@ enum TestReducers {
         DecReducer()
     }
     
-    struct IncReducer<State> : Reducer {
+    struct IncReducer<State> : ReducerProtocol {
         
         func apply(_ action: Inc<State>, to state: inout State) {
             state[keyPath: action.value] += 1
@@ -27,7 +27,7 @@ enum TestReducers {
         
     }
     
-    struct DecReducer<State> : Reducer {
+    struct DecReducer<State> : ReducerProtocol {
         
         func apply(_ action: Dec<State>, to state: inout State) {
             state[keyPath: action.value] -= 1

@@ -31,7 +31,7 @@ public extension DependentReducer {
 }
 
 
-public protocol Reducer : DependentReducer {
+public protocol ReducerProtocol : DependentReducer {
     
     associatedtype Action : ActionProtocol
     func apply(_ action: Action,
@@ -39,7 +39,7 @@ public protocol Reducer : DependentReducer {
     
 }
 
-public extension Reducer {
+public extension ReducerProtocol {
     
     func apply<Action : ActionProtocol>(_ action: Action,
                        to state: inout State,

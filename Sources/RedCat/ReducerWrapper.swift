@@ -28,3 +28,18 @@ public extension ReducerWrapper {
     }
     
 }
+
+
+public struct Wrap<Reducer : DependentReducer> : ReducerWrapper {
+    
+    public let body : Reducer
+    
+    public init(_ body: Reducer) {
+        self.body = body
+    }
+    
+    public init(_ build: () -> Reducer) {
+        self.body = build()
+    }
+    
+}
