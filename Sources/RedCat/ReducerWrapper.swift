@@ -5,7 +5,7 @@
 //  Created by Markus Pfeifer on 06.05.21.
 //
 
-import Foundation
+import CasePaths
 
 
 
@@ -30,16 +30,37 @@ public extension ReducerWrapper {
 }
 
 
-public struct Wrap<Reducer : DependentReducer> : ReducerWrapper {
+public struct Reducer<Reducer : DependentReducer> : ReducerWrapper {
     
     public let body : Reducer
     
-    public init(_ body: Reducer) {
-        self.body = body
+    public init(_ body: () -> Reducer) {
+        self.body = body()
     }
     
-    public init(_ build: () -> Reducer) {
-        self.body = build()
+    public init<State, Action : ActionProtocol>(_ closure: @escaping (Action, inout State, Environment) -> Void)
+    where Reducer == ClosureReducer<State, Action> {
+        self.body = ClosureReducer(closure)
     }
     
+    public init<State, Action : ActionProtocol>(_ closure: @escaping (Action, inout State) -> Void)
+    where Reducer == ClosureReducer<State, Action> {
+        self.body = ClosureReducer(closure)
+    }
+    
+    public init<State : Emptyable, R : DependentReducer>(_ aspect: CasePath<State, R.State>, _ body: () -> R)
+    where Reducer == PrismReducer<State, R> {
+        self.body = PrismReducer(aspect, reducer: body())
+    }
+    
+    public init<State, R : DependentClassReducer>(_ aspect: CasePath<State, R.State>, _ body: () -> R)
+    where Reducer == ClassPrismReducer<State, R> {
+        self.body = ClassPrismReducer(aspect, reducer: body())
+    }
+    
+    public init<State, R : DependentReducer>(_ detail: WritableKeyPath<State, R.State>, _ body: () -> R)
+    where Reducer == LensReducer<State, R> {
+        self.body = LensReducer(detail, reducer: body())
+    }
+
 }

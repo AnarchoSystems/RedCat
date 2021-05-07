@@ -9,7 +9,7 @@ import Foundation
 
 
 
-public struct Reducer<State, Act : ActionProtocol> : DependentReducer {
+public struct ClosureReducer<State, Act : ActionProtocol> : DependentReducer {
     
     @usableFromInline
     let closure : (Act, inout State, Environment) -> Void
@@ -21,7 +21,7 @@ public struct Reducer<State, Act : ActionProtocol> : DependentReducer {
     
     @inlinable
     public init(_ closure: @escaping (Act, inout State) -> Void){
-        self = Reducer{action, state, _ in closure(action, &state)}
+        self = Self{action, state, _ in closure(action, &state)}
     }
     
     @inlinable

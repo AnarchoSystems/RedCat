@@ -76,3 +76,16 @@ public extension DetailReducerWrapper {
     }
     
 }
+
+
+public struct LensReducer<State, Reducer : DependentReducer> : DetailReducerWrapper {
+    
+    public let keyPath: WritableKeyPath<State, Reducer.State>
+    public let body : Reducer
+    
+    public init(_ detail: WritableKeyPath<State, Reducer.State>, reducer: Reducer){
+        self.keyPath = detail
+        self.body = reducer
+    }
+    
+}

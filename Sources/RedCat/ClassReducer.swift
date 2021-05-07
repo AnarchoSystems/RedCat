@@ -51,22 +51,24 @@ public extension ClassReducer {
 }
 
 
-public protocol ClassReducerWrapper : DependentClassReducer where Body.Action == Action {
+public struct RefReducer<State : AnyObject, Action : ActionProtocol> : DependentClassReducer {
     
-    associatedtype Body : DependentClassReducer
-    var body : Body{get}
+    @usableFromInline
+    let closure : (Action, State, Environment) -> Void
     
-}
-
-
-public extension ClassReducerWrapper {
+    @inlinable
+    public init(_ closure: @escaping (Action, State, Environment) -> Void){
+        self.closure = closure
+    }
     
-    func apply(_ action: Action,
-               to state: Body.State,
-               environment: Environment) {
-        body.apply(action,
-                   to: state,
-                   environment: environment)
+    @inlinable
+    public init(_ closure: @escaping (Action, State) -> Void){
+        self.closure = {action, state, _ in closure(action, state)}
+    }
+    
+    @inlinable
+    public func apply(_ action: Action, to state: State, environment: Environment) {
+        closure(action, state, environment)
     }
     
 }
