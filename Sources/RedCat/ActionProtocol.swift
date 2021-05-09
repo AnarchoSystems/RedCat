@@ -34,22 +34,22 @@ public struct ActionGroup : ActionProtocol {
 
 @_functionBuilder
 public enum ActionBuilder {
-    public static func buildBlock<C : Collection>(_ elements: C) -> UndoGroup where C.Element == Undoable {
-        UndoGroup(values: Array(elements))
+    public static func buildBlock<C : Collection>(_ elements: C) -> ActionGroup where C.Element == ActionProtocol {
+        ActionGroup(values: Array(elements))
     }
-    public static func buildBlock<C : Collection>(_ elements: C) -> UndoGroup where C.Element : Undoable {
-        UndoGroup(values: elements.map{$0 as Undoable})
+    public static func buildBlock<C : Collection>(_ elements: C) -> ActionGroup where C.Element : ActionProtocol {
+        ActionGroup(values: elements.map{$0 as ActionProtocol})
     }
-    public static func buildBlock(_ elements: Undoable...) -> UndoGroup {
-        UndoGroup(values: elements)
+    public static func buildBlock(_ elements: ActionProtocol...) -> ActionGroup {
+        ActionGroup(values: elements)
     }
-    public static func buildEither(first: UndoGroup) -> UndoGroup {
+    public static func buildEither(first: ActionGroup) -> ActionGroup {
         first
     }
-    public static func buildEither(second: UndoGroup) -> UndoGroup {
+    public static func buildEither(second: ActionGroup) -> ActionGroup {
         second
     }
-    public static func buildIf(_ content: Undoable?) -> UndoGroup {content.map{[$0]} ?? []}
+    public static func buildIf(_ content: ActionProtocol?) -> ActionGroup {content.map{[$0]} ?? []}
 }
 
 extension ActionGroup : ExpressibleByArrayLiteral {
