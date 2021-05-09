@@ -7,17 +7,27 @@
 
 import Foundation
 
+struct AppInit : ActionProtocol{}
 
 public class Store<State> {
     
     public var state : State
     
     let services : [Service<State>]
+    let environment : Environment
     
     fileprivate init(initialState: State,
-                     services: [Service<State>]) {
+                     services: [Service<State>],
+                     environment: Environment) {
         state = initialState
         self.services = services
+        self.environment = environment
+        for service in services {
+            service.beforeUpdate(store: self, action: AppInit(), environment: environment)
+        }
+        for service in services {
+            service.afterUpdate(store: self, action: AppInit(), environment: environment)
+        }
     }
     
     public func send<Action : ActionProtocol>(_ action: Action){
@@ -38,15 +48,13 @@ public class Store<State> {
 public class ConcreteStore<Reducer : DependentReducer> : Store<Reducer.State> {
     
     let reducer : Reducer
-    let environment : Environment
     
     init(initialState: Reducer.State,
          reducer: Reducer,
          environment: Environment,
          services: [Service<Reducer.State>]) {
         self.reducer = reducer
-        self.environment = environment
-        super.init(initialState: initialState, services: services)
+        super.init(initialState: initialState, services: services, environment: environment)
     }
     
     public override func send<Action : ActionProtocol>(_ action: Action) {
