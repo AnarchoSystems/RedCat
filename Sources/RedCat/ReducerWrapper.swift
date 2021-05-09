@@ -21,7 +21,7 @@ public extension ReducerWrapper {
     
     func apply<Action : ActionProtocol>(_ action: Action,
                        to state: inout Body.State,
-                       environment: Environment) {
+                       environment: Dependencies) {
         body.apply(action,
                    to: &state,
                    environment: environment)
@@ -38,7 +38,7 @@ public struct Reducer<Reducer : DependentReducer> : ReducerWrapper {
         self.body = body()
     }
     
-    public init<State, Action : ActionProtocol>(_ closure: @escaping (Action, inout State, Environment) -> Void)
+    public init<State, Action : ActionProtocol>(_ closure: @escaping (Action, inout State, Dependencies) -> Void)
     where Reducer == ClosureReducer<State, Action> {
         self.body = ClosureReducer(closure)
     }

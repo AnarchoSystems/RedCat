@@ -29,7 +29,7 @@ public struct ComposedReducer<R1 : DependentReducer, R2 : DependentReducer> : De
     init(_ r1: R1, _ r2: R2){(self.r1, self.r2) = (r1, r2)}
     
     @inlinable
-    public func apply<Action : ActionProtocol>(_ action: Action, to state: inout R1.State, environment: Environment) {
+    public func apply<Action : ActionProtocol>(_ action: Action, to state: inout R1.State, environment: Dependencies) {
         r1.apply(action, to: &state, environment: environment)
         r2.apply(action, to: &state, environment: environment)
     }

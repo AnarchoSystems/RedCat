@@ -17,7 +17,7 @@ public protocol DependentAspectReducer : DependentReducer {
     var casePath : CasePath<State, Aspect>{get}
     func apply(_ action: Action,
                to aspect: inout Aspect,
-               environment: Environment)
+               environment: Dependencies)
     
 }
 
@@ -26,7 +26,7 @@ public extension DependentAspectReducer where State : Emptyable {
     
     func apply<Action : ActionProtocol>(_ action: Action,
                        to state: inout State,
-                       environment: Environment) {
+                       environment: Dependencies) {
         guard let action = action as? Self.Action else{return}
         casePath.mutate(&state){aspect in
             apply(action, to: &aspect, environment: environment)
@@ -51,7 +51,7 @@ public extension AspectReducer where State : Emptyable {
     
     func apply<Action : ActionProtocol>(_ action: Action,
                        to state: inout State,
-                       environment: Environment) {
+                       environment: Dependencies) {
         guard let action = action as? Self.Action else{return}
         casePath.mutate(&state){aspect in
             apply(action, to: &aspect)
@@ -76,7 +76,7 @@ public extension AspectReducerWrapper where State : Emptyable {
     @inlinable
     func apply<Action : ActionProtocol>(_ action: Action,
                        to state: inout State,
-                       environment: Environment) {
+                       environment: Dependencies) {
         casePath.mutate(&state){aspect in
             body.apply(action, to: &aspect, environment: environment)
         }
@@ -114,7 +114,7 @@ public protocol DependentClassCaseReducer : DependentReducer {
     var casePath : CasePath<State, Aspect>{get}
     func apply(_ action: Action,
                to aspect: Aspect,
-               environment: Environment)
+               environment: Dependencies)
     
 }
 
@@ -123,7 +123,7 @@ public extension DependentClassCaseReducer {
     
     func apply<Action : ActionProtocol>(_ action: Action,
                        to state: inout State,
-                       environment: Environment) {
+                       environment: Dependencies) {
         guard let action = action as? Self.Action else{return}
         casePath.mutate(state){aspect in
             apply(action, to: aspect, environment: environment)
@@ -148,7 +148,7 @@ public extension ClassCaseReducer {
     
     func apply<Action : ActionProtocol>(_ action: Action,
                        to state: inout State,
-                       environment: Environment) {
+                       environment: Dependencies) {
         guard let action = action as? Self.Action else{return}
         casePath.mutate(state){aspect in
             apply(action, to: aspect)
@@ -172,7 +172,7 @@ public extension ClassCaseReducerWrapper {
     
     func apply<Action : ActionProtocol>(_ action: Action,
                        to state: inout State,
-                       environment: Environment) {
+                       environment: Dependencies) {
         guard let action = action as? Body.Action else{return}
         casePath.mutate(state){aspect in
             body.apply(action, to: aspect, environment: environment)

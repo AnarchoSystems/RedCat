@@ -14,7 +14,7 @@ public protocol DependentClassReducer : DependentReducer where State : AnyObject
     associatedtype Action : ActionProtocol
     func apply(_ action: Action,
                to state: State,
-               environment: Environment)
+               environment: Dependencies)
     
 }
 
@@ -23,7 +23,7 @@ public extension DependentClassReducer {
     
     func apply<Action : ActionProtocol>(_ action: Action,
                        to state: inout State,
-                       environment: Environment) {
+                       environment: Dependencies) {
         guard let action = action as? Self.Action else{return}
         apply(action, to: state, environment: environment)
     }
@@ -43,7 +43,7 @@ public extension ClassReducer {
     
     func apply<Action : ActionProtocol>(_ action: Action,
                        to state: State,
-                       environment: Environment) {
+                       environment: Dependencies) {
         guard let action = action as? Self.Action else{return}
         apply(action, to: state)
     }
@@ -54,10 +54,10 @@ public extension ClassReducer {
 public struct RefReducer<State : AnyObject, Action : ActionProtocol> : DependentClassReducer {
     
     @usableFromInline
-    let closure : (Action, State, Environment) -> Void
+    let closure : (Action, State, Dependencies) -> Void
     
     @inlinable
-    public init(_ closure: @escaping (Action, State, Environment) -> Void){
+    public init(_ closure: @escaping (Action, State, Dependencies) -> Void){
         self.closure = closure
     }
     
@@ -67,7 +67,7 @@ public struct RefReducer<State : AnyObject, Action : ActionProtocol> : Dependent
     }
     
     @inlinable
-    public func apply(_ action: Action, to state: State, environment: Environment) {
+    public func apply(_ action: Action, to state: State, environment: Dependencies) {
         closure(action, state, environment)
     }
     

@@ -28,7 +28,7 @@ public extension DependentReducer {
 extension ActionProtocol {
     
     @usableFromInline
-    func apply<T : DependentReducer>(to target: inout T.State, using interpreter: T, environment: Environment) {
+    func apply<T : DependentReducer>(to target: inout T.State, using interpreter: T, environment: Dependencies) {
         interpreter.apply(self, to: &target, environment: environment)
     }
     
@@ -62,7 +62,7 @@ public struct ActionListHandling<I : DependentReducer> : DependentReducer {
     init(_ wrapped: I){self.wrapped = wrapped}
     
     @inlinable
-    public func apply<Action : ActionProtocol>(_ action: Action, to state: inout I.State, environment: Environment) {
+    public func apply<Action : ActionProtocol>(_ action: Action, to state: inout I.State, environment: Dependencies) {
         if let list = action as? ActionGroup {
             for elm in list.values {
                 elm.apply(to: &state, using: self, environment: environment)
@@ -85,7 +85,7 @@ public struct UndoListHandling<I : DependentReducer> : DependentReducer {
     init(_ wrapped: I){self.wrapped = wrapped}
     
     @inlinable
-    public func apply<Action : ActionProtocol>(_ action: Action, to state: inout I.State, environment: Environment) {
+    public func apply<Action : ActionProtocol>(_ action: Action, to state: inout I.State, environment: Dependencies) {
         if let list = action as? UndoGroup {
             for elm in list.values {
                 elm.apply(to: &state, using: self, environment: environment)

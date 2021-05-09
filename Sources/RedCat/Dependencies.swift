@@ -8,7 +8,7 @@
 import Foundation
 
 public protocol OpaqueEnvironmentKey {
-    static func tryWriteToEnv(_ any: Any, env: inout Environment)
+    static func tryWriteToEnv(_ any: Any, env: inout Dependencies)
 }
 
 public protocol EnvironmentKey : OpaqueEnvironmentKey {
@@ -19,7 +19,7 @@ public protocol EnvironmentKey : OpaqueEnvironmentKey {
 }
 
 public extension EnvironmentKey {
-    static func tryWriteToEnv(_ any: Any, env: inout Environment) {
+    static func tryWriteToEnv(_ any: Any, env: inout Dependencies) {
         guard let value = any as? Value else {
             fatalError("\(any) is not a \(String(describing: Value.self))!")
         }
@@ -27,7 +27,7 @@ public extension EnvironmentKey {
     }
 }
 
-public struct Environment {
+public struct Dependencies {
     
     @usableFromInline
     var dict : [String : Any]
@@ -44,7 +44,7 @@ public struct Environment {
     
 }
 
-extension Environment : ExpressibleByDictionaryLiteral {
+extension Dependencies : ExpressibleByDictionaryLiteral {
     
     public init(dictionaryLiteral elements: (OpaqueEnvironmentKey.Type, Any)...) {
         dict = [:]

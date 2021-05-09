@@ -16,7 +16,7 @@ public protocol DependentDetailReducer : DependentReducer {
     var keyPath : WritableKeyPath<State, Detail>{get}
     func apply(_ action: Action,
                to detail: inout Detail,
-               environment: Environment)
+               environment: Dependencies)
     
 }
 
@@ -25,7 +25,7 @@ public extension DependentDetailReducer {
     
     func apply<Action : ActionProtocol>(_ action: Action,
                        to state: inout State,
-                       environment: Environment) {
+                       environment: Dependencies) {
         guard let action = action as? Self.Action else{return}
         apply(action, to: &state[keyPath: keyPath], environment: environment)
     }
@@ -49,7 +49,7 @@ public extension DetailReducer {
     
     func apply<Action : ActionProtocol>(_ action: Action,
                        to state: inout State,
-                       environment: Environment) {
+                       environment: Dependencies) {
         guard let action = action as? Self.Action else{return}
         apply(action, to: &state[keyPath: keyPath])
     }
@@ -71,7 +71,7 @@ public extension DetailReducerWrapper {
     
     func apply<Action : ActionProtocol>(_ action: Action,
                        to state: inout State,
-                       environment: Environment) {
+                       environment: Dependencies) {
         body.apply(action, to: &state[keyPath: keyPath], environment: environment)
     }
     

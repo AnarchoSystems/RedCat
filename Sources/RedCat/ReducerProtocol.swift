@@ -15,7 +15,7 @@ public protocol DependentReducer {
     
     func apply<Action : ActionProtocol>(_ action: Action,
                        to state: inout State,
-                       environment: Environment)
+                       environment: Dependencies)
     
 }
 
@@ -24,7 +24,7 @@ public extension DependentReducer {
     
     func applyDynamic(_ action: ActionProtocol,
                       to state: inout State,
-                      environment: Environment = Environment()) {
+                      environment: Dependencies = Dependencies()) {
         action.apply(to: &state, using: self, environment: environment)
     }
     
@@ -43,7 +43,7 @@ public extension ReducerProtocol {
     
     func apply<Action : ActionProtocol>(_ action: Action,
                        to state: inout State,
-                       environment: Environment) {
+                       environment: Dependencies) {
         guard let action = action as? Self.Action else{return}
         apply(action, to: &state)
     }

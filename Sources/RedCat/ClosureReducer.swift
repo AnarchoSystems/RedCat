@@ -12,10 +12,10 @@ import Foundation
 public struct ClosureReducer<State, Act : ActionProtocol> : DependentReducer {
     
     @usableFromInline
-    let closure : (Act, inout State, Environment) -> Void
+    let closure : (Act, inout State, Dependencies) -> Void
     
     @inlinable
-    public init(_ closure: @escaping (Act, inout State, Environment) -> Void){
+    public init(_ closure: @escaping (Act, inout State, Dependencies) -> Void){
         self.closure = closure
     }
     
@@ -27,7 +27,7 @@ public struct ClosureReducer<State, Act : ActionProtocol> : DependentReducer {
     @inlinable
     public func apply<Action : ActionProtocol>(_ action: Action,
                               to state: inout State,
-                              environment: Environment) {
+                              environment: Dependencies) {
         guard let action = action as? Act else{return}
         closure(action, &state, environment)
     }

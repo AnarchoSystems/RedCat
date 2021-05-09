@@ -14,11 +14,11 @@ public class Store<State> {
     public var state : State
     
     let services : [Service<State>]
-    let environment : Environment
+    let environment : Dependencies
     
     fileprivate init(initialState: State,
                      services: [Service<State>],
-                     environment: Environment) {
+                     environment: Dependencies) {
         state = initialState
         self.services = services
         self.environment = environment
@@ -29,9 +29,26 @@ public class Store<State> {
         fatalError()
     }
     
+    @available(OSX 10.11, *)
+    public func sendWithUndo<Action: Undoable>(_ action: Action,
+                                               undoTitle: String? = nil,
+                                               redoTitle: String? = nil,
+                                               undoManager: UndoManager?) {
+        send(action)
+        undoManager?.registerUndo(withTarget: self){target in
+            target.sendWithUndo(action.inverted(),
+                                undoTitle: redoTitle,
+                                redoTitle: undoTitle,
+                                undoManager: undoManager)
+        }
+        if let undoTitle = undoTitle {
+            undoManager?.setActionName(undoTitle)
+        }
+    }
+    
     public static func create<Reducer : DependentReducer>(initialState: Reducer.State,
                                                           reducer: Reducer,
-                                                          environment: Environment,
+                                                          environment: Dependencies,
                                                           services: [Service<Reducer.State>]) -> Store<State>
     where Reducer.State == State {
         ConcreteStore(initialState: initialState, reducer: reducer, environment: environment, services: services)
@@ -46,7 +63,7 @@ public class ConcreteStore<Reducer : DependentReducer> : Store<Reducer.State> {
     
     init(initialState: Reducer.State,
          reducer: Reducer,
-         environment: Environment,
+         environment: Dependencies,
          services: [Service<Reducer.State>]) {
         self.reducer = reducer
         super.init(initialState: initialState, services: services, environment: environment)
@@ -85,7 +102,7 @@ public extension Store {
     @available(iOS 13.0, *)
     static func combineStore<Reducer : DependentReducer>(initialState: Reducer.State,
                                                                 reducer: Reducer,
-                                                                environment: Environment,
+                                                                environment: Dependencies,
                                                                 services: [Service<Reducer.State>]) -> CombineStore<Reducer>
     where Reducer.State == State {
         CombineStore(initialState: initialState, reducer: reducer, environment: environment, services: services)
@@ -100,9 +117,9 @@ open class Service<State> {
     
     public init(){}
     
-    open func beforeUpdate<Action>(store: Store<State>, action: Action, environment: Environment) {}
+    open func beforeUpdate<Action>(store: Store<State>, action: Action, environment: Dependencies) {}
     
-    open func afterUpdate<Action>(store: Store<State>, action: Action, environment: Environment) {}
+    open func afterUpdate<Action>(store: Store<State>, action: Action, environment: Dependencies) {}
     
 }
 
@@ -116,14 +133,14 @@ open class DetailService<State, Detail : Equatable> : Service<State> {
     public init(detail: @escaping (State) -> Detail) {self.detail = detail}
     
     @inlinable
-    public override func afterUpdate<Action>(store: Store<State>, action: Action, environment: Environment) {
+    public override func afterUpdate<Action>(store: Store<State>, action: Action, environment: Dependencies) {
         let detail = self.detail(store.state)
         guard detail != oldValue else{return}
         oldValue = detail
         onUpdate(newValue: detail, store: store, environment: environment)
     }
     
-    open func onUpdate(newValue: Detail, store: Store<State>, environment: Environment) {
+    open func onUpdate(newValue: Detail, store: Store<State>, environment: Dependencies) {
         
     }
     
