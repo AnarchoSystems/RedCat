@@ -22,12 +22,7 @@ public class Store<State> {
         state = initialState
         self.services = services
         self.environment = environment
-        for service in services {
-            service.beforeUpdate(store: self, action: AppInit(), environment: environment)
-        }
-        for service in services {
-            service.afterUpdate(store: self, action: AppInit(), environment: environment)
-        }
+        send(AppInit())
     }
     
     public func send<Action : ActionProtocol>(_ action: Action){
