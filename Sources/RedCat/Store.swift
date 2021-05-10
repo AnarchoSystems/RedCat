@@ -11,17 +11,11 @@ struct AppInit : ActionProtocol{}
 
 public class Store<State> {
     
-    public var state : State
+    public var state : State {
+        fatalError()
+    }
     
-    let services : [Service<State>]
-    let environment : Dependencies
-    
-    fileprivate init(initialState: State,
-                     services: [Service<State>],
-                     environment: Dependencies) {
-        state = initialState
-        self.services = services
-        self.environment = environment
+    internal init() {
         send(AppInit())
     }
     
@@ -59,21 +53,31 @@ public class Store<State> {
 
 public class ConcreteStore<Reducer : DependentReducer> : Store<Reducer.State> {
     
+    override public var state : Reducer.State {
+        _state
+    }
+    private var _state : Reducer.State
     let reducer : Reducer
+    
+    let services : [Service<Reducer.State>]
+    let environment : Dependencies
     
     init(initialState: Reducer.State,
          reducer: Reducer,
          environment: Dependencies,
          services: [Service<Reducer.State>]) {
+        self._state = initialState
         self.reducer = reducer
-        super.init(initialState: initialState, services: services, environment: environment)
+        self.services = services
+        self.environment = environment
+        super.init()
     }
     
     public override func send<Action : ActionProtocol>(_ action: Action) {
         for service in services {
             service.beforeUpdate(store: self, action: action, environment: environment)
         }
-        reducer.apply(action, to: &state, environment: environment)
+        reducer.apply(action, to: &_state, environment: environment)
         for service in services {
             service.afterUpdate(store: self, action: action, environment: environment)
         }
@@ -100,10 +104,12 @@ public extension Store {
     
     @available(OSX 10.15, *)
     @available(iOS 13.0, *)
-    static func combineStore<Reducer : DependentReducer>(initialState: Reducer.State,
-                                                                reducer: Reducer,
-                                                                environment: Dependencies,
-                                                                services: [Service<Reducer.State>]) -> CombineStore<Reducer>
+    static func combineStore<Reducer : DependentReducer>(
+        initialState: Reducer.State,
+        reducer: Reducer,
+        environment: Dependencies,
+        services: [Service<Reducer.State>]
+    ) -> CombineStore<Reducer>
     where Reducer.State == State {
         CombineStore(initialState: initialState, reducer: reducer, environment: environment, services: services)
     }
