@@ -35,7 +35,7 @@ public struct ActionGroup : ActionProtocol {
         
         var idx = 0
         while idx < values.count {
-            if let subList = values[idx] as? UndoGroup {
+            if let subList = values[idx] as? ActionGroup {
                 values.replaceSubrange(idx...idx, with: subList.values)
             }
             else {
