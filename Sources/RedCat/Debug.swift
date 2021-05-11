@@ -45,7 +45,7 @@ public class UnrecognizedActionDebugger<State, Logger : UnknownActionLogger> : S
     public override func beforeUpdate<Action : ActionProtocol>(store: Store<State>,
                                                                action: Action,
                                                                environment: Dependencies) {
-        
+         
         if var action = action as? ActionGroup {
             action.unroll()
             for action in action.values {

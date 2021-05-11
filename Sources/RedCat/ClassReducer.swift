@@ -48,7 +48,7 @@ public extension DependentClassReducer {
     }
     
     func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        type is Self.Action
+        type == Self.Action.self
     }
     
 }
