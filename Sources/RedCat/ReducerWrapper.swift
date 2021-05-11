@@ -9,28 +9,32 @@ import CasePaths
 
 
 
-public protocol ReducerWrapper : DependentReducer {
-    
-    associatedtype Body : DependentReducer
-    var body : Body{get}
-    
+public protocol ReducerWrapper : ErasedReducer {
+
+    associatedtype Body : ErasedReducer
+    var body : Body {get}
+
 }
 
 
 public extension ReducerWrapper {
     
     func apply<Action : ActionProtocol>(_ action: Action,
-                       to state: inout Body.State,
-                       environment: Dependencies) {
+                                        to state: inout Body.State,
+                                        environment: Dependencies) {
         body.apply(action,
                    to: &state,
                    environment: environment)
     }
     
+    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
+        body.acceptsAction(ofType: type)
+    }
+    
 }
 
 
-public struct Reducer<Reducer : DependentReducer> : ReducerWrapper {
+public struct Reducer<Reducer : ErasedReducer> : ReducerWrapper {
     
     public let body : Reducer
     
@@ -48,7 +52,7 @@ public struct Reducer<Reducer : DependentReducer> : ReducerWrapper {
         self.body = ClosureReducer(closure)
     }
     
-    public init<State : Emptyable, R : DependentReducer>(_ aspect: CasePath<State, R.State>, _ body: () -> R)
+    public init<State : Emptyable, R : ErasedReducer>(_ aspect: CasePath<State, R.State>, _ body: () -> R)
     where Reducer == PrismReducer<State, R> {
         self.body = PrismReducer(aspect, reducer: body())
     }
@@ -58,7 +62,7 @@ public struct Reducer<Reducer : DependentReducer> : ReducerWrapper {
         self.body = ClassPrismReducer(aspect, reducer: body())
     }
     
-    public init<State, R : DependentReducer>(_ detail: WritableKeyPath<State, R.State>, _ body: () -> R)
+    public init<State, R : ErasedReducer>(_ detail: WritableKeyPath<State, R.State>, _ body: () -> R)
     where Reducer == LensReducer<State, R> {
         self.body = LensReducer(detail, reducer: body())
     }

@@ -11,12 +11,12 @@ import CasePaths
 
 public protocol Emptyable {
     
-    static var empty : Self{get}
+    static var empty : Self {get}
     
 }
 
 
-extension Optional : Emptyable{
+extension Optional : Emptyable {
     
     @inlinable
     public static var empty : Wrapped? {
@@ -45,7 +45,7 @@ extension CasePath where Root : Emptyable {
     func mutate(_ whole: inout Root, optionalDefault fallback: Root?, closure: (inout Value) -> Void) {
         
         guard var part = extract(from: whole) else {
-            if let fallback = fallback{
+            if let fallback = fallback {
                 whole = fallback
             }
             return

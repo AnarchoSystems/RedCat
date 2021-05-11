@@ -9,18 +9,20 @@ import Foundation
 
 
 
-public protocol DependentReducer {
+public protocol ErasedReducer {
     
     associatedtype State
     
     func apply<Action : ActionProtocol>(_ action: Action,
-                       to state: inout State,
-                       environment: Dependencies)
+                                        to state: inout State,
+                                        environment: Dependencies)
+    
+    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool
     
 }
 
 
-public extension DependentReducer {
+public extension ErasedReducer {
     
     func applyDynamic(_ action: ActionProtocol,
                       to state: inout State,
@@ -31,9 +33,34 @@ public extension DependentReducer {
 }
 
 
-public protocol ReducerProtocol : DependentReducer {
+public protocol DependentReducer : ErasedReducer {
     
     associatedtype Action : ActionProtocol
+    
+    func apply(_ action: Action,
+               to state: inout State,
+               environment: Dependencies)
+    
+}
+
+
+public extension DependentReducer {
+    
+    func apply<Action : ActionProtocol>(_ action: Action,
+                                        to state: inout State,
+                                        environment: Dependencies) {
+        apply(action, to: &state, environment: environment)
+    }
+    
+    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
+        type is Self.Action
+    }
+    
+}
+
+
+public protocol ReducerProtocol : DependentReducer {
+    
     func apply(_ action: Action,
                to state: inout State)
     
@@ -41,10 +68,9 @@ public protocol ReducerProtocol : DependentReducer {
 
 public extension ReducerProtocol {
     
-    func apply<Action : ActionProtocol>(_ action: Action,
-                       to state: inout State,
-                       environment: Dependencies) {
-        guard let action = action as? Self.Action else{return}
+    func apply(_ action: Action,
+               to state: inout State,
+               environment: Dependencies) {
         apply(action, to: &state)
     }
     

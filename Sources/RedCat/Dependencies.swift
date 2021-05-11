@@ -14,7 +14,7 @@ public protocol OpaqueEnvironmentKey {
 public protocol EnvironmentKey : OpaqueEnvironmentKey {
     
     associatedtype Value
-    static var defaultValue : Value{get}
+    static var defaultValue : Value {get}
     
 }
 
@@ -34,10 +34,10 @@ public struct Dependencies {
     
     @inlinable
     public subscript<Key : EnvironmentKey>(key: Key.Type) -> Key.Value {
-        get{
+        get {
             dict[String(describing: key)] as? Key.Value ?? Key.defaultValue
         }
-        set{
+        set {
             dict[String(describing: key)] = newValue
         }
     }

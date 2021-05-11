@@ -8,7 +8,7 @@
 import Foundation
 
 
-public protocol ActionProtocol{
+public protocol ActionProtocol {
     func then<U : ActionProtocol>(_ next: U) -> ActionGroup
 }
 
@@ -17,10 +17,10 @@ public struct ActionGroup : ActionProtocol {
     @usableFromInline
     var values : [ActionProtocol]
     
-    public init(values: [ActionProtocol]){self.values = values}
+    public init(values: [ActionProtocol]) {self.values = values}
     
-    public init<T>(_ list: [T], build: (T) -> ActionProtocol){self = ActionGroup(values: list.map(build))}
-    public init(@ActionBuilder build: () -> ActionGroup){self = build()}
+    public init<T>(_ list: [T], build: (T) -> ActionProtocol) {self = ActionGroup(values: list.map(build))}
+    public init(@ActionBuilder build: () -> ActionGroup) {self = build()}
     
     public mutating func append(_ undoable: ActionProtocol) {
         values.append(undoable)
@@ -32,13 +32,13 @@ public struct ActionGroup : ActionProtocol {
     
 }
 
-@_functionBuilder
+@resultBuilder
 public enum ActionBuilder {
     public static func buildBlock<C : Collection>(_ elements: C) -> ActionGroup where C.Element == ActionProtocol {
         ActionGroup(values: Array(elements))
     }
     public static func buildBlock<C : Collection>(_ elements: C) -> ActionGroup where C.Element : ActionProtocol {
-        ActionGroup(values: elements.map{$0 as ActionProtocol})
+        ActionGroup(values: elements.map {$0 as ActionProtocol})
     }
     public static func buildBlock(_ elements: ActionProtocol...) -> ActionGroup {
         ActionGroup(values: elements)
@@ -49,7 +49,7 @@ public enum ActionBuilder {
     public static func buildEither(second: ActionGroup) -> ActionGroup {
         second
     }
-    public static func buildIf(_ content: ActionProtocol?) -> ActionGroup {content.map{[$0]} ?? []}
+    public static func buildIf(_ content: ActionProtocol?) -> ActionGroup {content.map {[$0]} ?? []}
 }
 
 extension ActionGroup : ExpressibleByArrayLiteral {
@@ -63,7 +63,7 @@ extension ActionGroup : ExpressibleByArrayLiteral {
 public extension ActionProtocol {
     
     func then<U : ActionProtocol>(_ next: U) -> ActionGroup {
-        (next as? ActionGroup).map{ActionGroup(values: [self] + $0.values)} ?? [self, next]
+        (next as? ActionGroup).map {ActionGroup(values: [self] + $0.values)} ?? [self, next]
     }
     
 }

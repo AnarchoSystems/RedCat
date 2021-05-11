@@ -21,6 +21,8 @@ enum TestReducers {
     
     struct IncReducer<State> : ReducerProtocol {
         
+        typealias Action = Inc<State>
+        
         func apply(_ action: Inc<State>, to state: inout State) {
             state[keyPath: action.value] += 1
         }
@@ -28,6 +30,8 @@ enum TestReducers {
     }
     
     struct DecReducer<State> : ReducerProtocol {
+        
+        typealias Action = Dec<State>
         
         func apply(_ action: Dec<State>, to state: inout State) {
             state[keyPath: action.value] -= 1
@@ -38,9 +42,9 @@ enum TestReducers {
 }
 
 
-struct Inc<State> : ActionProtocol{
+struct Inc<State> : ActionProtocol {
     let value : WritableKeyPath<State, Int>
 }
-struct Dec<State> : ActionProtocol{
+struct Dec<State> : ActionProtocol {
     let value : WritableKeyPath<State, Int>
 }

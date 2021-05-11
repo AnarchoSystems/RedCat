@@ -13,11 +13,11 @@ public class Box<T> {
     
     public var wrapped : T
     
-    public init(wrapped: T){self.wrapped = wrapped}
+    public init(wrapped: T) {self.wrapped = wrapped}
     
-    public subscript<U>(dynamicMember kp: WritableKeyPath<T,U>) -> U {
-        get{wrapped[keyPath: kp]}
-        set{wrapped[keyPath: kp] = newValue}
+    public subscript<U>(dynamicMember keyPath: WritableKeyPath<T, U>) -> U {
+        get {wrapped[keyPath: keyPath]}
+        set {wrapped[keyPath: keyPath] = newValue}
     }
     
 }
@@ -25,6 +25,7 @@ public class Box<T> {
 
 
 public prefix func /<Root, Value>(_ pattern: @escaping (Box<Value>) -> Root) -> CasePath<Root, Value> {
+    // swiftlint:disable:next opening_brace
     /{pattern(Box(wrapped: $0))}
 }
     

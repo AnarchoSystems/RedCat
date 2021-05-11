@@ -53,7 +53,7 @@ extension RedCatTests {
             var state1 = TestState(value: Int.random(in: -100...100))
             var state2 = state1
             
-            let list = (0..<100).map{_ in Bool.random()}
+            let list = (0..<100).map {_ in Bool.random()}
             
             for incDec in list {
                 

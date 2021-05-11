@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct AppInit : ActionProtocol{}
+struct AppInit : ActionProtocol {}
 
 public class Store<State> {
     
@@ -15,11 +15,13 @@ public class Store<State> {
         fatalError()
     }
     
-    internal init() {
-        send(AppInit())
+    internal init() {}
+    
+    public func send<Action : ActionProtocol>(_ action: Action) {
+        fatalError()
     }
     
-    public func send<Action : ActionProtocol>(_ action: Action){
+    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
         fatalError()
     }
     
@@ -29,7 +31,7 @@ public class Store<State> {
                                                redoTitle: String? = nil,
                                                undoManager: UndoManager?) {
         send(action)
-        undoManager?.registerUndo(withTarget: self){target in
+        undoManager?.registerUndo(withTarget: self) {target in
             target.sendWithUndo(action.inverted(),
                                 undoTitle: redoTitle,
                                 redoTitle: undoTitle,
@@ -40,26 +42,24 @@ public class Store<State> {
         }
     }
     
-    public static func create<Reducer : DependentReducer>(initialState: Reducer.State,
-                                                          reducer: Reducer,
-                                                          environment: Dependencies,
-                                                          services: [Service<Reducer.State>]) -> Store<State>
-    where Reducer.State == State {
-        ConcreteStore(initialState: initialState, reducer: reducer, environment: environment, services: services)
-    }
-    
 }
 
-
-public class ConcreteStore<Reducer : DependentReducer> : Store<Reducer.State> {
+final class ConcreteStore<Reducer : ErasedReducer> : Store<Reducer.State> {
     
-    override public var state : Reducer.State {
+    @usableFromInline
+    override var state : Reducer.State {
         _state
     }
-    private var _state : Reducer.State
+    
+    @usableFromInline
+    // swiftlint:disable:next identifier_name
+    var _state : Reducer.State
+    @usableFromInline
     let reducer : Reducer
     
+    @usableFromInline
     let services : [Service<Reducer.State>]
+    @usableFromInline
     let environment : Dependencies
     
     init(initialState: Reducer.State,
@@ -73,7 +73,9 @@ public class ConcreteStore<Reducer : DependentReducer> : Store<Reducer.State> {
         super.init()
     }
     
-    public override func send<Action : ActionProtocol>(_ action: Action) {
+    
+    @usableFromInline
+    override func send<Action : ActionProtocol>(_ action: Action) {
         for service in services {
             service.beforeUpdate(store: self, action: action, environment: environment)
         }
@@ -81,6 +83,11 @@ public class ConcreteStore<Reducer : DependentReducer> : Store<Reducer.State> {
         for service in services {
             service.afterUpdate(store: self, action: action, environment: environment)
         }
+    }
+    
+    @usableFromInline
+    override func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
+        reducer.acceptsAction(ofType: type)
     }
     
 }
@@ -91,41 +98,99 @@ public class ConcreteStore<Reducer : DependentReducer> : Store<Reducer.State> {
 
 @available(OSX 10.15, *)
 @available(iOS 13.0, *)
-public final class CombineStore<Reducer : DependentReducer> : ConcreteStore<Reducer>, ObservableObject {
+public class CombineStore<State> : Store<State>, ObservableObject {
     
-    public override func send<Action : ActionProtocol>(_ action: Action) {
+}
+
+@available(OSX 10.15, *)
+@available(iOS 13.0, *)
+final class ConcreteCombineStore<Reducer : ErasedReducer> : CombineStore<Reducer.State> {
+    
+    @inlinable
+    public override var state: Reducer.State {
+        wrapped.state
+    }
+    
+    @usableFromInline
+    let wrapped : ConcreteStore<Reducer>
+    
+    @usableFromInline
+    init(initialState: Reducer.State,
+         reducer: Reducer,
+         environment: Dependencies,
+         services: [Service<Reducer.State>]) {
+        wrapped = ConcreteStore(initialState: initialState,
+                                reducer: reducer,
+                                environment: environment,
+                                services: services)
+    }
+    
+    @usableFromInline
+    override func send<Action : ActionProtocol>(_ action: Action) {
         objectWillChange.send()
-        super.send(action)
+        wrapped.send(action)
+    }
+    
+    @usableFromInline
+    override func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
+        wrapped.acceptsAction(ofType: type)
     }
     
 }
 
+#endif
+#endif
+
 public extension Store {
+    
+    static func create<Reducer : ErasedReducer>(initialState: Reducer.State,
+                                                reducer: Reducer,
+                                                environment: Dependencies,
+                                                services: [Service<Reducer.State>]) -> Store<State>
+    where Reducer.State == State {
+        let result = ConcreteStore(initialState: initialState,
+                                   reducer: reducer,
+                                   environment: environment,
+                                   services: services)
+        result.send(AppInit())
+        return result
+    }
+    
+    
+    #if os(iOS) || os(macOS)
+    #if canImport(Combine)
     
     @available(OSX 10.15, *)
     @available(iOS 13.0, *)
-    static func combineStore<Reducer : DependentReducer>(
+    static func combineStore<Reducer : ErasedReducer>(
         initialState: Reducer.State,
         reducer: Reducer,
         environment: Dependencies,
         services: [Service<Reducer.State>]
-    ) -> CombineStore<Reducer>
+    ) -> CombineStore<Reducer.State>
     where Reducer.State == State {
-        CombineStore(initialState: initialState, reducer: reducer, environment: environment, services: services)
+        let result = ConcreteCombineStore(initialState: initialState,
+                                          reducer: reducer,
+                                          environment: environment,
+                                          services: services)
+        result.send(AppInit())
+        return result
     }
+    
+    #endif
+    #endif
+    
 }
 
-#endif
-#endif
 
 
 open class Service<State> {
     
-    public init(){}
+    public init() {}
     
-    open func beforeUpdate<Action>(store: Store<State>, action: Action, environment: Dependencies) {}
+    open func beforeUpdate<Action : ActionProtocol>(store: Store<State>, action: Action, environment: Dependencies) {}
     
-    open func afterUpdate<Action>(store: Store<State>, action: Action, environment: Dependencies) {}
+    open func afterUpdate<Action : ActionProtocol>(store: Store<State>, action: Action, environment: Dependencies) {}
     
 }
 
@@ -139,9 +204,11 @@ open class DetailService<State, Detail : Equatable> : Service<State> {
     public init(detail: @escaping (State) -> Detail) {self.detail = detail}
     
     @inlinable
-    public override func afterUpdate<Action>(store: Store<State>, action: Action, environment: Dependencies) {
+    public override func afterUpdate<Action : ActionProtocol>(store: Store<State>,
+                                                              action: Action,
+                                                              environment: Dependencies) {
         let detail = self.detail(store.state)
-        guard detail != oldValue else{return}
+        guard detail != oldValue else {return}
         oldValue = detail
         onUpdate(newValue: detail, store: store, environment: environment)
     }

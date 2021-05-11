@@ -8,7 +8,7 @@
 import Foundation
 
 
-public extension DependentReducer {
+public extension ErasedReducer {
     
     func handlingLists() -> ListHandling<Self> {
         ListHandling(self)
@@ -28,20 +28,20 @@ public extension DependentReducer {
 extension ActionProtocol {
     
     @usableFromInline
-    func apply<T : DependentReducer>(to target: inout T.State, using interpreter: T, environment: Dependencies) {
-        interpreter.apply(self, to: &target, environment: environment)
+    func apply<T : ErasedReducer>(to target: inout T.State, using reducer: T, environment: Dependencies) {
+        reducer.apply(self, to: &target, environment: environment)
     }
     
 }
 
 
-public struct ListHandling<I : DependentReducer> : ReducerWrapper {
+public struct ListHandling<I : ErasedReducer> : ReducerWrapper {
     
     @usableFromInline
     let wrapped : I
     
     @usableFromInline
-    init(_ wrapped: I){
+    init(_ wrapped: I) {
         self.wrapped = wrapped
     }
     
@@ -53,13 +53,13 @@ public struct ListHandling<I : DependentReducer> : ReducerWrapper {
 }
 
 
-public struct ActionListHandling<I : DependentReducer> : DependentReducer {
+public struct ActionListHandling<I : ErasedReducer> : ErasedReducer {
     
     @usableFromInline
     let wrapped : I
     
     @usableFromInline
-    init(_ wrapped: I){self.wrapped = wrapped}
+    init(_ wrapped: I) {self.wrapped = wrapped}
     
     @inlinable
     public func apply<Action : ActionProtocol>(_ action: Action, to state: inout I.State, environment: Dependencies) {
@@ -73,16 +73,21 @@ public struct ActionListHandling<I : DependentReducer> : DependentReducer {
         }
     }
     
+    
+    public func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
+        wrapped.acceptsAction(ofType: type)
+    }
+    
 }
 
 
-public struct UndoListHandling<I : DependentReducer> : DependentReducer {
+public struct UndoListHandling<I : ErasedReducer> : ErasedReducer {
     
     @usableFromInline
     let wrapped : I
     
     @usableFromInline
-    init(_ wrapped: I){self.wrapped = wrapped}
+    init(_ wrapped: I) {self.wrapped = wrapped}
     
     @inlinable
     public func apply<Action : ActionProtocol>(_ action: Action, to state: inout I.State, environment: Dependencies) {
@@ -94,6 +99,10 @@ public struct UndoListHandling<I : DependentReducer> : DependentReducer {
         else {
             wrapped.apply(action, to: &state, environment: environment)
         }
+    }
+    
+    public func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
+        wrapped.acceptsAction(ofType: type)
     }
     
 }

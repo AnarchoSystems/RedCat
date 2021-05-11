@@ -27,10 +27,10 @@ public struct UndoGroup : Undoable {
     @usableFromInline
     var values : [Undoable]
     
-    public init(values: [Undoable]){self.values = values}
+    public init(values: [Undoable]) {self.values = values}
     
-    public init<T>(_ list: [T], build: (T) -> Undoable){self = UndoGroup(values: list.map(build))}
-    public init(@UndoBuilder build: () -> UndoGroup){self = build()}
+    public init<T>(_ list: [T], build: (T) -> Undoable) {self = UndoGroup(values: list.map(build))}
+    public init(@UndoBuilder build: () -> UndoGroup) {self = build()}
     
     public mutating func invert() {
         values.reverse()
@@ -49,13 +49,13 @@ public struct UndoGroup : Undoable {
     
 }
 
-@_functionBuilder
+@resultBuilder
 public enum UndoBuilder {
     public static func buildBlock<C : Collection>(_ elements: C) -> UndoGroup where C.Element == Undoable {
         UndoGroup(values: Array(elements))
     }
     public static func buildBlock<C : Collection>(_ elements: C) -> UndoGroup where C.Element : Undoable {
-        UndoGroup(values: elements.map{$0 as Undoable})
+        UndoGroup(values: elements.map {$0 as Undoable})
     }
     public static func buildBlock(_ elements: Undoable...) -> UndoGroup {
         UndoGroup(values: elements)
@@ -66,7 +66,7 @@ public enum UndoBuilder {
     public static func buildEither(second: UndoGroup) -> UndoGroup {
         second
     }
-    public static func buildIf(_ content: Undoable?) -> UndoGroup {content.map{[$0]} ?? []}
+    public static func buildIf(_ content: Undoable?) -> UndoGroup {content.map {[$0]} ?? []}
 }
 
 extension UndoGroup : ExpressibleByArrayLiteral {
@@ -80,7 +80,7 @@ extension UndoGroup : ExpressibleByArrayLiteral {
 public extension Undoable {
     
     func then<U : Undoable>(_ next: U) -> UndoGroup {
-        (next as? UndoGroup).map{UndoGroup(values: [self] + $0.values)} ?? [self, next]
+        (next as? UndoGroup).map {UndoGroup(values: [self] + $0.values)} ?? [self, next]
     }
     
 }

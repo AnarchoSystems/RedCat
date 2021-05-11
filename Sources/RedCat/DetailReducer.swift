@@ -8,12 +8,12 @@
 import Foundation
 
 
-public protocol DependentDetailReducer : DependentReducer {
+public protocol DependentDetailReducer : ErasedReducer {
     
     associatedtype Detail
     associatedtype Action : ActionProtocol
     
-    var keyPath : WritableKeyPath<State, Detail>{get}
+    var keyPath : WritableKeyPath<State, Detail> {get}
     func apply(_ action: Action,
                to detail: inout Detail,
                environment: Dependencies)
@@ -24,21 +24,25 @@ public protocol DependentDetailReducer : DependentReducer {
 public extension DependentDetailReducer {
     
     func apply<Action : ActionProtocol>(_ action: Action,
-                       to state: inout State,
-                       environment: Dependencies) {
-        guard let action = action as? Self.Action else{return}
+                                        to state: inout State,
+                                        environment: Dependencies) {
+        guard let action = action as? Self.Action else {return}
         apply(action, to: &state[keyPath: keyPath], environment: environment)
+    }
+    
+    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
+        type is Self.Action
     }
     
 }
 
 
-public protocol DetailReducer : DependentReducer {
+public protocol DetailReducer : ErasedReducer {
     
     associatedtype Detail
     associatedtype Action : ActionProtocol
     
-    var keyPath : WritableKeyPath<State, Detail>{get}
+    var keyPath : WritableKeyPath<State, Detail> {get}
     func apply(_ action: Action,
                to detail: inout Detail)
     
@@ -48,21 +52,25 @@ public protocol DetailReducer : DependentReducer {
 public extension DetailReducer {
     
     func apply<Action : ActionProtocol>(_ action: Action,
-                       to state: inout State,
-                       environment: Dependencies) {
-        guard let action = action as? Self.Action else{return}
+                                        to state: inout State,
+                                        environment: Dependencies) {
+        guard let action = action as? Self.Action else {return}
         apply(action, to: &state[keyPath: keyPath])
+    }
+    
+    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
+        type is Self.Action
     }
     
 }
 
 
-public protocol DetailReducerWrapper : DependentReducer {
+public protocol DetailReducerWrapper : ErasedReducer {
     
-    associatedtype Body : DependentReducer
+    associatedtype Body : ErasedReducer
     
-    var keyPath : WritableKeyPath<State, Body.State>{get}
-    var body : Body{get}
+    var keyPath : WritableKeyPath<State, Body.State> {get}
+    var body : Body {get}
     
 }
 
@@ -70,20 +78,24 @@ public protocol DetailReducerWrapper : DependentReducer {
 public extension DetailReducerWrapper {
     
     func apply<Action : ActionProtocol>(_ action: Action,
-                       to state: inout State,
-                       environment: Dependencies) {
+                                        to state: inout State,
+                                        environment: Dependencies) {
         body.apply(action, to: &state[keyPath: keyPath], environment: environment)
+    }
+    
+    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
+        body.acceptsAction(ofType: type)
     }
     
 }
 
 
-public struct LensReducer<State, Reducer : DependentReducer> : DetailReducerWrapper {
+public struct LensReducer<State, Reducer : ErasedReducer> : DetailReducerWrapper {
     
     public let keyPath: WritableKeyPath<State, Reducer.State>
     public let body : Reducer
     
-    public init(_ detail: WritableKeyPath<State, Reducer.State>, reducer: Reducer){
+    public init(_ detail: WritableKeyPath<State, Reducer.State>, reducer: Reducer) {
         self.keyPath = detail
         self.body = reducer
     }
