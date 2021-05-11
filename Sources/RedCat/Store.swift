@@ -104,36 +104,55 @@ public class CombineStore<State> : Store<State>, ObservableObject {
 
 @available(OSX 10.15, *)
 @available(iOS 13.0, *)
+
+// FIXME: Below code is mostly copy+pase from ConcreteReducer
+// find a way to reuse ConcreteReducer such that ```send``` is called by services
+
 final class ConcreteCombineStore<Reducer : ErasedReducer> : CombineStore<Reducer.State> {
     
-    @inlinable
-    public override var state: Reducer.State {
-        wrapped.state
+    @usableFromInline
+    override var state : Reducer.State {
+        _state
     }
     
     @usableFromInline
-    let wrapped : ConcreteStore<Reducer>
+    // swiftlint:disable:next identifier_name
+    var _state : Reducer.State
+    @usableFromInline
+    let reducer : Reducer
     
     @usableFromInline
+    let services : [Service<Reducer.State>]
+    @usableFromInline
+    let environment : Dependencies
+    
     init(initialState: Reducer.State,
          reducer: Reducer,
          environment: Dependencies,
          services: [Service<Reducer.State>]) {
-        wrapped = ConcreteStore(initialState: initialState,
-                                reducer: reducer,
-                                environment: environment,
-                                services: services)
+        self._state = initialState
+        self.reducer = reducer
+        self.services = services
+        self.environment = environment
+        super.init()
     }
+    
     
     @usableFromInline
     override func send<Action : ActionProtocol>(_ action: Action) {
         objectWillChange.send()
-        wrapped.send(action)
+        for service in services {
+            service.beforeUpdate(store: self, action: action, environment: environment)
+        }
+        reducer.apply(action, to: &_state, environment: environment)
+        for service in services {
+            service.afterUpdate(store: self, action: action, environment: environment)
+        }
     }
     
     @usableFromInline
     override func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        wrapped.acceptsAction(ofType: type)
+        reducer.acceptsAction(ofType: type)
     }
     
 }
