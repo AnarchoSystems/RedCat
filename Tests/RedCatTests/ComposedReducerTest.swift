@@ -6,7 +6,7 @@
 //
 
 import XCTest
-import RedCat
+@testable import RedCat
 
 
 extension RedCatTests {
@@ -52,6 +52,7 @@ extension RedCatTests {
             
             var state1 = TestState(value: Int.random(in: -100...100))
             var state2 = state1
+            let original = state2
             
             let list = (0..<100).map {_ in Bool.random()}
             
@@ -61,9 +62,20 @@ extension RedCatTests {
                 
             }
             
-            composedReducer.handlingActionLists().applyDynamic(ActionGroup(list, build: incOrDec), to: &state2)
+            let group1 = ActionGroup(list, build: incOrDec)
+            
+            composedReducer.handlingActionLists().applyDynamic(group1,
+                                                               to: &state2)
             
             XCTAssertEqual(state1.value, state2.value)
+            
+            let group2 = UndoGroup(list,
+                                   build: incOrDecUndoable).inverted()
+            
+            incDecReducer.handlingUndoLists().applyDynamic(group2,
+                                                           to: &state2)
+            
+            XCTAssertEqual(state2.value, original.value)
             
         }
         
@@ -78,6 +90,10 @@ fileprivate extension RedCatTests {
         inc ? Inc(value: \TestState.value) : Dec(value: \TestState.value)
     }
     
+    func incOrDecUndoable(_ inc: Bool) -> IncDec<TestState> {
+        inc ? .inc(value: \TestState.value) : .dec(value: \TestState.value)
+    }
+    
     var incReducer : TestReducers.IncReducer<TestState> {
         TestReducers.inc()
     }
@@ -87,6 +103,17 @@ fileprivate extension RedCatTests {
     
     var composedReducer : ComposedReducer<TestReducers.IncReducer<TestState>, TestReducers.DecReducer<TestState>> {
         incReducer.compose(with: decReducer)
+    }
+    
+    var incDecReducer : ClosureReducer<TestState, IncDec<TestState>> {
+        ClosureReducer {action, state in
+            switch action.kind {
+            case .inc:
+                state[keyPath: action.value] += 1
+            case .dec:
+                state[keyPath: action.value] -= 1
+            }
+        }
     }
     
 }

@@ -63,19 +63,22 @@ public struct ActionListHandling<I : ErasedReducer> : ErasedReducer {
     
     @inlinable
     public func apply<Action : ActionProtocol>(_ action: Action, to state: inout I.State, environment: Dependencies) {
-        if let list = action as? ActionGroup {
-            for elm in list.values {
-                elm.apply(to: &state, using: self, environment: environment)
-            }
+        
+        guard var list = action as? ActionGroup else {
+            return wrapped.apply(action, to: &state, environment: environment)
         }
-        else {
-            wrapped.apply(action, to: &state, environment: environment)
+        
+        list.unroll()
+        
+        for elm in list.values {
+            wrapped.applyDynamic(elm, to: &state, environment: environment)
         }
+        
     }
     
     
     public func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        wrapped.acceptsAction(ofType: type)
+        wrapped.acceptsAction(ofType: type) || type == ActionGroup.self
     }
     
 }
@@ -91,18 +94,21 @@ public struct UndoListHandling<I : ErasedReducer> : ErasedReducer {
     
     @inlinable
     public func apply<Action : ActionProtocol>(_ action: Action, to state: inout I.State, environment: Dependencies) {
-        if let list = action as? UndoGroup {
-            for elm in list.values {
-                elm.apply(to: &state, using: self, environment: environment)
-            }
+        
+        guard var list = action as? UndoGroup else {
+            return wrapped.apply(action, to: &state, environment: environment)
         }
-        else {
-            wrapped.apply(action, to: &state, environment: environment)
+        
+        list.unroll()
+        
+        for elm in list.values {
+            wrapped.applyDynamic(elm, to: &state, environment: environment)
         }
+        
     }
     
     public func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        wrapped.acceptsAction(ofType: type)
+        wrapped.acceptsAction(ofType: type) || type == UndoGroup.self
     }
     
 }

@@ -47,6 +47,21 @@ public struct UndoGroup : Undoable {
         UndoGroup(values: values + ((next as? UndoGroup).map(\.values) ?? [next]))
     }
     
+    @usableFromInline
+    mutating func unroll() {
+        
+        var idx = 0
+        while idx < values.count {
+            if let subList = values[idx] as? UndoGroup {
+                values.replaceSubrange(idx...idx, with: subList.values)
+            }
+            else {
+                idx += 1
+            }
+        }
+        
+    }
+    
 }
 
 @resultBuilder

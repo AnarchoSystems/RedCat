@@ -8,7 +8,7 @@
 import Foundation
 
 public protocol UnknownActionLogger {
-    func log<Action : ActionProtocol>(_ action: Action, debugMode: Bool)
+    func log<Action : ActionProtocol>(_ action: Action)
 }
 
 struct DebugFlagKey : EnvironmentKey {
@@ -33,7 +33,7 @@ public class UnrecognizedActionDebugger<State, Logger : UnknownActionLogger> : S
     @usableFromInline
     let logger : Logger
     
-    /// Logs unrecognized actions.
+    /// Logs unrecognized actions in debug mode.
     /// - Parameters:
     ///     - logger: What to do if an invalid action is received.
     @inlinable
@@ -46,12 +46,42 @@ public class UnrecognizedActionDebugger<State, Logger : UnknownActionLogger> : S
                                                                action: Action,
                                                                environment: Dependencies) {
         
-        if !store.acceptsAction(ofType: Action.self) {
-            
-            logger.log(action, debugMode: environment.debug)
-            
+        if var action = action as? ActionGroup {
+            action.unroll()
+            for action in action.values {
+                check(action, store: store)
+            }
         }
         
+        else if var action = action as? UndoGroup {
+            action.unroll()
+            for action in action.values {
+                check(action, store: store)
+            }
+        }
+        
+        else {
+            check(action, store: store)
+        }
+        
+    }
+    
+    func check(_ action: ActionProtocol, store: Store<State>) {
+        if !action.isAccepted(by: store) {
+            action.log(using: logger)
+        }
+    }
+    
+}
+
+extension ActionProtocol {
+    
+    func isAccepted<State>(by store: Store<State>) -> Bool {
+        store.acceptsAction(ofType: Self.self)
+    }
+
+    func log<Logger : UnknownActionLogger>(using logger: Logger) {
+        logger.log(self)
     }
     
 }
@@ -76,15 +106,13 @@ public struct DefaultUnknownActionLogger : UnknownActionLogger {
     public init(trapOnDebug: Bool) {self.trapOnDebug = trapOnDebug}
     
     @inlinable
-    public func log<Action : ActionProtocol>(_ action: Action, debugMode: Bool) {
-        if debugMode {
-            if trapOnDebug {
+    public func log<Action : ActionProtocol>(_ action: Action) {
+        if trapOnDebug {
                 fatalError("Unrecognized action: \(action)")
             }
             else {
                 NSLog("Unrecognized action: \(action)")
             }
-        }
     }
     
 }

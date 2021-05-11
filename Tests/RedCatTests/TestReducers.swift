@@ -48,3 +48,34 @@ struct Inc<State> : ActionProtocol {
 struct Dec<State> : ActionProtocol {
     let value : WritableKeyPath<State, Int>
 }
+
+struct IncDec<State> : Undoable {
+    
+    let value : WritableKeyPath<State, Int>
+    var kind : Kind
+    
+    static func inc(value: WritableKeyPath<State, Int>) -> Self {
+        IncDec(value: value, kind: .inc)
+    }
+    
+    static func dec(value: WritableKeyPath<State, Int>) -> Self {
+        IncDec(value: value, kind: .dec)
+    }
+    
+    mutating func invert() {
+        kind.invert()
+    }
+    
+    enum Kind {
+        case inc
+        case dec
+        mutating func invert() {
+            switch self {
+            case .inc:
+                self = .dec
+            case .dec:
+                self = .inc
+            }
+        }
+    }
+}
