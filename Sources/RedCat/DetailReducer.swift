@@ -100,4 +100,9 @@ public struct LensReducer<State, Reducer : ErasedReducer> : DetailReducerWrapper
         self.body = reducer
     }
     
+    public init(_ detail: WritableKeyPath<State, Reducer.State>, build: @escaping () -> Reducer) {
+        self.keyPath = detail
+        self.body = build()
+    }
+    
 }
