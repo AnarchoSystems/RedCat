@@ -39,7 +39,12 @@ public struct Bind {
     let update : (inout Dependencies) -> Void
     
     public init<Value>(_ keyPath: WritableKeyPath<Dependencies, Value>, to value: Value) {
-        update = {env in env[keyPath: keyPath] = value}
+        self.update = {env in env[keyPath: keyPath] = value}
+    }
+    
+    public init<GivenValue>(given: KeyPath<Dependencies, GivenValue>,
+                            _ update: @escaping (GivenValue) -> Bind) {
+        self.update = {env in update(env[keyPath: given]).update(&env)}
     }
     
 }
