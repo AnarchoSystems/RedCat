@@ -7,7 +7,8 @@
 
 import Foundation
 
-struct AppInit : ActionProtocol {}
+public struct AppInit : ActionProtocol {}
+public struct AppDeinit : ActionProtocol {}
 
 public class Store<State> {
     
@@ -17,7 +18,13 @@ public class Store<State> {
     
     // prevent external initialization
     // makes external subclasses uninitializable
-    internal init() {}
+    internal init() {
+        send(AppInit())
+    }
+    
+    deinit {
+        send(AppDeinit())
+    }
     
     public func send<Action : ActionProtocol>(_ action: Action) {
         fatalError()
@@ -197,7 +204,18 @@ public extension Store {
                                    reducer: reducer,
                                    environment: environment,
                                    services: services)
-        result.send(AppInit())
+        return result
+    }
+    
+    static func create<Reducer : ErasedReducer>(reducer: Reducer,
+                                                environment: Dependencies,
+                                                services: [Service<Reducer.State>],
+                                                configure: (Dependencies) -> State) -> DelegateStore<State>
+    where Reducer.State == State {
+        let result = ConcreteStore(initialState: configure(environment),
+                                   reducer: reducer,
+                                   environment: environment,
+                                   services: services)
         return result
     }
     
@@ -218,60 +236,27 @@ public extension Store {
                                           reducer: reducer,
                                           environment: environment,
                                           services: services)
-        result.send(AppInit())
+        return result
+    }
+    
+    
+    @available(OSX 10.15, *)
+    @available(iOS 13.0, *)
+    static func combineStore<Reducer : ErasedReducer>(
+        reducer: Reducer,
+        environment: Dependencies,
+        services: [Service<Reducer.State>],
+        configure: (Dependencies) -> State
+    ) -> CombineStore<Reducer.State>
+    where Reducer.State == State {
+        let result = ConcreteCombineStore(initialState: configure(environment),
+                                          reducer: reducer,
+                                          environment: environment,
+                                          services: services)
         return result
     }
     
     #endif
     #endif
-    
-}
-
-
-
-open class Service<State> {
-    
-    public init() {}
-    
-    open func beforeUpdate<Action : ActionProtocol>(store: Store<State>, action: Action, environment: Dependencies) {}
-    
-    open func afterUpdate<Action : ActionProtocol>(store: Store<State>, action: Action, environment: Dependencies) {}
-    
-}
-
-fileprivate extension ActionProtocol {
-    
-    func beforeUpdate<State>(service: Service<State>, store: Store<State>, environment: Dependencies) {
-        service.beforeUpdate(store: store, action: self, environment: environment)
-    }
-    
-    func afterUpdate<State>(service: Service<State>, store: Store<State>, environment: Dependencies) {
-        service.afterUpdate(store: store, action: self, environment: environment)
-    }
-    
-}
-
-open class DetailService<State, Detail : Equatable> : Service<State> {
-    
-    @usableFromInline
-    let detail : (State) -> Detail
-    @usableFromInline
-    var oldValue : Detail?
-    
-    public init(detail: @escaping (State) -> Detail) {self.detail = detail}
-    
-    @inlinable
-    public override func afterUpdate<Action : ActionProtocol>(store: Store<State>,
-                                                              action: Action,
-                                                              environment: Dependencies) {
-        let detail = self.detail(store.state)
-        guard detail != oldValue else {return}
-        oldValue = detail
-        onUpdate(newValue: detail, store: store, environment: environment)
-    }
-    
-    open func onUpdate(newValue: Detail, store: Store<State>, environment: Dependencies) {
-        
-    }
     
 }

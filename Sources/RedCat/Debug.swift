@@ -60,7 +60,7 @@ public class UnrecognizedActionDebugger<State, Logger : UnknownActionLogger> : S
             }
         }
         
-        else if !(action is AppInit) {
+        else if !(action is AppInit) && !(action is AppDeinit) {
             check(action, store: store)
         }
         
