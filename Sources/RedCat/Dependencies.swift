@@ -38,8 +38,8 @@ public struct Bind {
     
     let update : (inout Dependencies) -> Void
     
-    init<Key : Dependency>(_ key: Key.Type, to value: Key.Value) {
-        update = {env in env[key] = value}
+    init<Value>(_ keyPath: WritableKeyPath<Dependencies, Value>, to value: Value) {
+        update = {env in env[keyPath: keyPath] = value}
     }
     
 }
