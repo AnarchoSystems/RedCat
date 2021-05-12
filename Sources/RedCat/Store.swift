@@ -105,12 +105,14 @@ final class ConcreteStore<Reducer : ErasedReducer> : DelegateStore<Reducer.State
         
         while idx < enqueuedActions.count {
             
+            let action = enqueuedActions[idx]
+            
             for service in services {
-                service.beforeUpdate(store: self, action: action, environment: environment)
+                action.beforeUpdate(service: service, store: self, environment: environment)
             }
-            reducer.apply(action, to: &_state, environment: environment)
+            reducer.applyDynamic(action, to: &_state, environment: environment)
             for service in services {
-                service.afterUpdate(store: self, action: action, environment: environment)
+                action.afterUpdate(service: service, store: self, environment: environment)
             }
             
             idx += 1
@@ -234,6 +236,18 @@ open class Service<State> {
     open func beforeUpdate<Action : ActionProtocol>(store: Store<State>, action: Action, environment: Dependencies) {}
     
     open func afterUpdate<Action : ActionProtocol>(store: Store<State>, action: Action, environment: Dependencies) {}
+    
+}
+
+fileprivate extension ActionProtocol {
+    
+    func beforeUpdate<State>(service: Service<State>, store: Store<State>, environment: Dependencies) {
+        service.beforeUpdate(store: store, action: self, environment: environment)
+    }
+    
+    func afterUpdate<State>(service: Service<State>, store: Store<State>, environment: Dependencies) {
+        service.afterUpdate(store: store, action: self, environment: environment)
+    }
     
 }
 
