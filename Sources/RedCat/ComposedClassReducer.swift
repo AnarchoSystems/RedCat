@@ -40,9 +40,9 @@ where R1.State == R2.State {
         re2.apply(action, to: state, environment: environment)
     }
     
-    public func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        re1.acceptsAction(ofType: type)
-            || re2.acceptsAction(ofType: type)
+    public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+        re1.acceptsAction(action)
+            || re2.acceptsAction(action)
     }
     
 }

@@ -7,25 +7,14 @@
 
 import Foundation
 
-public protocol OpaqueEnvironmentKey {
-    static func tryWriteToEnv(_ any: Any, env: inout Dependencies)
-}
 
-public protocol EnvironmentKey : OpaqueEnvironmentKey {
+public protocol Dependency {
     
     associatedtype Value
     static var defaultValue : Value {get}
     
 }
 
-public extension EnvironmentKey {
-    static func tryWriteToEnv(_ any: Any, env: inout Dependencies) {
-        guard let value = any as? Value else {
-            fatalError("\(any) is not a \(String(describing: Value.self))!")
-        }
-        env[self] = value
-    }
-}
 
 public struct Dependencies {
     
@@ -33,7 +22,7 @@ public struct Dependencies {
     var dict : [String : Any]
     
     @inlinable
-    public subscript<Key : EnvironmentKey>(key: Key.Type) -> Key.Value {
+    public subscript<Key : Dependency>(key: Key.Type) -> Key.Value {
         get {
             dict[String(describing: key)] as? Key.Value ?? Key.defaultValue
         }
@@ -44,12 +33,24 @@ public struct Dependencies {
     
 }
 
-extension Dependencies : ExpressibleByDictionaryLiteral {
+
+public struct Bind {
     
-    public init(dictionaryLiteral elements: (OpaqueEnvironmentKey.Type, Any)...) {
+    let update : (inout Dependencies) -> Void
+    
+    init<Key : Dependency>(_ key: Key.Type, to value: Key.Value) {
+        update = {env in env[key] = value}
+    }
+    
+}
+
+
+extension Dependencies : ExpressibleByArrayLiteral {
+    
+    public init(arrayLiteral elements: Bind...) {
         dict = [:]
-        for (key, value) in elements {
-            key.tryWriteToEnv(value, env: &self)
+        for elm in elements {
+            elm.update(&self)
         }
     }
     

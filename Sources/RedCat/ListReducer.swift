@@ -77,8 +77,8 @@ public struct ActionListHandling<I : ErasedReducer> : ErasedReducer {
     }
     
     
-    public func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        wrapped.acceptsAction(ofType: type) || type == ActionGroup.self
+    public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+        wrapped.acceptsAction(action) || action is ActionGroup
     }
     
 }
@@ -107,8 +107,8 @@ public struct UndoListHandling<I : ErasedReducer> : ErasedReducer {
         
     }
     
-    public func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        wrapped.acceptsAction(ofType: type) || type == UndoGroup.self
+    public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+        wrapped.acceptsAction(action) || action is UndoGroup
     }
     
 }

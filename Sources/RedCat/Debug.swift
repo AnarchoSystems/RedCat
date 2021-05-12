@@ -11,7 +11,7 @@ public protocol UnknownActionLogger {
     func log<Action : ActionProtocol>(_ action: Action)
 }
 
-struct DebugFlagKey : EnvironmentKey {
+fileprivate struct Debug : Dependency {
     static var defaultValue : Bool {
         #if DEBUG
         return true
@@ -23,8 +23,8 @@ struct DebugFlagKey : EnvironmentKey {
 
 public extension Dependencies {
     var debug : Bool {
-        get {self[DebugFlagKey.self]}
-        set {self[DebugFlagKey.self] = newValue}
+        get {self[Debug.self]}
+        set {self[Debug.self] = newValue}
     }
 }
 
@@ -77,7 +77,7 @@ public class UnrecognizedActionDebugger<State, Logger : UnknownActionLogger> : S
 extension ActionProtocol {
     
     func isAccepted<State>(by store: Store<State>) -> Bool {
-        store.acceptsAction(ofType: Self.self)
+        store.acceptsAction(self)
     }
 
     func log<Logger : UnknownActionLogger>(using logger: Logger) {

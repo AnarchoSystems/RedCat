@@ -15,13 +15,15 @@ public class Store<State> {
         fatalError()
     }
     
+    // prevent external initialization
+    // makes external subclasses uninitializable
     internal init() {}
     
     public func send<Action : ActionProtocol>(_ action: Action) {
         fatalError()
     }
     
-    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
+    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         fatalError()
     }
     
@@ -44,7 +46,16 @@ public class Store<State> {
     
 }
 
-final class ConcreteStore<Reducer : ErasedReducer> : Store<Reducer.State> {
+public protocol StoreDelegate : AnyObject {
+    func storeWillChange()
+}
+
+public class DelegateStore<State> : Store<State> {
+    weak var delegate : StoreDelegate?
+    fileprivate override init() {}
+}
+
+final class ConcreteStore<Reducer : ErasedReducer> : DelegateStore<Reducer.State> {
     
     @usableFromInline
     override var state : Reducer.State {
@@ -62,6 +73,8 @@ final class ConcreteStore<Reducer : ErasedReducer> : Store<Reducer.State> {
     @usableFromInline
     let environment : Dependencies
     
+    var enqueuedActions = [ActionProtocol]()
+    
     init(initialState: Reducer.State,
          reducer: Reducer,
          environment: Dependencies,
@@ -76,18 +89,41 @@ final class ConcreteStore<Reducer : ErasedReducer> : Store<Reducer.State> {
     
     @usableFromInline
     override func send<Action : ActionProtocol>(_ action: Action) {
-        for service in services {
-            service.beforeUpdate(store: self, action: action, environment: environment)
+        
+        delegate?.storeWillChange()
+        enqueuedActions.append(action)
+        
+        guard enqueuedActions.count == 1 else {
+            // All calls to this method are assumed to happen on
+            // main dispatch queue - a serial queue.
+            // Therefore, if more than one action is in the queue,
+            // the action must have been enqueued by the below while loop
+            return
         }
-        reducer.apply(action, to: &_state, environment: environment)
-        for service in services {
-            service.afterUpdate(store: self, action: action, environment: environment)
+        
+        var idx = 0
+        
+        while idx < enqueuedActions.count {
+            
+            for service in services {
+                service.beforeUpdate(store: self, action: action, environment: environment)
+            }
+            reducer.apply(action, to: &_state, environment: environment)
+            for service in services {
+                service.afterUpdate(store: self, action: action, environment: environment)
+            }
+            
+            idx += 1
+            
         }
+        
+        enqueuedActions = []
+        
     }
     
     @usableFromInline
-    override func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        reducer.acceptsAction(ofType: type)
+    override func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+        reducer.acceptsAction(action)
     }
     
 }
@@ -99,60 +135,48 @@ final class ConcreteStore<Reducer : ErasedReducer> : Store<Reducer.State> {
 @available(OSX 10.15, *)
 @available(iOS 13.0, *)
 public class CombineStore<State> : Store<State>, ObservableObject {
-    
+    fileprivate override init() {}
 }
 
 @available(OSX 10.15, *)
 @available(iOS 13.0, *)
 
-// FIXME: Below code is mostly copy+pase from ConcreteReducer
-// find a way to reuse ConcreteReducer such that ```send``` is called by services
-
-final class ConcreteCombineStore<Reducer : ErasedReducer> : CombineStore<Reducer.State> {
+final class ConcreteCombineStore<Reducer : ErasedReducer> : CombineStore<Reducer.State>, StoreDelegate {
     
     @usableFromInline
     override var state : Reducer.State {
-        _state
+        concreteStore.state
     }
     
     @usableFromInline
-    // swiftlint:disable:next identifier_name
-    var _state : Reducer.State
-    @usableFromInline
-    let reducer : Reducer
-    
-    @usableFromInline
-    let services : [Service<Reducer.State>]
-    @usableFromInline
-    let environment : Dependencies
+    let concreteStore : ConcreteStore<Reducer>
     
     init(initialState: Reducer.State,
          reducer: Reducer,
          environment: Dependencies,
          services: [Service<Reducer.State>]) {
-        self._state = initialState
-        self.reducer = reducer
-        self.services = services
-        self.environment = environment
+        concreteStore = ConcreteStore(initialState: initialState,
+                                      reducer: reducer,
+                                      environment: environment,
+                                      services: services)
         super.init()
+        concreteStore.delegate = self
     }
     
     
     @usableFromInline
     override func send<Action : ActionProtocol>(_ action: Action) {
-        objectWillChange.send()
-        for service in services {
-            service.beforeUpdate(store: self, action: action, environment: environment)
-        }
-        reducer.apply(action, to: &_state, environment: environment)
-        for service in services {
-            service.afterUpdate(store: self, action: action, environment: environment)
-        }
+        concreteStore.send(action)
     }
     
     @usableFromInline
-    override func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        reducer.acceptsAction(ofType: type)
+    override func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+        concreteStore.acceptsAction(action)
+    }
+    
+    @usableFromInline
+    func storeWillChange() {
+        objectWillChange.send()
     }
     
 }
@@ -165,7 +189,7 @@ public extension Store {
     static func create<Reducer : ErasedReducer>(initialState: Reducer.State,
                                                 reducer: Reducer,
                                                 environment: Dependencies,
-                                                services: [Service<Reducer.State>]) -> Store<State>
+                                                services: [Service<Reducer.State>]) -> DelegateStore<State>
     where Reducer.State == State {
         let result = ConcreteStore(initialState: initialState,
                                    reducer: reducer,

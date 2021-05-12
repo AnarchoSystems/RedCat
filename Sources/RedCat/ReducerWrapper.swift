@@ -27,8 +27,8 @@ public extension ReducerWrapper {
                    environment: environment)
     }
     
-    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        body.acceptsAction(ofType: type)
+    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+        body.acceptsAction(action)
     }
     
 }

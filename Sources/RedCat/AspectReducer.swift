@@ -33,8 +33,8 @@ public extension DependentAspectReducer where State : Emptyable {
         }
     }
     
-    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        type == Self.Action.self
+    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+        action is Self.Action
     }
     
 }
@@ -62,8 +62,8 @@ public extension AspectReducer where State : Emptyable {
         }
     }
     
-    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        type == Self.Action.self
+    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+        action is Self.Action
     }
     
 }
@@ -90,8 +90,8 @@ public extension AspectReducerWrapper where State : Emptyable {
         }
     }
     
-    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        body.acceptsAction(ofType: type)
+    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+        body.acceptsAction(action)
     }
     
 }
@@ -142,8 +142,8 @@ public extension DependentClassCaseReducer {
         }
     }
     
-    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        type == Self.Action.self
+    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+        action is Self.Action
     }
     
 }
@@ -171,8 +171,8 @@ public extension ClassCaseReducer {
         }
     }
     
-    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        type == Self.Action.self
+    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+        action is Self.Action
     }
     
 }
@@ -198,8 +198,8 @@ public extension ClassCaseReducerWrapper {
         }
     }
     
-    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        body.acceptsAction(ofType: type)
+    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+        body.acceptsAction(action)
     }
     
 }

@@ -30,8 +30,8 @@ public extension DependentDetailReducer {
         apply(action, to: &state[keyPath: keyPath], environment: environment)
     }
     
-    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        type == Self.Action.self
+    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+        action is Self.Action
     }
     
 }
@@ -58,8 +58,8 @@ public extension DetailReducer {
         apply(action, to: &state[keyPath: keyPath])
     }
     
-    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        type == Self.Action.self
+    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+        action is Self.Action
     }
     
 }
@@ -83,8 +83,8 @@ public extension DetailReducerWrapper {
         body.apply(action, to: &state[keyPath: keyPath], environment: environment)
     }
     
-    func acceptsAction<Action : ActionProtocol>(ofType type: Action.Type) -> Bool {
-        body.acceptsAction(ofType: type)
+    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+        body.acceptsAction(action)
     }
     
 }
