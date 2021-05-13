@@ -8,11 +8,24 @@
 import Foundation
 
 
-public protocol Dependency {
+public protocol Configuration {
     
     associatedtype Value
-    static var defaultValue : Value {get}
+    static func value(given: Dependencies) -> Value
     
+}
+
+
+public protocol Dependency : Configuration where StaticValue == Value {
+    associatedtype StaticValue
+    static var defaultValue : StaticValue {get}
+}
+
+
+public extension Dependency {
+    static func value(given: Dependencies) -> Value {
+        defaultValue
+    }
 }
 
 
@@ -22,9 +35,9 @@ public struct Dependencies {
     var dict : [String : Any]
     
     @inlinable
-    public subscript<Key : Dependency>(key: Key.Type) -> Key.Value {
+    public subscript<Key : Configuration>(key: Key.Type) -> Key.Value {
         get {
-            dict[String(describing: key)] as? Key.Value ?? Key.defaultValue
+            dict[String(describing: key)] as? Key.Value ?? Key.value(given: self)
         }
         set {
             dict[String(describing: key)] = newValue
@@ -45,6 +58,10 @@ public struct Bind {
     public init<GivenValue>(given: KeyPath<Dependencies, GivenValue>,
                             _ update: @escaping (GivenValue) -> Bind) {
         self.update = {env in update(env[keyPath: given]).update(&env)}
+    }
+    
+    public init(_ transform: @escaping (Dependencies) -> Bind) {
+        self.update = {env in transform(env).update(&env)}
     }
     
 }
