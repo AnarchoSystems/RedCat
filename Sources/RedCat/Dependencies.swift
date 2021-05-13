@@ -8,7 +8,7 @@
 import Foundation
 
 
-public protocol Configuration {
+public protocol Config {
     
     associatedtype Value
     static func value(given: Dependencies) -> Value
@@ -16,7 +16,7 @@ public protocol Configuration {
 }
 
 
-public protocol Dependency : Configuration where StaticValue == Value {
+public protocol Dependency : Config where StaticValue == Value {
     associatedtype StaticValue
     static var defaultValue : StaticValue {get}
 }
@@ -35,7 +35,7 @@ public struct Dependencies {
     var dict : [String : Any]
     
     @inlinable
-    public subscript<Key : Configuration>(key: Key.Type) -> Key.Value {
+    public subscript<Key : Config>(key: Key.Type) -> Key.Value {
         get {
             dict[String(describing: key)] as? Key.Value ?? Key.value(given: self)
         }
