@@ -34,20 +34,26 @@ internal extension ActionProtocol {
 
 open class DetailService<State, Detail : Equatable> : Service<State> {
     
+    
+    public let detail : (State) -> Detail
+    
+    @inlinable
+    public final var oldValue : Detail? {
+        _oldValue
+    }
+    
     @usableFromInline
-    let detail : (State) -> Detail
-    @usableFromInline
-    var oldValue : Detail?
+    var _oldValue : Detail? // swiftlint:disable:this identifier_name
     
     public init(detail: @escaping (State) -> Detail) {self.detail = detail}
     
-    @inlinable
+    
     public override func afterUpdate<Action : ActionProtocol>(store: Store<State>,
                                                               action: Action,
                                                               environment: Dependencies) {
         let detail = self.detail(store.state)
         guard detail != oldValue else {return}
-        oldValue = detail
+        _oldValue = detail
         onUpdate(newValue: detail, store: store, environment: environment)
     }
     
