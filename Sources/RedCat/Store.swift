@@ -22,7 +22,7 @@ public class Store<State> {
         send(AppInit())
     }
     
-    deinit {
+    public func shutDown() {
         send(AppDeinit())
     }
     
