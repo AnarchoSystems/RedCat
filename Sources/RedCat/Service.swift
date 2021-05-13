@@ -53,8 +53,8 @@ open class DetailService<State, Detail : Equatable> : Service<State> {
                                                               environment: Dependencies) {
         let detail = self.detail(store.state)
         guard detail != oldValue else {return}
-        _oldValue = detail
         onUpdate(newValue: detail, store: store, environment: environment)
+        _oldValue = detail
     }
     
     open func onUpdate(newValue: Detail, store: Store<State>, environment: Dependencies) {
