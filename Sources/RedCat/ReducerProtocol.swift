@@ -26,7 +26,7 @@ public extension ErasedReducer {
     
     func applyDynamic(_ action: ActionProtocol,
                       to state: inout State,
-                      environment: Dependencies = Dependencies()) {
+                      environment: Dependencies = []) {
         action.apply(to: &state, using: self, environment: environment)
     }
     

@@ -32,7 +32,7 @@ public extension Dependency {
 public struct Dependencies {
     
     @usableFromInline
-    var dict : [String : Any]
+    var dict : [String : Any] = [:]
     
     @inlinable
     public subscript<Key : Config>(key: Key.Type) -> Key.Value {
@@ -51,17 +51,63 @@ public struct Bind {
     
     let update : (inout Dependencies) -> Void
     
-    public init<Value>(_ keyPath: WritableKeyPath<Dependencies, Value>, to value: Value) {
+}
+
+
+public extension Bind {
+    
+    init<Value>(_ keyPath: WritableKeyPath<Dependencies, Value>, to value: Value) {
         self.update = {env in env[keyPath: keyPath] = value}
     }
     
-    public init<GivenValue>(given: KeyPath<Dependencies, GivenValue>,
-                            _ update: @escaping (GivenValue) -> Bind) {
+    init<GivenValue>(given: KeyPath<Dependencies, GivenValue>,
+                     _ update: @escaping (GivenValue) -> Bind) {
         self.update = {env in update(env[keyPath: given]).update(&env)}
     }
     
-    public init(_ transform: @escaping (Dependencies) -> Bind) {
+    init(_ transform: @escaping (Dependencies) -> Bind) {
         self.update = {env in transform(env).update(&env)}
+    }
+    
+    func then(_ transform: @escaping (Dependencies) -> Bind) -> Bind {
+        Bind {(env: inout Dependencies) in
+            update(&env)
+            transform(env).update(&env)
+        }
+    }
+    
+}
+
+
+@resultBuilder
+enum EnvironmentBuilder {
+    
+    static func buildBlock(_ components: Bind...) -> Bind {
+        buildArray(components)
+    }
+    
+    static func buildEither(first component: Bind) -> Bind {
+        component
+    }
+    
+    static func buildEither(second component: Bind) -> Bind {
+        component
+    }
+    
+    static func buildOptional(_ component: Bind?) -> Bind {
+        Bind.init {_ in }
+    }
+    
+    static func buildArray(_ components: [Bind]) -> Bind {
+        Bind {(env: inout Dependencies) in
+            for bind in components {
+                bind.update(&env)
+            }
+        }
+    }
+    
+    static func buildLimitedAvailability(_ component: Bind) -> Bind {
+        component
     }
     
 }
@@ -70,10 +116,22 @@ public struct Bind {
 extension Dependencies : ExpressibleByArrayLiteral {
     
     public init(arrayLiteral elements: Bind...) {
-        dict = [:]
         for elm in elements {
             elm.update(&self)
         }
+    }
+    
+}
+
+
+public extension Dependencies {
+    
+    init(@EnvironmentBuilder content: () -> Bind) {
+        content().update(&self)
+    }
+    
+    init(@EnvironmentBuilder content: (Dependencies) -> Bind) {
+        content(self).update(&self)
     }
     
 }
