@@ -80,25 +80,25 @@ public extension Bind {
 
 
 @resultBuilder
-enum EnvironmentBuilder {
+public enum EnvironmentBuilder {
     
-    static func buildBlock(_ components: Bind...) -> Bind {
+    public static func buildBlock(_ components: Bind...) -> Bind {
         buildArray(components)
     }
     
-    static func buildEither(first component: Bind) -> Bind {
+    public static func buildEither(first component: Bind) -> Bind {
         component
     }
     
-    static func buildEither(second component: Bind) -> Bind {
+    public static func buildEither(second component: Bind) -> Bind {
         component
     }
     
-    static func buildOptional(_ component: Bind?) -> Bind {
+    public static func buildOptional(_ component: Bind?) -> Bind {
         Bind.init {_ in }
     }
     
-    static func buildArray(_ components: [Bind]) -> Bind {
+    public static func buildArray(_ components: [Bind]) -> Bind {
         Bind {(env: inout Dependencies) in
             for bind in components {
                 bind.update(&env)
@@ -106,7 +106,7 @@ enum EnvironmentBuilder {
         }
     }
     
-    static func buildLimitedAvailability(_ component: Bind) -> Bind {
+    public static func buildLimitedAvailability(_ component: Bind) -> Bind {
         component
     }
     
