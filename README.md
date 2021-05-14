@@ -6,3 +6,4 @@ RedCat is a new Redux-inspired unidirectional data flow framework with an emphas
 
 There is also a proof of concept:
 - [RedCatTicTacToe](https://github.com/AnarchoSystems/RedCatTicTacToe): a Tic-Tac-Toe implementation using RedCat.
+- [RedCatWeather](https://github.com/AnarchoSystems/RedCatWeather.git): a weather app communicating with a fake backend.
