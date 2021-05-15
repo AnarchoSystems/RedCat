@@ -16,14 +16,15 @@ public class Store<State> {
         fatalError()
     }
     
+    fileprivate var hasShutdown = false
+    
     // prevent external initialization
     // makes external subclasses uninitializable
-    internal init() {
-        send(AppInit())
-    }
+    internal init() {}
     
-    public func shutDown() {
+    public final func shutDown() {
         send(AppDeinit())
+        hasShutdown = true
     }
     
     public func send<Action : ActionProtocol>(_ action: Action) {
@@ -92,11 +93,16 @@ final class ConcreteStore<Reducer : ErasedReducer> : DelegateStore<Reducer.State
         self.environment = environment
         super.init()
         self.environment.memoize = {bind in bind.update(&self.environment)}
+        self.send(AppInit())
     }
     
     
     @usableFromInline
     override func send<Action : ActionProtocol>(_ action: Action) {
+        
+        guard !hasShutdown else {
+            fatalError("App has shutdown, actions are no longer accepted.")
+        }
         
         delegate?.storeWillChange()
         enqueuedActions.append(action)
