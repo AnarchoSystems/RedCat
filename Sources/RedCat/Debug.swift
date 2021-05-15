@@ -111,7 +111,7 @@ public struct DefaultUnknownActionLogger : UnknownActionLogger {
                 fatalError("Unrecognized action: \(action)")
             }
             else {
-                NSLog("Unrecognized action: \(action)")
+                print("Unrecognized action: \(action)")
             }
     }
     

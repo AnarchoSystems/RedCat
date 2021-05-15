@@ -16,6 +16,7 @@ public class Store<State> {
         fatalError()
     }
     
+    fileprivate var hasInitialized = false
     fileprivate var hasShutdown = false
     
     // prevent external initialization
@@ -63,6 +64,19 @@ public class DelegateStore<State> : Store<State> {
     fileprivate override init() {}
 }
 
+enum AppInitCheck : Config {
+    static func value(given: Dependencies) -> Bool {
+        given.debug
+    }
+}
+
+public extension Dependencies {
+    var appInitCheck : Bool {
+        get {self[AppInitCheck.self]}
+        set {self[AppInitCheck.self] = newValue}
+    }
+}
+
 final class ConcreteStore<Reducer : ErasedReducer> : DelegateStore<Reducer.State> {
     
     @usableFromInline
@@ -99,6 +113,13 @@ final class ConcreteStore<Reducer : ErasedReducer> : DelegateStore<Reducer.State
     
     @usableFromInline
     override func send<Action : ActionProtocol>(_ action: Action) {
+        
+        if action is AppInit {
+            if hasInitialized && environment.appInitCheck {
+                print("AppInit has been sent more than once. Please file a bug report.\nIf your app works fine otherwise, you can silence this warning by setting appInitCheck to false in the environment.")
+            }
+            hasInitialized = true
+        }
         
         guard !hasShutdown else {
             fatalError("App has shutdown, actions are no longer accepted.")
