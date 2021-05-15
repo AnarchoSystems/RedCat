@@ -39,20 +39,6 @@ public enum IfReducer<R1 : ErasedReducer, R2 : ErasedReducer> : ErasedReducer wh
 }
 
 
-extension IfReducer : ErasedClassReducer where R1 : ErasedClassReducer, R2 : ErasedClassReducer {
-    
-    public func apply<Action : ActionProtocol>(_ action: Action, to state: R1.State, environment: Dependencies) {
-        switch self {
-        case .ifReducer(let reducer):
-            reducer.apply(action, to: state, environment: environment)
-        case .elseReducer(let reducer):
-            reducer.apply(action, to: state, environment: environment)
-        }
-    }
-    
-}
-
-
 public enum ElseIfReducer<R1 : ErasedReducer, R2 : ErasedReducer, R3 : ErasedReducer> : ErasedReducer where
     R1.State == R2.State, R2.State == R3.State {
     
@@ -85,23 +71,6 @@ public enum ElseIfReducer<R1 : ErasedReducer, R2 : ErasedReducer, R3 : ErasedRed
     
     public static func elseReducer<State>() -> Self where R3 == NopReducer<State> {
         .elseReducer(NopReducer())
-    }
-    
-}
-
-
-extension ElseIfReducer : ErasedClassReducer where
-    R1 : ErasedClassReducer, R2 : ErasedClassReducer, R3 : ErasedClassReducer {
-    
-    public func apply<Action : ActionProtocol>(_ action: Action, to state: R1.State, environment: Dependencies) {
-        switch self {
-        case .ifReducer(let reducer):
-            reducer.apply(action, to: state, environment: environment)
-        case .elseIfReducer(let reducer):
-            reducer.apply(action, to: state, environment: environment)
-        case .elseReducer(let reducer):
-            reducer.apply(action, to: state, environment: environment)
-        }
     }
     
 }
@@ -147,21 +116,3 @@ public enum Switch4Reducer<R1 : ErasedReducer, R2 : ErasedReducer, R3 : ErasedRe
     
 }
 
-
-extension Switch4Reducer : ErasedClassReducer where
-    R1 : ErasedClassReducer, R2 : ErasedClassReducer, R3 : ErasedClassReducer, R4 : ErasedClassReducer {
-    
-    public func apply<Action : ActionProtocol>(_ action: Action, to state: R1.State, environment: Dependencies) {
-        switch self {
-        case .case1Reducer(let reducer):
-            reducer.apply(action, to: state, environment: environment)
-        case .case2Reducer(let reducer):
-            reducer.apply(action, to: state, environment: environment)
-        case .case3Reducer(let reducer):
-            reducer.apply(action, to: state, environment: environment)
-        case .defaultReducer(let reducer):
-            reducer.apply(action, to: state, environment: environment)
-        }
-    }
-    
-}

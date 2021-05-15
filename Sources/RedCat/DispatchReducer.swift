@@ -30,24 +30,3 @@ public extension DispatchReducer {
     
 }
 
-
-public protocol DispatchClassReducer : ErasedClassReducer {
-    
-    associatedtype Result : ErasedClassReducer
-    
-    func dispatch<Action: ActionProtocol>(_ action: Action) -> Result
-    
-}
-
-
-public extension DispatchClassReducer {
-    
-    func apply<Action : ActionProtocol>(_ action: Action, to state: Result.State, environment: Dependencies) {
-        dispatch(action).apply(action, to: state, environment: environment)
-    }
-    
-    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
-        dispatch(action).acceptsAction(action)
-    }
-    
-}

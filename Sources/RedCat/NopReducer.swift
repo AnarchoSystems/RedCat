@@ -22,10 +22,3 @@ public struct NopReducer<State> : ErasedReducer {
     }
     
 }
-
-
-extension NopReducer : ErasedClassReducer where State :AnyObject {
-    
-    public func apply<Action : ActionProtocol>(_ action: Action, to state: State, environment: Dependencies) {}
-    
-}
