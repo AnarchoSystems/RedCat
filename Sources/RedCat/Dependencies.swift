@@ -33,11 +33,20 @@ public struct Dependencies {
     
     @usableFromInline
     var dict : [String : Any] = [:]
+    @usableFromInline
+    var memoize : ((Bind) -> Void)?
     
     @inlinable
     public subscript<Key : Config>(key: Key.Type) -> Key.Value {
         get {
-            dict[String(describing: key)] as? Key.Value ?? Key.value(given: self)
+            if let result = dict[String(describing: key)] as? Key.Value {
+                return result
+            }
+            else {
+                let result = Key.value(given: self)
+                memoize?(Bind(update: {$0[key] = result}))
+                return result
+            }
         }
         set {
             dict[String(describing: key)] = newValue
@@ -49,7 +58,12 @@ public struct Dependencies {
 
 public struct Bind {
     
+    @usableFromInline
     let update : (inout Dependencies) -> Void
+    @usableFromInline
+    init(update: @escaping (inout Dependencies) -> Void) {
+        self.update = update
+    }
     
 }
 

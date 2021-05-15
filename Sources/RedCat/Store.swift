@@ -78,7 +78,7 @@ final class ConcreteStore<Reducer : ErasedReducer> : DelegateStore<Reducer.State
     @usableFromInline
     let services : [Service<Reducer.State>]
     @usableFromInline
-    let environment : Dependencies
+    var environment : Dependencies
     
     var enqueuedActions = [ActionProtocol]()
     
@@ -91,6 +91,7 @@ final class ConcreteStore<Reducer : ErasedReducer> : DelegateStore<Reducer.State
         self.services = services
         self.environment = environment
         super.init()
+        self.environment.memoize = {bind in bind.update(&self.environment)}
     }
     
     

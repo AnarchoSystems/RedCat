@@ -57,11 +57,6 @@ public struct Reducer<Reducer : ErasedReducer> : ReducerWrapper {
         self.body = PrismReducer(aspect, reducer: body())
     }
     
-    public init<State, R : DependentClassReducer>(_ aspect: CasePath<State, R.State>, _ body: () -> R)
-    where Reducer == ClassPrismReducer<State, R> {
-        self.body = ClassPrismReducer(aspect, reducer: body())
-    }
-    
     public init<State, R : ErasedReducer>(_ detail: WritableKeyPath<State, R.State>, _ body: () -> R)
     where Reducer == LensReducer<State, R> {
         self.body = LensReducer(detail, reducer: body())

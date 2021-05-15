@@ -29,13 +29,6 @@ public extension ErasedReducer {
         compose(with: PrismReducer(aspect, reducer: next))
     }
     
-    @inlinable
-    func compose<Next : DependentClassReducer>(with next: Next,
-                                               aspect: CasePath<State, Next.State>)
-    -> ComposedReducer<Self, ClassPrismReducer<State, Next>> {
-        compose(with: ClassPrismReducer(aspect, reducer: next))
-    }
-    
 }
 
 
