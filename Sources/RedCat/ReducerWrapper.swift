@@ -52,14 +52,14 @@ public struct Reducer<Reducer : ErasedReducer> : ReducerWrapper {
         self.body = ClosureReducer(closure)
     }
     
-    public init<State : Emptyable, R : ErasedReducer>(_ aspect: CasePath<State, R.State>, _ body: () -> R)
-    where Reducer == PrismReducer<State, R> {
-        self.body = PrismReducer(aspect, reducer: body())
+    public init<State : Releasable, R : ErasedReducer>(_ aspect: CasePath<State, R.State>, _ body: () -> R)
+    where Reducer == AspectReducer<State, R> {
+        self.body = AspectReducer(aspect, reducer: body())
     }
     
     public init<State, R : ErasedReducer>(_ detail: WritableKeyPath<State, R.State>, _ body: () -> R)
-    where Reducer == LensReducer<State, R> {
-        self.body = LensReducer(detail, reducer: body())
+    where Reducer == DetailReducer<State, R> {
+        self.body = DetailReducer(detail, reducer: body())
     }
 
 }

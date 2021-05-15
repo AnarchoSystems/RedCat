@@ -9,24 +9,34 @@ import CasePaths
 
 
 
-public protocol Emptyable {
+public protocol Releasable {
     
-    static var empty : Self {get}
+    mutating func releaseCopy()
     
 }
 
 
-extension Optional : Emptyable {
+extension Optional : Releasable {
     
     @inlinable
-    public static var empty : Wrapped? {
-        nil
+    public mutating func releaseCopy() {
+        self = nil
     }
     
 }
 
 
-public extension CasePath where Root : Emptyable {
+public extension Optional {
+    
+    @inlinable
+    mutating func modify(default defaultValue: Wrapped?, _ closure: @escaping (inout Wrapped) -> Void) {
+        (/Optional.some).mutate(&self, default: defaultValue, closure: closure)
+    }
+    
+}
+
+
+public extension CasePath where Root : Releasable {
     
     func mutate(_ whole: inout Root, closure: (inout Value) -> Void) {
         mutate(&whole, optionalDefault: nil, closure: closure)
@@ -39,7 +49,7 @@ public extension CasePath where Root : Emptyable {
 }
 
 
-extension CasePath where Root : Emptyable {
+extension CasePath where Root : Releasable {
     
     @usableFromInline
     func mutate(_ whole: inout Root, optionalDefault fallback: Root?, closure: (inout Value) -> Void) {
@@ -51,35 +61,9 @@ extension CasePath where Root : Emptyable {
             return
         }
         
-        whole = .empty
+        whole.releaseCopy()
         closure(&part)
         whole = embed(part)
-        
-    }
-    
-}
-
-
-public extension CasePath where Value : AnyObject {
-    
-    func mutate(_ whole: Root, closure: (Value) -> Void) {
-        
-        guard let part = extract(from: whole) else {
-            return
-        }
-        
-        closure(part)
-        
-    }
-    
-    func mutate(_ whole: inout Root, default fallback: Root, closure: (Value) -> Void) {
-        
-        guard let part = extract(from: whole) else {
-            whole = fallback
-            return
-        }
-        
-        closure(part)
         
     }
     

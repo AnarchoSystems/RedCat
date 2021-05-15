@@ -37,7 +37,7 @@ public extension DependentDetailReducer {
 }
 
 
-public protocol DetailReducer : ErasedReducer {
+public protocol DetailReducerProtocol : ErasedReducer {
     
     associatedtype Detail
     associatedtype Action : ActionProtocol
@@ -49,7 +49,7 @@ public protocol DetailReducer : ErasedReducer {
 }
 
 
-public extension DetailReducer {
+public extension DetailReducerProtocol {
     
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
@@ -90,7 +90,7 @@ public extension DetailReducerWrapper {
 }
 
 
-public struct LensReducer<State, Reducer : ErasedReducer> : DetailReducerWrapper {
+public struct DetailReducer<State, Reducer : ErasedReducer> : DetailReducerWrapper {
     
     public let keyPath: WritableKeyPath<State, Reducer.State>
     public let body : Reducer

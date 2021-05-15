@@ -22,7 +22,7 @@ public protocol DependentAspectReducer : ErasedReducer {
 }
 
 
-public extension DependentAspectReducer where State : Emptyable {
+public extension DependentAspectReducer where State : Releasable {
     
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
@@ -39,7 +39,7 @@ public extension DependentAspectReducer where State : Emptyable {
     
 }
 
-public protocol AspectReducer : ErasedReducer {
+public protocol AspectReducerProtocol : ErasedReducer {
     
     associatedtype Aspect
     associatedtype Action : ActionProtocol
@@ -51,7 +51,7 @@ public protocol AspectReducer : ErasedReducer {
 }
 
 
-public extension AspectReducer where State : Emptyable {
+public extension AspectReducerProtocol where State : Releasable {
     
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
@@ -79,7 +79,7 @@ public protocol AspectReducerWrapper : ErasedReducer {
 }
 
 
-public extension AspectReducerWrapper where State : Emptyable {
+public extension AspectReducerWrapper where State : Releasable {
     
     @inlinable
     func apply<Action : ActionProtocol>(_ action: Action,
@@ -97,7 +97,7 @@ public extension AspectReducerWrapper where State : Emptyable {
 }
 
 
-public struct PrismReducer<State : Emptyable, Reducer : ErasedReducer> : AspectReducerWrapper {
+public struct AspectReducer<State : Releasable, Reducer : ErasedReducer> : AspectReducerWrapper {
     
     public let casePath : CasePath<State, Reducer.State>
     public let body : Reducer
@@ -114,65 +114,6 @@ public struct PrismReducer<State : Emptyable, Reducer : ErasedReducer> : AspectR
                 build: @escaping () -> Reducer) {
         self.casePath = casePath
         self.body = build()
-    }
-    
-}
-
-public protocol DependentClassCaseReducer : ErasedReducer {
-    
-    associatedtype Aspect : AnyObject
-    associatedtype Action : ActionProtocol
-    
-    var casePath : CasePath<State, Aspect> {get}
-    func apply(_ action: Action,
-               to aspect: Aspect,
-               environment: Dependencies)
-    
-}
-
-
-public extension DependentClassCaseReducer {
-    
-    func apply<Action : ActionProtocol>(_ action: Action,
-                                        to state: inout State,
-                                        environment: Dependencies) {
-        guard let action = action as? Self.Action else {return}
-        casePath.mutate(state) {aspect in
-            apply(action, to: aspect, environment: environment)
-        }
-    }
-    
-    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
-        action is Self.Action
-    }
-    
-}
-
-public protocol ClassCaseReducer : ErasedReducer {
-    
-    associatedtype Aspect : AnyObject
-    associatedtype Action : ActionProtocol
-    
-    var casePath : CasePath<State, Aspect> {get}
-    func apply(_ action: Action,
-               to aspect: Aspect)
-    
-}
-
-
-public extension ClassCaseReducer {
-    
-    func apply<Action : ActionProtocol>(_ action: Action,
-                                        to state: inout State,
-                                        environment: Dependencies) {
-        guard let action = action as? Self.Action else {return}
-        casePath.mutate(state) {aspect in
-            apply(action, to: aspect)
-        }
-    }
-    
-    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
-        action is Self.Action
     }
     
 }

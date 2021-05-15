@@ -8,19 +8,19 @@
 import CasePaths
 
 
-public protocol Change : Undoable {
+public protocol PropertyChange : Undoable {
     associatedtype Value
     var oldValue : Value {get set}
     var newValue : Value {get set}
 }
 
-public extension Change {
+public extension PropertyChange {
     mutating func invert() {
         (oldValue, newValue) = (newValue, oldValue)
     }
 }
 
-public struct BindChange<Root, Changer : Change> : DetailReducer {
+public struct BindChange<Root, Changer : PropertyChange> : DetailReducerProtocol {
 
     public typealias State = Root
     public let keyPath : WritableKeyPath<Root, Changer.Value>
@@ -36,7 +36,7 @@ public struct BindChange<Root, Changer : Change> : DetailReducer {
 }
 
 
-public struct BindMaybeChange<Root : Emptyable, Changer : Change> : AspectReducer {
+public struct BindCase<Root : Releasable, Changer : PropertyChange> : AspectReducerProtocol {
     
     public typealias State = Root
     public let casePath: CasePath<Root, Changer.Value>

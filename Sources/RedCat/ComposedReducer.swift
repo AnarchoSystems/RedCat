@@ -18,15 +18,15 @@ public extension ErasedReducer {
     @inlinable
     func compose<Next : ErasedReducer>(with next: Next,
                                        property: WritableKeyPath<State, Next.State>)
-    -> ComposedReducer<Self, LensReducer<State, Next>> {
-        compose(with: LensReducer(property, reducer: next))
+    -> ComposedReducer<Self, DetailReducer<State, Next>> {
+        compose(with: DetailReducer(property, reducer: next))
     }
     
     @inlinable
     func compose<Next : ErasedReducer>(with next: Next,
                                        aspect: CasePath<State, Next.State>)
-    -> ComposedReducer<Self, PrismReducer<State, Next>> where State : Emptyable {
-        compose(with: PrismReducer(aspect, reducer: next))
+    -> ComposedReducer<Self, AspectReducer<State, Next>> where State : Releasable {
+        compose(with: AspectReducer(aspect, reducer: next))
     }
     
 }
