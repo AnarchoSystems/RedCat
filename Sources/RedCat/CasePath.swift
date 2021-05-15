@@ -16,11 +16,26 @@ public protocol Releasable {
 }
 
 
-extension Optional : Releasable {
+public protocol Emptyable : Releasable {
+    
+    static var empty : Self {get}
+    
+}
+
+public extension Emptyable {
     
     @inlinable
-    public mutating func releaseCopy() {
-        self = nil
+    mutating func releaseCopy() {
+        self = .empty
+    }
+    
+}
+
+extension Optional : Emptyable {
+    
+    @inlinable
+    public static var empty : Wrapped? {
+        nil
     }
     
 }
