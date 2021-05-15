@@ -24,12 +24,21 @@ public protocol ErasedReducer {
 
 public extension ErasedReducer {
     
+    @inlinable
     func applyDynamic(_ action: ActionProtocol,
                       to state: inout State,
                       environment: Dependencies = []) {
         action.apply(to: &state, using: self, environment: environment)
     }
     
+}
+
+
+extension ActionProtocol {
+    @usableFromInline
+    func apply<Reducer : ErasedReducer>(to state: inout Reducer.State, using reducer: Reducer, environment: Dependencies) {
+        reducer.apply(self, to: &state, environment: environment)
+    }
 }
 
 
@@ -46,6 +55,7 @@ public protocol DependentReducer : ErasedReducer {
 
 public extension DependentReducer {
     
+    @inlinable
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
@@ -53,6 +63,7 @@ public extension DependentReducer {
         apply(action, to: &state, environment: environment)
     }
     
+    @inlinable
     func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         action is Self.Action
     }
@@ -69,6 +80,7 @@ public protocol ReducerProtocol : DependentReducer {
 
 public extension ReducerProtocol {
     
+    @inlinable
     func apply(_ action: Action,
                to state: inout State,
                environment: Dependencies) {

@@ -44,7 +44,6 @@ public final class ViewStore<Base, State> : Store<State> {
     public override var state : State {
         _state
     }
-    // swiftlint:disable:next identifier_name
     let _state : State
     
     init(base: Store<Base>, transform: (Base) -> State) {

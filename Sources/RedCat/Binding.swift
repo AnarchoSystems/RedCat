@@ -14,6 +14,7 @@ import SwiftUI
 @available(macOS 10.15, *)
 public extension Store {
     
+    /// Exposes a value as a binding, if provided with an action that serves as a setter.
     func binding<Value, Action: ActionProtocol>(for value: @escaping (State) -> Value,
                                                 action: @escaping (Value) -> Action)
     -> Binding<Value> {
@@ -21,6 +22,7 @@ public extension Store {
                 set: {self.send(action($0))})
     }
     
+    /// Exposes a value as a binding, if provided with an action that serves as a setter.
     func binding<Value, Action : Undoable>(for value: @escaping (State) -> Value,
                                            withUndoManager: UndoManager?,
                                            undoTitle: String? = nil,

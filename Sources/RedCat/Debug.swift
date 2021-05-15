@@ -46,21 +46,7 @@ public class UnrecognizedActionDebugger<State, Logger : UnknownActionLogger> : S
                                                                action: Action,
                                                                environment: Dependencies) {
          
-        if var action = action as? ActionGroup {
-            action.unroll()
-            for action in action.values {
-                check(action, store: store)
-            }
-        }
-        
-        else if var action = action as? UndoGroup {
-            action.unroll()
-            for action in action.values {
-                check(action, store: store)
-            }
-        }
-        
-        else if !(action is AppInit) && !(action is AppDeinit) {
+      if !(action is AppInit) && !(action is AppDeinit) {
             check(action, store: store)
         }
         
@@ -108,10 +94,10 @@ public struct DefaultUnknownActionLogger : UnknownActionLogger {
     @inlinable
     public func log<Action : ActionProtocol>(_ action: Action) {
         if trapOnDebug {
-                fatalError("Unrecognized action: \(action)")
+                fatalError("RedCat: Unrecognized action: \(action)")
             }
             else {
-                print("Unrecognized action: \(action)")
+                print("RedCat: Unrecognized action: \(action)")
             }
     }
     

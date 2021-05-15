@@ -43,7 +43,7 @@ open class DetailService<State, Detail : Equatable> : Service<State> {
     }
     
     @usableFromInline
-    var _oldValue : Detail? // swiftlint:disable:this identifier_name
+    var _oldValue : Detail?
     
     public init(detail: @escaping (State) -> Detail) {self.detail = detail}
     

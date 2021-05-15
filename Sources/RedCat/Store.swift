@@ -7,27 +7,44 @@
 
 import Foundation
 
+
+/// ```AppInit``` is dispatched exactly once right after the initialization of a ```CombineStore``` or a ```ObservableStore```.
 public struct AppInit : ActionProtocol {}
+/// ```AppDeinit``` is dispatched, when ```shotDown()``` is called on a ```Store```. After the dispatch has finished (including actions synchronously dispatched by ```Service```s during ```AppDeinit```), the store becomes invalid.
 public struct AppDeinit : ActionProtocol {}
 
+
+/// A ```Store``` contains the "global" AppState and exposes the main methods to mutate the state.
 public class Store<State> {
     
+    /// The "global" state of the application.
     public var state : State {
         fatalError()
     }
     
-    fileprivate var hasInitialized = false
-    fileprivate var hasShutdown = false
+    @usableFromInline
+    internal var hasInitialized = false
+    @usableFromInline
+    internal var hasShutdown = false
     
     // prevent external initialization
     // makes external subclasses uninitializable
     internal init() {}
     
+    
+    /// Dispatches ```AppDeinit``` and invalidates the receiver.
+    ///
+    /// Use this method when your App is about to terminate to trigger cleanup actions.
     public final func shutDown() {
         send(AppDeinit())
         hasShutdown = true
     }
     
+    /// Applies an action to the state using the App's main reducer.
+    /// - Parameters:
+    ///     - action: The action to dispatch.
+    ///
+    /// This method is not threadsafe and has to be called on the mainthread.
     public func send<Action : ActionProtocol>(_ action: Action) {
         fatalError()
     }
@@ -36,8 +53,14 @@ public class Store<State> {
         fatalError()
     }
     
+    /// Applies an undoable action to the state using the App's main reducer and registers the inverted action at the specified ```UndoManager```.
+    /// - Parameters:
+    ///     - action: The action to dispatch.
+    ///     - undoTitle: The name of the inverted action.
+    ///     - redoTitle: The name of the action.
+    /// This method is not threadsafe and has to be called on the mainthread.
     @available(OSX 10.11, *)
-    public func sendWithUndo<Action: Undoable>(_ action: Action,
+    public final func sendWithUndo<Action: Undoable>(_ action: Action,
                                                undoTitle: String? = nil,
                                                redoTitle: String? = nil,
                                                undoManager: UndoManager?) {
@@ -55,178 +78,21 @@ public class Store<State> {
     
 }
 
-public protocol StoreDelegate : AnyObject {
-    func storeWillChange()
-}
 
-public class DelegateStore<State> : Store<State> {
-    weak var delegate : StoreDelegate?
-    fileprivate override init() {}
-}
-
-enum AppInitCheck : Config {
-    static func value(given: Dependencies) -> Bool {
-        given.debug
-    }
-}
-
-public extension Dependencies {
-    var appInitCheck : Bool {
-        get {self[AppInitCheck.self]}
-        set {self[AppInitCheck.self] = newValue}
-    }
-}
-
-final class ConcreteStore<Reducer : ErasedReducer> : DelegateStore<Reducer.State> {
-    
-    @usableFromInline
-    override var state : Reducer.State {
-        _state
-    }
-    
-    @usableFromInline
-    // swiftlint:disable:next identifier_name
-    var _state : Reducer.State
-    @usableFromInline
-    let reducer : Reducer
-    
-    @usableFromInline
-    let services : [Service<Reducer.State>]
-    @usableFromInline
-    var environment : Dependencies
-    
-    var enqueuedActions = [ActionProtocol]()
-    
-    init(initialState: Reducer.State,
-         reducer: Reducer,
-         environment: Dependencies,
-         services: [Service<Reducer.State>]) {
-        self._state = initialState
-        self.reducer = reducer
-        self.services = services
-        self.environment = environment
-        super.init()
-        self.environment.memoize = {bind in bind.update(&self.environment)}
-        self.send(AppInit())
-    }
-    
-    
-    @usableFromInline
-    override func send<Action : ActionProtocol>(_ action: Action) {
-        
-        if action is AppInit {
-            if hasInitialized && environment.appInitCheck {
-                print("AppInit has been sent more than once. Please file a bug report.\nIf your app works fine otherwise, you can silence this warning by setting appInitCheck to false in the environment.")
-            }
-            hasInitialized = true
-        }
-        
-        guard !hasShutdown else {
-            fatalError("App has shutdown, actions are no longer accepted.")
-        }
-        
-        delegate?.storeWillChange()
-        enqueuedActions.append(action)
-        
-        guard enqueuedActions.count == 1 else {
-            // All calls to this method are assumed to happen on
-            // main dispatch queue - a serial queue.
-            // Therefore, if more than one action is in the queue,
-            // the action must have been enqueued by the below while loop
-            return
-        }
-        
-        var idx = 0
-        
-        while idx < enqueuedActions.count {
-            
-            let action = enqueuedActions[idx]
-            
-            for service in services {
-                action.beforeUpdate(service: service, store: self, environment: environment)
-            }
-            reducer.applyDynamic(action, to: &_state, environment: environment)
-            for service in services {
-                action.afterUpdate(service: service, store: self, environment: environment)
-            }
-            
-            idx += 1
-            
-        }
-        
-        enqueuedActions = []
-        
-    }
-    
-    @usableFromInline
-    override func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
-        reducer.acceptsAction(action)
-    }
-    
-}
-
-
-#if os(iOS) || os(macOS)
-#if canImport(Combine)
-
-@available(OSX 10.15, *)
-@available(iOS 13.0, *)
-public class CombineStore<State> : Store<State>, ObservableObject {
-    fileprivate override init() {}
-}
-
-@available(OSX 10.15, *)
-@available(iOS 13.0, *)
-
-final class ConcreteCombineStore<Reducer : ErasedReducer> : CombineStore<Reducer.State>, StoreDelegate {
-    
-    @usableFromInline
-    override var state : Reducer.State {
-        concreteStore.state
-    }
-    
-    @usableFromInline
-    let concreteStore : ConcreteStore<Reducer>
-    
-    init(initialState: Reducer.State,
-         reducer: Reducer,
-         environment: Dependencies,
-         services: [Service<Reducer.State>]) {
-        concreteStore = ConcreteStore(initialState: initialState,
-                                      reducer: reducer,
-                                      environment: environment,
-                                      services: services)
-        super.init()
-        concreteStore.delegate = self
-    }
-    
-    
-    @usableFromInline
-    override func send<Action : ActionProtocol>(_ action: Action) {
-        concreteStore.send(action)
-    }
-    
-    @usableFromInline
-    override func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
-        concreteStore.acceptsAction(action)
-    }
-    
-    @usableFromInline
-    func storeWillChange() {
-        objectWillChange.send()
-    }
-    
-}
-
-#endif
-#endif
 
 public extension Store {
     
+    /// Creates an ```ObservableStore```.
+    /// - Parameters:
+    ///     - initialState: The initial state of the store.
+    ///     - reducer: The method that is used to modify the state.
+    ///     - environment: The constants that the reducer and the services need.
+    ///     - services: Instances of service classes that can react to state changes and dispatch further actions.
+    /// - Returns: A fully configured ```ObservableStore```.
     static func create<Reducer : ErasedReducer>(initialState: Reducer.State,
                                                 reducer: Reducer,
                                                 environment: Dependencies,
-                                                services: [Service<Reducer.State>]) -> DelegateStore<State>
+                                                services: [Service<Reducer.State>]) -> ObservableStore<State>
     where Reducer.State == State {
         let result = ConcreteStore(initialState: initialState,
                                    reducer: reducer,
@@ -235,10 +101,18 @@ public extension Store {
         return result
     }
     
+    /// Creates an ```ObservableStore```.
+    /// - Parameters:
+    ///     - reducer: The method that is used to modify the state.
+    ///     - environment: The constants that the reducer and the services need. Will also be passd to ```configure```.
+    ///     - services: Instances of service classes that can react to state changes and dispatch further actions.
+    ///     - configure: Creates the initial state of the app from the app's constants.
+    ///     - constants: The same as ```environment```.
+    /// - Returns: A fully configured ```ObservableStore```.
     static func create<Reducer : ErasedReducer>(reducer: Reducer,
                                                 environment: Dependencies,
                                                 services: [Service<Reducer.State>],
-                                                configure: (Dependencies) -> State) -> DelegateStore<State>
+                                                configure: (_ constants: Dependencies) -> State) -> ObservableStore<State>
     where Reducer.State == State {
         let result = ConcreteStore(initialState: configure(environment),
                                    reducer: reducer,
@@ -251,14 +125,19 @@ public extension Store {
     #if os(iOS) || os(macOS)
     #if canImport(Combine)
     
+    /// Creates a ```CombineStore```.
+    /// - Parameters:
+    ///     - initialState: The initial state of the store.
+    ///     - reducer: The method that is used to modify the state.
+    ///     - environment: The constants that the reducer and the services need.
+    ///     - services: Instances of service classes that can react to state changes and dispatch further actions.
+    /// - Returns: A fully configured ```CombineStore```.
     @available(OSX 10.15, *)
     @available(iOS 13.0, *)
-    static func combineStore<Reducer : ErasedReducer>(
-        initialState: Reducer.State,
-        reducer: Reducer,
-        environment: Dependencies,
-        services: [Service<Reducer.State>]
-    ) -> CombineStore<Reducer.State>
+    static func combineStore<Reducer : ErasedReducer>(initialState: Reducer.State,
+                                                      reducer: Reducer,
+                                                      environment: Dependencies,
+                                                      services: [Service<Reducer.State>]) -> CombineStore<Reducer.State>
     where Reducer.State == State {
         let result = ConcreteCombineStore(initialState: initialState,
                                           reducer: reducer,
@@ -268,14 +147,20 @@ public extension Store {
     }
     
     
+    /// Creates an ```CombineStore```.
+    /// - Parameters:
+    ///     - reducer: The method that is used to modify the state.
+    ///     - environment: The constants that the reducer and the services need. Will also be passd to ```configure```.
+    ///     - services: Instances of service classes that can react to state changes and dispatch further actions.
+    ///     - configure: Creates the initial state of the app from the app's constants.
+    ///     - constants: The same as ```environment```.
+    /// - Returns: A fully configured ```CombineStore```.
     @available(OSX 10.15, *)
     @available(iOS 13.0, *)
-    static func combineStore<Reducer : ErasedReducer>(
-        reducer: Reducer,
-        environment: Dependencies,
-        services: [Service<Reducer.State>],
-        configure: (Dependencies) -> State
-    ) -> CombineStore<Reducer.State>
+    static func combineStore<Reducer : ErasedReducer>(reducer: Reducer,
+                                                      environment: Dependencies,
+                                                      services: [Service<Reducer.State>],
+                                                      configure: (_ constants: Dependencies) -> State) -> CombineStore<Reducer.State>
     where Reducer.State == State {
         let result = ConcreteCombineStore(initialState: configure(environment),
                                           reducer: reducer,

@@ -29,32 +29,59 @@ public extension Dependency {
 }
 
 
+/// ```Dependencies``` Wrap the app's constants configured from outside. Values can be accessed via a subscript taking a type that conforms to ```Config```:
+/// ```
+/// public extension Dependencies {
+///
+///   var myValue : MyType {
+///         get {self[MyKey.self]}
+///         set {self[MyKey.self] = newValue}
+///   }
+///
+/// }
+/// ```
+/// - Note: If you read a value that isn't stored in the underlying dictionary, the default value is assumed. The value will then be memoized and shared across all copies. As a result, if the dependency itself has reference semantics, it will be retained after the first read.
+/// - Important: The way memoization is implemented requires properties to be read on the main thread. Failing to read not-yet memoized dependencies on the main thread is undefined behavior and may lead to crashes due to overlapping memory access.
 public struct Dependencies {
     
     @usableFromInline
-    var dict : [String : Any] = [:]
-    @usableFromInline
-    var memoize : ((Bind) -> Void)?
+    var dict = SwiftMutableDict()
     
     @inlinable
     public subscript<Key : Config>(key: Key.Type) -> Key.Value {
         get {
-            if let result = dict[String(describing: key)] as? Key.Value {
+            if let result = dict.dict[String(describing: key)] as? Key.Value {
                 return result
             }
             else {
                 let result = Key.value(given: self)
-                memoize?(Bind(update: {$0[key] = result}))
+                //memoization -- reference semantics is appropriate
+                dict.dict[String(describing: key)] = result
                 return result
             }
         }
         set {
-            dict[String(describing: key)] = newValue
+            if
+                !isKnownUniquelyReferenced(&dict) {
+                self.dict = dict.copy()
+            }
+            dict.dict[String(describing: key)] = newValue
         }
     }
     
 }
 
+@usableFromInline
+class SwiftMutableDict {
+    @usableFromInline
+    var dict : [String : Any] = [:]
+    @usableFromInline
+    func copy() -> SwiftMutableDict {
+        let result = SwiftMutableDict()
+        result.dict = dict
+        return result
+    }
+}
 
 public struct Bind {
     

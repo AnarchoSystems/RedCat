@@ -8,9 +8,19 @@
 import Foundation
 
 
+///```Undoable``` actions can be sent to a ```Store``` along with an ```UndoManager``` to enable undo and redo.
 public protocol Undoable : ActionProtocol {
+    
+    ///Inverts the action.
     mutating func invert()
+    
+    ///Returns the opposite of the action.
     func inverted() -> Self
+    
+    /// Seqentially chains the undoable action with another undoable action so they can be dispatched in a block.
+    /// - Parameters:
+    ///     - next: The next undoable action to execute.
+    /// - Returns: A group of undoable actions that will be dispatched in a block.
     func then<U : Undoable>(_ next: U) -> UndoGroup
 }
 
@@ -22,11 +32,14 @@ public extension Undoable {
     }
 }
 
+/// An ```UndoGroup``` is a block of undoable actions that can be dispatched with one call to ```send``` or ```sendWithUndo```.
+/// - Important: Actions enqueued by ```Service```s will execute only after the entire block of actions has been processed.
 public struct UndoGroup : Undoable {
  
     @usableFromInline
     var values : [Undoable]
     
+    /// Initializes the ```UndoGroup```.
     public init(values: [Undoable]) {self.values = values}
     
     public init<T>(_ list: [T], build: (T) -> Undoable) {self = UndoGroup(values: list.map(build))}
@@ -39,16 +52,22 @@ public struct UndoGroup : Undoable {
         }
     }
     
+    /// Appends another action to the receiver.
     public mutating func append(_ undoable: Undoable) {
         values.append(undoable)
+    }
+    
+    public func then<U : ActionProtocol>(_ next: U) -> ActionGroup {
+        ActionGroup(values: values + ((next as? ActionGroup).map(\.values) ?? [next]))
     }
     
     public func then<U : Undoable>(_ next: U) -> UndoGroup {
         UndoGroup(values: values + ((next as? UndoGroup).map(\.values) ?? [next]))
     }
     
-    @usableFromInline
-    mutating func unroll() {
+    ///If the receiver contains any nested ```UndoGroup```s, they will be successively unrolled into one long sequence.
+    @inlinable
+    public mutating func unroll() {
         
         var idx = 0
         while idx < values.count {
@@ -82,6 +101,10 @@ public enum UndoBuilder {
         second
     }
     public static func buildIf(_ content: Undoable?) -> UndoGroup {content.map {[$0]} ?? []}
+    
+    public func buildArray(_ components: [Undoable]) -> UndoGroup {
+        UndoGroup(values: components)
+    }
 }
 
 extension UndoGroup : ExpressibleByArrayLiteral {

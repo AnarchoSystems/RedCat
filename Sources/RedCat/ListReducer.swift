@@ -24,17 +24,6 @@ public extension ErasedReducer {
     
 }
 
-
-extension ActionProtocol {
-    
-    @usableFromInline
-    func apply<T : ErasedReducer>(to target: inout T.State, using reducer: T, environment: Dependencies) {
-        reducer.apply(self, to: &target, environment: environment)
-    }
-    
-}
-
-
 public struct ListHandling<I : ErasedReducer> : ReducerWrapper {
     
     @usableFromInline
