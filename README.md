@@ -201,7 +201,9 @@ Actions are sent to the store via its ```send``` or ```sendWithUndo``` methods. 
 Every app has to handle side effects somehow. For this, RedCat has a dedicated ```Service``` class. This class exposes two methods that can be overridden: ```beforeUpdate``` and ```afterUpdate```. Both methods take the dispatched action, the app's environment and the state before or after the action is applied. The services are the perfect place to orchestrate further actions, either immediately or by registering an event listener and hopping back to the main queue whenever an event arrives. The ```Dependencies``` passed to the service are the ideal place to configure the source of the events.
 
 ## Proofs of Concept
-There is also a proof of concept:
+
+There are two toy projects showcasing how RedCat is used.
+
 - [RedCatTicTacToe](https://github.com/AnarchoSystems/RedCatTicTacToe): a Tic-Tac-Toe implementation using RedCat.
 - [RedCatWeather](https://github.com/AnarchoSystems/RedCatWeather.git): a weather app communicating with a fake backend.
 
