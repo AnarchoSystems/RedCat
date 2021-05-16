@@ -34,31 +34,31 @@ public extension ReducerWrapper {
 }
 
 
-public struct Reducer<Reducer : ErasedReducer> : ReducerWrapper {
+public struct Reducer<Body : ErasedReducer> : ReducerWrapper {
     
-    public let body : Reducer
+    public let body : Body
     
-    public init(_ body: () -> Reducer) {
+    public init(_ body: () -> Body) {
         self.body = body()
     }
     
     public init<State, Action : ActionProtocol>(_ closure: @escaping (Action, inout State, Dependencies) -> Void)
-    where Reducer == ClosureReducer<State, Action> {
+    where Body == ClosureReducer<State, Action> {
         self.body = ClosureReducer(closure)
     }
     
     public init<State, Action : ActionProtocol>(_ closure: @escaping (Action, inout State) -> Void)
-    where Reducer == ClosureReducer<State, Action> {
+    where Body == ClosureReducer<State, Action> {
         self.body = ClosureReducer(closure)
     }
     
     public init<State : Releasable, R : ErasedReducer>(_ aspect: CasePath<State, R.State>, _ body: () -> R)
-    where Reducer == AspectReducer<State, R> {
+    where Body == AspectReducer<State, R> {
         self.body = AspectReducer(aspect, reducer: body())
     }
     
     public init<State, R : ErasedReducer>(_ detail: WritableKeyPath<State, R.State>, _ body: () -> R)
-    where Reducer == DetailReducer<State, R> {
+    where Body == DetailReducer<State, R> {
         self.body = DetailReducer(detail, reducer: body())
     }
 

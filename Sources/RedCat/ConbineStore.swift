@@ -18,20 +18,20 @@ public class CombineStore<State> : Store<State>, ObservableObject {}
 
 @available(OSX 10.15, *)
 @available(iOS 13.0, *)
-final class ConcreteCombineStore<Reducer : ErasedReducer> : CombineStore<Reducer.State>, StoreDelegate {
+final class ConcreteCombineStore<Body : ErasedReducer> : CombineStore<Body.State>, StoreDelegate {
     
     @usableFromInline
-    override var state : Reducer.State {
+    override var state : Body.State {
         concreteStore.state
     }
     
     @usableFromInline
-    let concreteStore : ConcreteStore<Reducer>
+    let concreteStore : ConcreteStore<Body>
     
-    init(initialState: Reducer.State,
-         reducer: Reducer,
+    init(initialState: Body.State,
+         reducer: Body,
          environment: Dependencies,
-         services: [Service<Reducer.State>]) {
+         services: [Service<Body.State>]) {
         concreteStore = ConcreteStore(initialState: initialState,
                                       reducer: reducer,
                                       environment: environment,

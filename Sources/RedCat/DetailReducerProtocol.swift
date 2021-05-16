@@ -106,3 +106,12 @@ public struct DetailReducer<State, Reducer : ErasedReducer> : DetailReducerWrapp
     }
     
 }
+
+
+public extension ErasedReducer {
+    
+    func bind<Root>(to property: WritableKeyPath<Root, State>) -> DetailReducer<Root, Self> {
+        DetailReducer(property, reducer: self)
+    }
+    
+}

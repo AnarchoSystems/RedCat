@@ -117,3 +117,12 @@ public struct AspectReducer<State : Releasable, Reducer : ErasedReducer> : Aspec
     }
     
 }
+
+
+public extension ErasedReducer {
+    
+    func bind<Root>(to property: CasePath<Root, State>) -> AspectReducer<Root, Self> {
+        AspectReducer(property, reducer: self)
+    }
+    
+}

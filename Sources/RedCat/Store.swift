@@ -134,11 +134,11 @@ public extension Store {
     /// - Returns: A fully configured ```CombineStore```.
     @available(OSX 10.15, *)
     @available(iOS 13.0, *)
-    static func combineStore<Reducer : ErasedReducer>(initialState: Reducer.State,
-                                                      reducer: Reducer,
+    static func combineStore<Body : ErasedReducer>(initialState: Body.State,
+                                                      reducer: Body,
                                                       environment: Dependencies,
-                                                      services: [Service<Reducer.State>]) -> CombineStore<Reducer.State>
-    where Reducer.State == State {
+                                                      services: [Service<Body.State>]) -> CombineStore<Body.State>
+    where Body.State == State {
         let result = ConcreteCombineStore(initialState: initialState,
                                           reducer: reducer,
                                           environment: environment,
@@ -157,11 +157,11 @@ public extension Store {
     /// - Returns: A fully configured ```CombineStore```.
     @available(OSX 10.15, *)
     @available(iOS 13.0, *)
-    static func combineStore<Reducer : ErasedReducer>(reducer: Reducer,
+    static func combineStore<Body : ErasedReducer>(reducer: Body,
                                                       environment: Dependencies,
-                                                      services: [Service<Reducer.State>],
-                                                      configure: (_ constants: Dependencies) -> State) -> CombineStore<Reducer.State>
-    where Reducer.State == State {
+                                                      services: [Service<Body.State>],
+                                                      configure: (_ constants: Dependencies) -> State) -> CombineStore<Body.State>
+    where Body.State == State {
         let result = ConcreteCombineStore(initialState: configure(environment),
                                           reducer: reducer,
                                           environment: environment,
