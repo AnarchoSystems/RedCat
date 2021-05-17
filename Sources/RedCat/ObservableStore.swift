@@ -95,9 +95,24 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
             fatalError("App has shutdown, actions are no longer accepted.")
         }
         
-        enqueuedActions.append(action)
+        let expectedCount : Int
         
-        guard enqueuedActions.count == 1 else {
+        if var action = action as? ActionGroup {
+            action.unroll()
+            enqueuedActions.append(contentsOf: action.values)
+            expectedCount = action.values.count
+        }
+        else if var action = action as? UndoGroup {
+            action.unroll()
+            enqueuedActions.append(contentsOf: action.values)
+            expectedCount = action.values.count
+        }
+        else {
+            enqueuedActions.append(action)
+            expectedCount = 1
+        }
+        
+        guard enqueuedActions.count == expectedCount else {
             // All calls to this method are assumed to happen on
             // main dispatch queue - a serial queue.
             // Therefore, if more than one action is in the queue,
@@ -117,15 +132,6 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
         var idx = 0
         
         while idx < enqueuedActions.count {
-            
-            if var list = enqueuedActions[idx] as? ActionGroup {
-                list.unroll()
-                enqueuedActions.replaceSubrange(idx...idx, with: list.values)
-            }
-            if var list = enqueuedActions[idx] as? UndoGroup {
-                list.unroll()
-                enqueuedActions.replaceSubrange(idx...idx, with: list.values)
-            }
             
             let action = enqueuedActions[idx]
             
