@@ -8,12 +8,6 @@
 import Foundation
 
 
-/// ```AppInit``` is dispatched exactly once right after the initialization of a ```CombineStore``` or a ```ObservableStore```.
-public struct AppInit : ActionProtocol {}
-/// ```AppDeinit``` is dispatched, when ```shotDown()``` is called on a ```Store```. After the dispatch has finished (including actions synchronously dispatched by ```Service```s during ```AppDeinit```), the store becomes invalid.
-public struct AppDeinit : ActionProtocol {}
-
-
 /// A ```Store``` contains the "global" AppState and exposes the main methods to mutate the state.
 public class Store<State> {
     
@@ -36,7 +30,7 @@ public class Store<State> {
     ///
     /// Use this method when your App is about to terminate to trigger cleanup actions.
     public final func shutDown() {
-        send(AppDeinit())
+        send(Actions.AppDeinit())
         hasShutdown = true
     }
     

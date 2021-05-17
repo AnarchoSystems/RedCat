@@ -46,7 +46,7 @@ public class UnrecognizedActionDebugger<State, Logger : UnknownActionLogger> : S
                                                                action: Action,
                                                                environment: Dependencies) {
          
-      if !(action is AppInit) && !(action is AppDeinit) {
+        if !(action is Actions.AppInit) && !(action is Actions.AppDeinit) {
             check(action, store: store)
         }
         

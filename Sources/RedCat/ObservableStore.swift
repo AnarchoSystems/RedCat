@@ -77,14 +77,14 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
         self.services = services
         self.environment = environment
         super.init()
-        self.send(AppInit())
+        self.send(Actions.AppInit())
     }
     
     
     @usableFromInline
     override func send<Action : ActionProtocol>(_ action: Action) {
         
-        if action is AppInit {
+        if action is Actions.AppInit {
             if hasInitialized && environment.__appInitCheck {
                 print("RedCat: AppInit has been sent more than once. Please file a bug report.\nIf your app works fine otherwise, you can silence this warning by setting __appInitCheck to false in the environment.")
             }
