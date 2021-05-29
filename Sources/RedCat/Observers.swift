@@ -8,66 +8,41 @@
 import Foundation
 
 
-
 @usableFromInline
-class Observers {
+class Observers<State> {
     
-    //faster than reading from dict
-    private weak var firstObserver : StoreDelegate?
-    private var otherObservers : [UUID : WeakDelegate] = [:]
+    private var observers: [UUID: AnyStoreDelegate<State>] = [:]
     
     @usableFromInline
-    func addObserver(_ observer: StoreDelegate) {
-        
-        if firstObserver == nil {
-            firstObserver = observer
-        }
-        else {
-            otherObservers[UUID()] = WeakDelegate(delegate: observer)
+    func addObserver<S: StoreDelegate>(_ observer: S) -> StoreUnsubscriber where S.State == State {
+        let id = UUID()
+				observers[id] = AnyStoreDelegate(observer)
+				return StoreUnsubscriber { self.observers[id] = nil }
+    }
+    
+		@usableFromInline
+	func notifyAllWillChange(old: State, new: State, action: ActionProtocol) {
+        for observer in observers.values {
+					observer.storeWillChange(oldState: old, newState: new, action: action)
         }
     }
     
-	@usableFromInline
-	func notifyAllWillChange() {
-        
-        firstObserver?.storeWillChange()
-        
-        for observer in otherObservers.values {
-            observer.delegate?.storeWillChange()
-        }
-        
-        let invalidObservers = otherObservers.compactMap{key, value in
-            value.delegate == nil ? key : nil
-        }
-        
-        for key in invalidObservers {
-            otherObservers.removeValue(forKey: key)
-        }
-        
-        if
-            firstObserver == nil,
-            let (key, value) = otherObservers.first {
-            otherObservers.removeValue(forKey: key)
-            firstObserver = value.delegate
-        }
-        
-    }
-    
-	@usableFromInline
-	func notifyAllDidChange() {
-		firstObserver?.storeDidChange()
-		
-		for observer in otherObservers.values {
-			observer.delegate?.storeDidChange()
+		@usableFromInline
+		func notifyAllDidChange(old: State, new: State, action: ActionProtocol) {
+				for observer in observers.values {
+					observer.storeDidChange(oldState: old, newState: new, action: action)
+				}
 		}
-	}
 }
 
-
-private extension Observers {
-    
-    struct WeakDelegate {
-        weak var delegate : StoreDelegate?
-    }
-    
+public struct StoreUnsubscriber {
+	private let unsubscribeAction: () -> Void
+	
+	public init(_ unsubscribe: @escaping () -> Void) {
+		unsubscribeAction = unsubscribe
+	}
+	
+	public func unsubscribe() {
+		unsubscribeAction()
+	}
 }

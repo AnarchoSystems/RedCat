@@ -16,25 +16,9 @@ import Combine
 /// A ```CombineStore``` is an ```ObservableObject``` in ```Combine```'s sense. For every dispatch cycle, ```objectWillChange``` will be notified.
 @available(OSX 10.15, *)
 @available(iOS 13.0, *)
-public class CombineStore<State> : Store<State>, ObservableObject, Publisher, Subscriber {
+public class CombineStore<State> : Store<State>, ObservableObject {
 		public typealias Output = State
 		public typealias Failure = Never
-	
-		public var actions: AnyPublisher<ActionProtocol, Never> { actionsSubject.eraseToAnyPublisher() }
-		let actionsSubject = PassthroughSubject<ActionProtocol, Never>()
-	
-		public func receive<S: Subscriber>(subscriber: S) where Never == S.Failure, State == S.Input {}
-	
-		public func receive(_ input: ActionProtocol) -> Subscribers.Demand {
-				send(ActionGroup(values: [input]))
-				return .unlimited
-		}
-	
-		public func receive(subscription: Subscription) {
-				subscription.request(.unlimited)
-		}
-	
-		public func receive(completion: Subscribers.Completion<Never>) {}
 }
 
 @available(OSX 10.15, *)
@@ -48,7 +32,6 @@ final class ConcreteCombineStore<Body : ErasedReducer> : CombineStore<Body.State
     
     @usableFromInline
     let concreteStore : ConcreteStore<Body>
-		private let subject = PassthroughSubject<Body.State, Never>()
     
     init(initialState: Body.State,
          reducer: Body,
@@ -59,36 +42,89 @@ final class ConcreteCombineStore<Body : ErasedReducer> : CombineStore<Body.State
                                       environment: environment,
                                       services: services)
         super.init()
-        concreteStore.addObserver(self)
+        concreteStore.addObserver(WeakStoreDelegate(self))
     }
     
     
     @usableFromInline
-    override func send<Action : ActionProtocol>(_ action: Action) {
+    override func send(_ action: ActionProtocol) {
         concreteStore.send(action)
-				actionsSubject.send(action)
     }
     
     @usableFromInline
     override func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         concreteStore.acceptsAction(action)
     }
-    
-		override func receive<S>(subscriber: S) where Body.State == S.Input, S : Subscriber, S.Failure == Never {
-				if subscriber.receive(state) > 0 {
-						subject.receive(subscriber: subscriber)
-				}
-		}
 	
     @usableFromInline
-    func storeWillChange() {
+		func storeWillChange(oldState: Body.State, newState: Body.State, action: ActionProtocol) {
         objectWillChange.send()
     }
 	
 		@usableFromInline
-		func storeDidChange() {
-				subject.send(state)
+		func storeDidChange(oldState: Body.State, newState: Body.State, action: ActionProtocol) {}
+}
+
+@available(OSX 10.15, *)
+@available(iOS 13.0, *)
+extension ObservableStore {
+	
+	public var publisher: StorePublisher { StorePublisher(base: self) }
+	public var actionsPublisher: StoreActionsPublisher { StoreActionsPublisher(base: self) }
+	
+	public var subscriber: AnySubscriber<ActionProtocol, Never> {
+		AnySubscriber(
+			receiveSubscription: {
+				$0.request(.unlimited)
+			},
+			receiveValue: {
+				self.send($0)
+				return .unlimited
+			},
+			receiveCompletion: nil
+		)
+	}
+	
+	public struct StorePublisher: Publisher {
+		public typealias Failure = Never
+		public typealias Output = State
+		let base: ObservableStore
+		
+		public func receive<S: Subscriber>(subscriber: S) where Never == S.Failure, Output == S.Input {
+			let unsubscriber = base.addObserver(didChange: {
+				_ = subscriber.receive($0)
+			})
+			subscriber.receive(subscription: StoreSubscription(unsubscriber))
+			_ = subscriber.receive(base.state)
 		}
+	}
+	
+	public struct StoreActionsPublisher: Publisher {
+		public typealias Failure = Never
+		public typealias Output = ActionProtocol
+		let base: ObservableStore<State>
+		
+		public func receive<S: Subscriber>(subscriber: S) where Never == S.Failure, Output == S.Input {
+			let unsubscriber = base.addObserver(didChange: {_, _, action in
+				_ = subscriber.receive(action)
+			})
+			subscriber.receive(subscription: StoreSubscription(unsubscriber))
+		}
+	}
+	
+	private final class StoreSubscription: Subscription {
+		let unsubscriber: StoreUnsubscriber
+		
+		init(_ unsubscriber: StoreUnsubscriber) {
+			self.unsubscriber = unsubscriber
+		}
+		
+		func request(_ demand: Subscribers.Demand) {}
+		
+		func cancel() {
+			unsubscriber.unsubscribe()
+		}
+	}
 }
 
 #endif
