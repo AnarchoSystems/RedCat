@@ -11,6 +11,8 @@ public final class ConnectableReducer<State>: ErasedReducer {
 	
 	private var reducers: [(UUID, AnyReducer<State>)] = []
 	
+	public init() {}
+	
 	public func apply<Action>(_ action: Action, to state: inout State, environment: Dependencies) where Action : ActionProtocol {
 		reducers.forEach {
 			$0.1.apply(action, to: &state, environment: environment)
