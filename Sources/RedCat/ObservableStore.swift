@@ -9,10 +9,11 @@ import Foundation
 
 
 /// An ```ObservableStore``` exposes an ```addObserver``` method so other parts can be notified of dispatch cycles (in absence of ```Combine```).
-public class ObservableStore<State> : Store<State> {
+open class ObservableStore<State> : Store<State> {
     
     @usableFromInline
     final let observers = Observers<State>()
+		public let objectWillChange = StoreObjectWillChangePublisher()
     
     /// Tells the receiver that the observer wants to be notified about dispatch cycles.
     /// - Parameters:
@@ -65,6 +66,12 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
     @usableFromInline
     let reducer : Reducer
     
+	
+		@usableFromInline
+		internal var hasInitialized = false
+		@usableFromInline
+		internal var hasShutdown = false
+	
     @usableFromInline
     let services : [Service<Reducer.State>]
     @usableFromInline
@@ -86,7 +93,7 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
     
     
     @usableFromInline
-    override func send(_ action: ActionProtocol) {
+    override func send<Action : ActionProtocol>(_ action: Action) {
         
         if action is Actions.AppInit {
             if hasInitialized && environment.__appInitCheck {
@@ -128,6 +135,7 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
 				let newState = dispatchActions()
         
 				observers.notifyAllWillChange(old: oldState, new: newState, action: action)
+				objectWillChange.send()
 				_state = newState
 				observers.notifyAllDidChange(old: oldState, new: newState, action: action)
     }
@@ -162,5 +170,19 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
     override func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         reducer.acceptsAction(action)
     }
-    
+	
+		/// Dispatches ```AppDeinit``` and invalidates the receiver.
+		///
+		/// Use this method when your App is about to terminate to trigger cleanup actions.
+		public final func shutDown() {
+				send(Actions.AppDeinit())
+				hasShutdown = true
+		}
+}
+
+extension ActionProtocol {
+	@usableFromInline
+	func send<State>(to store: Store<State>) {
+		store.send(self)
+	}
 }

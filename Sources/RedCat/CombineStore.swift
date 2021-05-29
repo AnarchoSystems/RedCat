@@ -7,62 +7,43 @@
 
 import Foundation
 
+public final class StoreObjectWillChangePublisher {
+	private var observers: [UUID: () -> Void] = [:]
+	
+	public func send() {
+		observers.forEach { $0.value() }
+	}
+	
+	func subscribe(_ subscriber: @escaping () -> Void) -> StoreUnsubscriber {
+		let id = UUID()
+		observers[id] = subscriber
+		return StoreUnsubscriber { self.observers[id] = nil }
+	}
+}
 
 #if os(iOS) || os(macOS)
 #if canImport(Combine)
 
 import Combine
 
-/// A ```CombineStore``` is an ```ObservableObject``` in ```Combine```'s sense. For every dispatch cycle, ```objectWillChange``` will be notified.
 @available(OSX 10.15, *)
 @available(iOS 13.0, *)
-public class CombineStore<State> : Store<State>, ObservableObject {
-		public typealias Output = State
-		public typealias Failure = Never
+extension StoreObjectWillChangePublisher: Publisher {
+	public typealias Output = Void
+	public typealias Failure = Never
+	
+	public func receive<S: Subscriber>(subscriber: S) where Never == S.Failure, Void == S.Input {
+		let unsubscriber = subscribe {
+			_ = subscriber.receive()
+		}
+		subscriber.receive(subscription: StoreSubscription(unsubscriber))
+	}
 }
 
 @available(OSX 10.15, *)
 @available(iOS 13.0, *)
-final class ConcreteCombineStore<Body : ErasedReducer> : CombineStore<Body.State>, StoreDelegate {
-    
-    @usableFromInline
-    override var state : Body.State {
-        concreteStore.state
-    }
-    
-    @usableFromInline
-    let concreteStore : ConcreteStore<Body>
-    
-    init(initialState: Body.State,
-         reducer: Body,
-         environment: Dependencies,
-         services: [Service<Body.State>]) {
-        concreteStore = ConcreteStore(initialState: initialState,
-                                      reducer: reducer,
-                                      environment: environment,
-                                      services: services)
-        super.init()
-        concreteStore.addObserver(WeakStoreDelegate(self))
-    }
-    
-    
-    @usableFromInline
-    override func send(_ action: ActionProtocol) {
-        concreteStore.send(action)
-    }
-    
-    @usableFromInline
-    override func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
-        concreteStore.acceptsAction(action)
-    }
-	
-    @usableFromInline
-		func storeWillChange(oldState: Body.State, newState: Body.State, action: ActionProtocol) {
-        objectWillChange.send()
-    }
-	
-		@usableFromInline
-		func storeDidChange(oldState: Body.State, newState: Body.State, action: ActionProtocol) {}
+extension ObservableStore: ObservableObject {
+	public typealias ObjectWillChangePublisher = StoreObjectWillChangePublisher
 }
 
 @available(OSX 10.15, *)
@@ -78,7 +59,7 @@ extension ObservableStore {
 				$0.request(.unlimited)
 			},
 			receiveValue: {
-				self.send($0)
+				$0.send(to: self)
 				return .unlimited
 			},
 			receiveCompletion: nil
@@ -111,19 +92,21 @@ extension ObservableStore {
 			subscriber.receive(subscription: StoreSubscription(unsubscriber))
 		}
 	}
+}
+
+@available(OSX 10.15, *)
+@available(iOS 13.0, *)
+private final class StoreSubscription: Subscription {
+	let unsubscriber: StoreUnsubscriber
 	
-	private final class StoreSubscription: Subscription {
-		let unsubscriber: StoreUnsubscriber
-		
-		init(_ unsubscriber: StoreUnsubscriber) {
-			self.unsubscriber = unsubscriber
-		}
-		
-		func request(_ demand: Subscribers.Demand) {}
-		
-		func cancel() {
-			unsubscriber.unsubscribe()
-		}
+	init(_ unsubscriber: StoreUnsubscriber) {
+		self.unsubscriber = unsubscriber
+	}
+	
+	func request(_ demand: Subscribers.Demand) {}
+	
+	func cancel() {
+		unsubscriber.unsubscribe()
 	}
 }
 

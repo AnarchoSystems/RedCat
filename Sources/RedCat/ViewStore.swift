@@ -35,7 +35,7 @@ public final class MapStore<Root, State> : Store<State> {
         super.init()
     }
     
-    public override func send(_ action: ActionProtocol) {
+		public override func send<Action: ActionProtocol>(_ action: Action) {
         base.send(action)
     }
     
@@ -59,7 +59,7 @@ public final class ViewStore<Base, State> : Store<State> {
         super.init()
     }
     
-    public override func send(_ action: ActionProtocol) {
+		public override func send<Action: ActionProtocol>(_ action: Action) {
         base.send(action)
     }
     
