@@ -27,8 +27,8 @@ class Observers {
         }
     }
     
-    @usableFromInline
-    func notifyAll() {
+	@usableFromInline
+	func notifyAllWillChange() {
         
         firstObserver?.storeWillChange()
         
@@ -53,6 +53,14 @@ class Observers {
         
     }
     
+	@usableFromInline
+	func notifyAllDidChange() {
+		firstObserver?.storeDidChange()
+		
+		for observer in otherObservers.values {
+			observer.delegate?.storeDidChange()
+		}
+	}
 }
 
 
