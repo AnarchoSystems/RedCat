@@ -85,6 +85,7 @@ final class ConcreteCombineStore<Body : ErasedReducer> : CombineStore<Body.State
         objectWillChange.send()
     }
 	
+		@usableFromInline
 		func storeDidChange() {
 				subject.send(state)
 		}
