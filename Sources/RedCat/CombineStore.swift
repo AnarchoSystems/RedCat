@@ -50,8 +50,8 @@ extension ObservableStore: ObservableObject {
 @available(iOS 13.0, *)
 extension ObservableStore {
 	
-	public var publisher: StorePublisher { StorePublisher(base: self) }
-	public var actionsPublisher: StoreActionsPublisher { StoreActionsPublisher(base: self) }
+	public var publisher: StatePublisher { StatePublisher(base: self) }
+	public var actionsPublisher: ActionsPublisher { ActionsPublisher(base: self) }
 	
 	public var subscriber: AnySubscriber<ActionProtocol, Never> {
 		AnySubscriber(
@@ -66,7 +66,7 @@ extension ObservableStore {
 		)
 	}
 	
-	public struct StorePublisher: Publisher {
+	public struct StatePublisher: Publisher {
 		public typealias Failure = Never
 		public typealias Output = State
 		let base: ObservableStore
@@ -80,7 +80,7 @@ extension ObservableStore {
 		}
 	}
 	
-	public struct StoreActionsPublisher: Publisher {
+	public struct ActionsPublisher: Publisher {
 		public typealias Failure = Never
 		public typealias Output = ActionProtocol
 		let base: ObservableStore<State>
