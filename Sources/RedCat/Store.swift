@@ -9,6 +9,7 @@ import Foundation
 
 
 /// A ```Store``` contains the "global" AppState and exposes the main methods to mutate the state.
+@dynamicMemberLookup
 public class Store<State> {
     
     /// The "global" state of the application.
@@ -39,7 +40,7 @@ public class Store<State> {
     ///     - action: The action to dispatch.
     ///
     /// This method is not threadsafe and has to be called on the mainthread.
-    public func send<Action : ActionProtocol>(_ action: Action) {
+    public func send(_ action: ActionProtocol) {
         fatalError()
     }
     
@@ -69,7 +70,6 @@ public class Store<State> {
             undoManager?.setActionName(undoTitle)
         }
     }
-    
 }
 
 

@@ -12,6 +12,10 @@ public extension Store {
         MapStore(base: self, transform: transform)
     }
     
+	
+		subscript<NewState>(dynamicMember keyPath: KeyPath<State, NewState>) -> MapStore<State, NewState> {
+				MapStore(base: self, transform: { $0[keyPath: keyPath] })
+		}
 }
 
 
@@ -31,10 +35,13 @@ public final class MapStore<Root, State> : Store<State> {
         super.init()
     }
     
-    public override func send<Action : ActionProtocol>(_ action: Action) {
+    public override func send(_ action: ActionProtocol) {
         base.send(action)
     }
     
+		public override func acceptsAction<Action>(_ action: Action) -> Bool where Action : ActionProtocol {
+				base.acceptsAction(action)
+		}
 }
 
 
@@ -52,7 +59,7 @@ public final class ViewStore<Base, State> : Store<State> {
         super.init()
     }
     
-    public override func send<Action : ActionProtocol>(_ action: Action) {
+    public override func send(_ action: ActionProtocol) {
         base.send(action)
     }
     

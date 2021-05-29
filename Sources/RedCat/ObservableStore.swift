@@ -8,34 +8,34 @@
 import Foundation
 
 
-/// Implement this protocol (in absence of ```Combine```) to monitor the store for dispatch cycles that are about to happen.
-public protocol StoreDelegate : AnyObject {
-    
-    /// The store will call this method whenever a dispatch cycle is about to happen.
-    /// - Important: The method will be called *once* per dispatch cycle, *not* per change of state.
-    /// - Note: The receiver needs to be registered as an observer to receive updates.
-    func storeWillChange()
-    
-	/// The store will call this method whenever a dispatch cycle is about to happen.
-	/// - Important: The method will be called *once* per dispatch cycle, *not* per change of state.
-	/// - Note: The receiver needs to be registered as an observer to receive updates.
-	func storeDidChange()
-}
-
 /// An ```ObservableStore``` exposes an ```addObserver``` method so other parts can be notified of dispatch cycles (in absence of ```Combine```).
 public class ObservableStore<State> : Store<State> {
     
     @usableFromInline
-    final let observers = Observers()
+    final let observers = Observers<State>()
     
     /// Tells the receiver that the observer wants to be notified about dispatch cycles.
     /// - Parameters:
     ///     - observer: The object to be notified.
+		@discardableResult
     @inlinable
-    public final func addObserver(_ observer: StoreDelegate) {
+		public final func addObserver<S: StoreDelegate>(_ observer: S) -> StoreUnsubscriber where S.State == State {
         observers.addObserver(observer)
     }
-    
+	
+	/// Tells the receiver that the observer wants to be notified about dispatch cycles.
+	@discardableResult
+	@inlinable
+	public final func addObserver(didChange: @escaping (State, State, ActionProtocol) -> Void, willChange: @escaping (State, State, ActionProtocol) -> Void = {_, _, _ in}) -> StoreUnsubscriber {
+		observers.addObserver(AnyStoreDelegate(didChange: didChange, willChange: willChange))
+	}
+	
+	/// Tells the receiver that the observer wants to be notified about dispatch cycles.
+	@discardableResult
+	@inlinable
+	public final func addObserver(didChange: @escaping (State) -> Void, willChange: @escaping (State) -> Void = {_ in}) -> StoreUnsubscriber {
+		observers.addObserver(AnyStoreDelegate(didChange: { _, new, _ in didChange(new) }, willChange: { _, new, _ in didChange(new) }))
+	}
 }
 
 enum AppInitCheck : Config {
@@ -86,7 +86,7 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
     
     
     @usableFromInline
-    override func send<Action : ActionProtocol>(_ action: Action) {
+    override func send(_ action: ActionProtocol) {
         
         if action is Actions.AppInit {
             if hasInitialized && environment.__appInitCheck {
@@ -123,17 +123,18 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
             // the action must have been enqueued by the below while loop
             return
         }
-        
-			observers.notifyAllWillChange()
-        
-			dispatchActions()
 			
-			observers.notifyAllDidChange()
+				let oldState = _state
+				let newState = dispatchActions()
+        
+				observers.notifyAllWillChange(old: oldState, new: newState, action: action)
+				_state = newState
+				observers.notifyAllDidChange(old: oldState, new: newState, action: action)
     }
     
     @usableFromInline
-    func dispatchActions() {
-        
+		func dispatchActions() -> Reducer.State {
+        var newState = _state
         var idx = 0
         
         while idx < enqueuedActions.count {
@@ -144,7 +145,7 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
             for service in services.reversed() {
                 action.beforeUpdate(service: service, store: self, environment: environment)
             }
-            reducer.applyDynamic(action, to: &_state, environment: environment)
+            reducer.applyDynamic(action, to: &newState, environment: environment)
             for service in services {
                 action.afterUpdate(service: service, store: self, environment: environment)
             }
@@ -154,7 +155,7 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
         }
         
         enqueuedActions = []
-        
+        return newState
     }
     
     @usableFromInline
