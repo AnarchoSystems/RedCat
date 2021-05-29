@@ -16,6 +16,10 @@ public protocol StoreDelegate : AnyObject {
     /// - Note: The receiver needs to be registered as an observer to receive updates.
     func storeWillChange()
     
+	/// The store will call this method whenever a dispatch cycle is about to happen.
+	/// - Important: The method will be called *once* per dispatch cycle, *not* per change of state.
+	/// - Note: The receiver needs to be registered as an observer to receive updates.
+	func storeDidChange()
 }
 
 /// An ```ObservableStore``` exposes an ```addObserver``` method so other parts can be notified of dispatch cycles (in absence of ```Combine```).
@@ -120,10 +124,11 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
             return
         }
         
-        observers.notifyAll()
+			observers.notifyAllWillChange()
         
-        dispatchActions()
-        
+			dispatchActions()
+			
+			observers.notifyAllDidChange()
     }
     
     @usableFromInline
