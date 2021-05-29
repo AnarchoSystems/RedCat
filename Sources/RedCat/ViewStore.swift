@@ -6,30 +6,29 @@
 //
 
 
-public extension Store {
+public extension StoreProtocol {
     
-    func map<NewState>(_ transform: @escaping (State) -> NewState) -> MapStore<State, NewState> {
+    func map<NewState>(_ transform: @escaping (State) -> NewState) -> MapStore<Self, NewState> {
         MapStore(base: self, transform: transform)
     }
-    
 	
-		subscript<NewState>(dynamicMember keyPath: KeyPath<State, NewState>) -> MapStore<State, NewState> {
+		subscript<NewState>(dynamicMember keyPath: KeyPath<State, NewState>) -> MapStore<Self, NewState> {
 				MapStore(base: self, transform: { $0[keyPath: keyPath] })
 		}
 }
 
 
-public final class MapStore<Root, State> : Store<State> {
+public final class MapStore<Base: StoreProtocol, State> : Store<State> {
     
-    let base : Store<Root>
-    let transform : (Root) -> State
+    let base : Base
+		let transform : (Base.State) -> State
     
     public override var state : State {
         transform(base.state)
     }
     
-    init(base: Store<Root>,
-         transform: @escaping (Root) -> State) {
+    init(base: Base,
+         transform: @escaping (Base.State) -> State) {
         self.base = base
         self.transform = transform
         super.init()
