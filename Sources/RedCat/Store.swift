@@ -10,41 +10,27 @@ import Foundation
 
 /// A ```Store``` contains the "global" AppState and exposes the main methods to mutate the state.
 @dynamicMemberLookup
-public class Store<State> {
+open class Store<State> {
     
     /// The "global" state of the application.
-    public var state : State {
+		open var state : State {
         fatalError()
     }
-    
-    @usableFromInline
-    internal var hasInitialized = false
-    @usableFromInline
-    internal var hasShutdown = false
     
     // prevent external initialization
     // makes external subclasses uninitializable
     internal init() {}
-    
-    
-    /// Dispatches ```AppDeinit``` and invalidates the receiver.
-    ///
-    /// Use this method when your App is about to terminate to trigger cleanup actions.
-    public final func shutDown() {
-        send(Actions.AppDeinit())
-        hasShutdown = true
-    }
     
     /// Applies an action to the state using the App's main reducer.
     /// - Parameters:
     ///     - action: The action to dispatch.
     ///
     /// This method is not threadsafe and has to be called on the mainthread.
-    public func send(_ action: ActionProtocol) {
+		open func send<Action : ActionProtocol>(_ action: Action) {
         fatalError()
     }
     
-    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+		open func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         fatalError()
     }
     
@@ -71,8 +57,6 @@ public class Store<State> {
         }
     }
 }
-
-
 
 public extension Store {
     
@@ -114,56 +98,4 @@ public extension Store {
                                    services: services)
         return result
     }
-    
-    
-    #if os(iOS) || os(macOS)
-    #if canImport(Combine)
-    
-    /// Creates a ```CombineStore```.
-    /// - Parameters:
-    ///     - initialState: The initial state of the store.
-    ///     - reducer: The method that is used to modify the state.
-    ///     - environment: The constants that the reducer and the services need.
-    ///     - services: Instances of service classes that can react to state changes and dispatch further actions.
-    /// - Returns: A fully configured ```CombineStore```.
-    @available(OSX 10.15, *)
-    @available(iOS 13.0, *)
-    static func combineStore<Body : ErasedReducer>(initialState: Body.State,
-                                                      reducer: Body,
-                                                      environment: Dependencies = [],
-                                                      services: [Service<Body.State>] = []) -> CombineStore<Body.State>
-    where Body.State == State {
-        let result = ConcreteCombineStore(initialState: initialState,
-                                          reducer: reducer,
-                                          environment: environment,
-                                          services: services)
-        return result
-    }
-    
-    
-    /// Creates an ```CombineStore```.
-    /// - Parameters:
-    ///     - reducer: The method that is used to modify the state.
-    ///     - environment: The constants that the reducer and the services need. Will also be passd to ```configure```.
-    ///     - services: Instances of service classes that can react to state changes and dispatch further actions.
-    ///     - configure: Creates the initial state of the app from the app's constants.
-    ///     - constants: The same as ```environment```.
-    /// - Returns: A fully configured ```CombineStore```.
-    @available(OSX 10.15, *)
-    @available(iOS 13.0, *)
-    static func combineStore<Body : ErasedReducer>(reducer: Body,
-                                                      environment: Dependencies = [],
-                                                      services: [Service<Body.State>] = [],
-                                                      configure: (_ constants: Dependencies) -> State) -> CombineStore<Body.State>
-    where Body.State == State {
-        let result = ConcreteCombineStore(initialState: configure(environment),
-                                          reducer: reducer,
-                                          environment: environment,
-                                          services: services)
-        return result
-    }
-    
-    #endif
-    #endif
-    
 }
