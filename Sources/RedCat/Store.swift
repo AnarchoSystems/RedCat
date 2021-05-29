@@ -85,8 +85,8 @@ public extension Store {
     /// - Returns: A fully configured ```ObservableStore```.
     static func create<Reducer : ErasedReducer>(initialState: Reducer.State,
                                                 reducer: Reducer,
-                                                environment: Dependencies,
-                                                services: [Service<Reducer.State>]) -> ObservableStore<State>
+                                                environment: Dependencies = [],
+                                                services: [Service<Reducer.State>] = []) -> ObservableStore<State>
     where Reducer.State == State {
         let result = ConcreteStore(initialState: initialState,
                                    reducer: reducer,
@@ -104,8 +104,8 @@ public extension Store {
     ///     - constants: The same as ```environment```.
     /// - Returns: A fully configured ```ObservableStore```.
     static func create<Reducer : ErasedReducer>(reducer: Reducer,
-                                                environment: Dependencies,
-                                                services: [Service<Reducer.State>],
+                                                environment: Dependencies = [],
+                                                services: [Service<Reducer.State>] = [],
                                                 configure: (_ constants: Dependencies) -> State) -> ObservableStore<State>
     where Reducer.State == State {
         let result = ConcreteStore(initialState: configure(environment),
@@ -130,8 +130,8 @@ public extension Store {
     @available(iOS 13.0, *)
     static func combineStore<Body : ErasedReducer>(initialState: Body.State,
                                                       reducer: Body,
-                                                      environment: Dependencies,
-                                                      services: [Service<Body.State>]) -> CombineStore<Body.State>
+                                                      environment: Dependencies = [],
+                                                      services: [Service<Body.State>] = []) -> CombineStore<Body.State>
     where Body.State == State {
         let result = ConcreteCombineStore(initialState: initialState,
                                           reducer: reducer,
@@ -152,8 +152,8 @@ public extension Store {
     @available(OSX 10.15, *)
     @available(iOS 13.0, *)
     static func combineStore<Body : ErasedReducer>(reducer: Body,
-                                                      environment: Dependencies,
-                                                      services: [Service<Body.State>],
+                                                      environment: Dependencies = [],
+                                                      services: [Service<Body.State>] = [],
                                                       configure: (_ constants: Dependencies) -> State) -> CombineStore<Body.State>
     where Body.State == State {
         let result = ConcreteCombineStore(initialState: configure(environment),

@@ -12,7 +12,7 @@ RedCat is a unidirectional data flow framework with an emphasis on static analys
 
 The core component of every unidirectional data flow framework is the reducer. Here is one:
 
-```
+```swift
 let incDecReducer = Reducer {(action: IncDec, state: inout Int in
    switch action {
       case .inc:
@@ -25,7 +25,7 @@ let incDecReducer = Reducer {(action: IncDec, state: inout Int in
 
 The type of the above example will be inferred to ```Reducer<ClosureReducer<Int, IncDec>>```. This is because in RedCat, reducers aren't just wrappers or type aliases for a certain type of closure, they are their own thing. Here's a more verbose way to achieve something similar to the above:
 
-```
+```swift
 struct IncDecReducer : ReducerProtocol {
 
    typealias State = Int 
@@ -50,7 +50,7 @@ While more verbose, this may come in handy when dealing with more complex scenar
 
 Composing reducers is quite simple:
 
-```
+```swift
 let reducer = myReducer1
                   .compose(with: myReducer2)
                   .compose(with: myReducer3)
@@ -62,7 +62,7 @@ Wait, what? In the above example, we have seen that reducers have *two* associat
 
 The answer is that the root protocol from which all other reducer protocols inherit actually looks like this:
 
-```
+```swift
 public protocol ErasedReducer {
 
    associatedtype State 
@@ -79,7 +79,7 @@ Of course, the main goal is to write reducers only for components of the state a
 
 For instance, you can bind a reducer to a certain mutable property of your state: 
 
-```
+```swift
 struct Foo {
    
    var bar : Int
@@ -93,7 +93,7 @@ struct Foo {
 
 Or you can bind it to the associated value of an enum case
 
-```
+```swift
 import CasePaths
 
 enum MyEnum : Emptyable {
@@ -112,7 +112,7 @@ Here, we used a [CasePath](https://github.com/pointfreeco/swift-case-paths). Add
 
 Additionally, there's a way to bind the reducers implicitly to properties or cases while composing:
 
-```
+```swift
 let structReducer = reducer1.compose(with: reducer2, property: \.foo)
 let enumReducer = reducer3.compose(with: property3, aspect: /EnumType.bar)
 ```
@@ -121,7 +121,7 @@ let enumReducer = reducer3.compose(with: property3, aspect: /EnumType.bar)
 
 Plain reducers, aspect reducers and detail reducers come in multiple forms: For each of them, there are protocols:
 
-```
+```swift
 DependentXXXReducer // required method takes environment as argument
 XXXReducerProtocol // required method doesn't take environment as argument
 XXXReducerWrapper // requirements are a wrapped reducer called "body" and possibly a keypath/casepath
@@ -133,7 +133,7 @@ and a struct ```XXXReducer```. The plain ```Reducer``` can be initialized using 
 
 A distinguishing feature of RedCat is the ```DispatchReducer``` protocol. Sometimes, you have already careully written reducers that should be applied under different circumstances. You could of course simply store them in a reducer, make your case distinctions and call ```reducer1/2.apply(...)```. But this is a bit verbose. Hence, RedCat provides a ```DispatchReducer``` protocol with the single requirement
 
-```
+```swift
 func dispatch<Action : ActionProtocol>(_ action: Action) -> Result
 ```
 
@@ -145,7 +145,7 @@ As you can see above, some reducers may depend on some ```Dependencies``` type. 
 
 1. You declare some type that will be used as a key for ```Dependencies```' subscript:
 
-```
+```swift
 enum MyKey : Dependency {
    static let defaultValue = "Hello, World!"
 }
@@ -153,7 +153,7 @@ enum MyKey : Dependency {
 
 2. You add an instance property to ```Dependencies```:
 
-```
+```swift
 extension Dependencies {
    var myValue : Int {
       get {self[MyKey.self]}
@@ -164,7 +164,7 @@ extension Dependencies {
 
 3. Optionally, you set specific values when building the environment:
 
-```
+```swift
 let environment = Dependencies {
    Bind(\.myValue, to: "42")
 }
@@ -172,7 +172,7 @@ let environment = Dependencies {
 
 There's a noteworthy distinction to ```SwiftUI```'s ```Environment```: The key type doesn't need to conform to ```Dependency```. There's actually a more general version of this: 
 
-```
+```swift
 enum MyKey : Config {
    func value(given: Environment) -> Int {
       given.debug ? 1337 : 42
@@ -213,7 +213,7 @@ There are two toy projects showcasing how RedCat is used.
 
 In ```Package.swift```, add the following:
 
-```
+```swift
 dependencies: [
         .package(url: "https://github.com/AnarchoSystems/RedCat.git", .branch("main"))
     ]
