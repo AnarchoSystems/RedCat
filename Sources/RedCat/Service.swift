@@ -36,7 +36,6 @@ internal extension ActionProtocol {
     func afterUpdate<State>(service: Service<State>, store: Store<State>, environment: Dependencies) {
         service.afterUpdate(store: store, action: self, environment: environment)
     }
-    
 }
 
 
@@ -69,5 +68,29 @@ open class DetailService<State, Detail : Equatable> : Service<State> {
     open func onUpdate(newValue: Detail, store: Store<State>, environment: Dependencies) {
         
     }
-    
+}
+
+open class MapService<Base, State>: Service<State> {
+	public let transform: (State) -> Base
+	public let base: Service<Base>
+	
+	init(_ base: Service<Base>, transform: @escaping (State) -> Base) {
+		self.transform = transform
+		self.base = base
+	}
+	
+	public override func beforeUpdate<Action>(store: Store<State>, action: Action, environment: Dependencies) where Action : ActionProtocol {
+		base.beforeUpdate(store: store.map(transform), action: action, environment: environment)
+	}
+	
+	public override func afterUpdate<Action>(store: Store<State>, action: Action, environment: Dependencies) where Action : ActionProtocol {
+		base.afterUpdate(store: store.map(transform), action: action, environment: environment)
+	}
+}
+
+extension Service {
+	
+	public func map<T>(_ transform: @escaping (T) -> State) -> MapService<State, T> {
+		MapService(self, transform: transform)
+	}
 }

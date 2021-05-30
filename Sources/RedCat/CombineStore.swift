@@ -72,9 +72,9 @@ extension ObservableStore {
 		let base: ObservableStore
 		
 		public func receive<S: Subscriber>(subscriber: S) where Never == S.Failure, Output == S.Input {
-			let unsubscriber = base.addObserver(didChange: {
+			let unsubscriber = base.addObserver {
 				_ = subscriber.receive($0)
-			})
+			}
 			subscriber.receive(subscription: StoreSubscription(unsubscriber))
 			_ = subscriber.receive(base.state)
 		}
@@ -86,9 +86,9 @@ extension ObservableStore {
 		let base: ObservableStore<State>
 		
 		public func receive<S: Subscriber>(subscriber: S) where Never == S.Failure, Output == S.Input {
-			let unsubscriber = base.addObserver(didChange: {_, _, action in
+			let unsubscriber = base.addObserver {_, _, action in
 				_ = subscriber.receive(action)
-			})
+			}
 			subscriber.receive(subscription: StoreSubscription(unsubscriber))
 		}
 	}

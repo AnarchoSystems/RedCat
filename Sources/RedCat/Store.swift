@@ -9,10 +9,10 @@ import Foundation
 
 /// A ```Store``` contains the "global" AppState and exposes the main methods to mutate the state.
 @dynamicMemberLookup
-open class Store<State>: StoreProtocol {
-    
+public class Store<State>: StoreProtocol {
+
     /// The "global" state of the application.
-		open var state : State {
+	public var state : State {
         fatalError()
     }
     
@@ -25,11 +25,11 @@ open class Store<State>: StoreProtocol {
     ///     - action: The action to dispatch.
     ///
     /// This method is not threadsafe and has to be called on the mainthread.
-		open func send<Action : ActionProtocol>(_ action: Action) {
+		public func send<Action : ActionProtocol>(_ action: Action) {
         fatalError()
     }
     
-		open func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+		public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         fatalError()
     }
 }

@@ -7,9 +7,30 @@
 
 import Foundation
 
+public protocol ObservableStoreProtocol: StoreProtocol {
+	@discardableResult
+	func addObserver<S: StoreDelegate>(_ observer: S) -> StoreUnsubscriber where S.State == State
+}
+
+extension ObservableStoreProtocol {
+	
+	/// Tells the receiver that the observer wants to be notified about dispatch cycles.
+	@discardableResult
+	@inlinable
+	public func addObserver(_ didChange: @escaping (State, State, ActionProtocol) -> Void) -> StoreUnsubscriber {
+		addObserver(AnyStoreDelegate(didChange))
+	}
+	
+	/// Tells the receiver that the observer wants to be notified about dispatch cycles.
+	@discardableResult
+	@inlinable
+	public func addObserver(_ didChange: @escaping (State) -> Void) -> StoreUnsubscriber {
+		addObserver(AnyStoreDelegate({ _, new, _ in didChange(new) }))
+	}
+}
 
 /// An ```ObservableStore``` exposes an ```addObserver``` method so other parts can be notified of dispatch cycles (in absence of ```Combine```).
-open class ObservableStore<State> : Store<State> {
+public class ObservableStore<State> : Store<State>, ObservableStoreProtocol {
     
     @usableFromInline
     final let observers = Observers<State>()
@@ -20,23 +41,9 @@ open class ObservableStore<State> : Store<State> {
     ///     - observer: The object to be notified.
 		@discardableResult
     @inlinable
-		public final func addObserver<S: StoreDelegate>(_ observer: S) -> StoreUnsubscriber where S.State == State {
+		public func addObserver<S: StoreDelegate>(_ observer: S) -> StoreUnsubscriber where S.State == State {
         observers.addObserver(observer)
     }
-	
-	/// Tells the receiver that the observer wants to be notified about dispatch cycles.
-	@discardableResult
-	@inlinable
-	public final func addObserver(didChange: @escaping (State, State, ActionProtocol) -> Void, willChange: @escaping (State, State, ActionProtocol) -> Void = {_, _, _ in}) -> StoreUnsubscriber {
-		observers.addObserver(AnyStoreDelegate(didChange: didChange, willChange: willChange))
-	}
-	
-	/// Tells the receiver that the observer wants to be notified about dispatch cycles.
-	@discardableResult
-	@inlinable
-	public final func addObserver(didChange: @escaping (State) -> Void, willChange: @escaping (State) -> Void = {_ in}) -> StoreUnsubscriber {
-		observers.addObserver(AnyStoreDelegate(didChange: { _, new, _ in didChange(new) }, willChange: { _, new, _ in didChange(new) }))
-	}
 }
 
 enum AppInitCheck : Config {
@@ -134,10 +141,9 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
 				let oldState = _state
 				let newState = dispatchActions()
         
-				observers.notifyAllWillChange(old: oldState, new: newState, action: action)
 				objectWillChange.send()
 				_state = newState
-				observers.notifyAllDidChange(old: oldState, new: newState, action: action)
+				observers.notifyAll(old: oldState, new: newState, action: action)
     }
     
     @usableFromInline

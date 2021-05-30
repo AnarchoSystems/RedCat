@@ -21,14 +21,7 @@ class Observers<State> {
     }
     
 		@usableFromInline
-	func notifyAllWillChange(old: State, new: State, action: ActionProtocol) {
-        for observer in observers.values {
-					observer.storeWillChange(oldState: old, newState: new, action: action)
-        }
-    }
-    
-		@usableFromInline
-		func notifyAllDidChange(old: State, new: State, action: ActionProtocol) {
+		func notifyAll(old: State, new: State, action: ActionProtocol) {
 				for observer in observers.values {
 					observer.storeDidChange(oldState: old, newState: new, action: action)
 				}

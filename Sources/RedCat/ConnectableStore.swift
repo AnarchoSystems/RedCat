@@ -37,4 +37,8 @@ public class ConnectableStore<State> : ObservableStore<State> {
 	public func connect<R: ErasedReducer>(_ reducer: R, at keyPath: WritableKeyPath<State, R.State>) -> StoreUnsubscriber {
 		base.reducer.connect(reducer, at: keyPath)
 	}
+	
+	override public func addObserver<S>(_ observer: S) -> StoreUnsubscriber where State == S.State, S : StoreDelegate {
+		base.addObserver(observer)
+	}
 }

@@ -36,6 +36,27 @@ public final class AsyncStore<Base: StoreProtocol>: Store<Base.State> {
 	}
 }
 
+extension AsyncStore: ObservableStoreProtocol where Base: ObservableStoreProtocol {
+
+	public func addObserver<S>(_ observer: S) -> StoreUnsubscriber where S : StoreDelegate, Base.State == S.State {
+		base.addObserver(observer)
+	}
+}
+
+#if os(iOS) || os(macOS)
+#if canImport(Combine)
+
+import Combine
+
+@available(OSX 10.15, *)
+@available(iOS 13.0, *)
+extension AsyncStore: ObservableObject where Base: ObservableObject {
+	public typealias ObjectWillChangePublisher = Base.ObjectWillChangePublisher
+	public var objectWillChange: Base.ObjectWillChangePublisher { base.objectWillChange }
+}
+#endif
+#endif
+	
 extension StoreProtocol {
 	
 	public func async(on queue: DispatchQueue) -> AsyncStore<Self> {
