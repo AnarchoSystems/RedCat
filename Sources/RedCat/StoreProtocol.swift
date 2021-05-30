@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol StoreProtocol {
+public protocol StoreProtocol: AnyObject {
 	associatedtype State
 	var state: State { get }
 	func send<Action : ActionProtocol>(_ action: Action)
