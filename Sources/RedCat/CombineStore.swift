@@ -48,10 +48,10 @@ extension ObservableStore: ObservableObject {
 
 @available(OSX 10.15, *)
 @available(iOS 13.0, *)
-extension ObservableStore {
+extension ObservableStoreProtocol {
 	
-	public var publisher: StatePublisher { StatePublisher(base: self) }
-	public var actionsPublisher: ActionsPublisher { ActionsPublisher(base: self) }
+	public var publisher: StatePublisher<Self> { StatePublisher(base: self) }
+	public var actionsPublisher: ActionsPublisher<Self> { ActionsPublisher(base: self) }
 	
 	public var subscriber: AnySubscriber<ActionProtocol, Never> {
 		AnySubscriber(
@@ -65,32 +65,36 @@ extension ObservableStore {
 			receiveCompletion: nil
 		)
 	}
+}
+
+@available(OSX 10.15, *)
+@available(iOS 13.0, *)
+public struct StatePublisher<Store: ObservableStoreProtocol>: Publisher {
+	public typealias Failure = Never
+	public typealias Output = Store.State
+	let base: Store
 	
-	public struct StatePublisher: Publisher {
-		public typealias Failure = Never
-		public typealias Output = State
-		let base: ObservableStore
-		
-		public func receive<S: Subscriber>(subscriber: S) where Never == S.Failure, Output == S.Input {
-			let unsubscriber = base.addObserver {
-				_ = subscriber.receive($0)
-			}
-			subscriber.receive(subscription: StoreSubscription(unsubscriber))
-			_ = subscriber.receive(base.state)
+	public func receive<S: Subscriber>(subscriber: S) where Never == S.Failure, Output == S.Input {
+		let unsubscriber = base.addObserver {
+			_ = subscriber.receive($0)
 		}
+		subscriber.receive(subscription: StoreSubscription(unsubscriber))
+		_ = subscriber.receive(base.state)
 	}
+}
+
+@available(OSX 10.15, *)
+@available(iOS 13.0, *)
+public struct ActionsPublisher<Store: ObservableStoreProtocol>: Publisher {
+	public typealias Failure = Never
+	public typealias Output = ActionProtocol
+	let base: Store
 	
-	public struct ActionsPublisher: Publisher {
-		public typealias Failure = Never
-		public typealias Output = ActionProtocol
-		let base: ObservableStore<State>
-		
-		public func receive<S: Subscriber>(subscriber: S) where Never == S.Failure, Output == S.Input {
-			let unsubscriber = base.addObserver {_, _, action in
-				_ = subscriber.receive(action)
-			}
-			subscriber.receive(subscription: StoreSubscription(unsubscriber))
+	public func receive<S: Subscriber>(subscriber: S) where Never == S.Failure, Output == S.Input {
+		let unsubscriber = base.addObserver {_, _, action in
+			_ = subscriber.receive(action)
 		}
+		subscriber.receive(subscription: StoreSubscription(unsubscriber))
 	}
 }
 

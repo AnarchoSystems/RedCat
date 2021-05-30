@@ -140,7 +140,8 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
 			
 				let oldState = _state
 				let newState = dispatchActions()
-        
+			
+				guard !isEqual(oldState, newState) else { return }
 				objectWillChange.send()
 				_state = newState
 				observers.notifyAll(old: oldState, new: newState, action: action)
@@ -184,11 +185,19 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
 				send(Actions.AppDeinit())
 				hasShutdown = true
 		}
+	
+		@usableFromInline
+		func isEqual(_ lhs: Reducer.State, _ rhs: Reducer.State) -> Bool {
+			if let left = lhs as? AnyHashable, let right = rhs as? AnyHashable {
+				return left == right
+			}
+			return false
+		}
 }
 
 extension ActionProtocol {
 	@usableFromInline
-	func send<State>(to store: Store<State>) {
+	func send<S: StoreProtocol>(to store: S) {
 		store.send(self)
 	}
 }
