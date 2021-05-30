@@ -108,3 +108,8 @@ public struct TupleState<First, Second> {
 		nonmutating set { _1[keyPath: keyPath] = newValue }
 	}
 }
+
+extension TupleState: Equatable where First: Equatable, Second: Equatable {}
+extension TupleState: Hashable where First: Hashable, Second: Hashable {}
+extension TupleState: Decodable where First: Decodable, Second: Decodable {}
+extension TupleState: Encodable where First: Encodable, Second: Encodable {}
