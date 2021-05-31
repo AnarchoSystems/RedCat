@@ -9,7 +9,7 @@ import Foundation
 
 public protocol ObservableStoreProtocol: StoreProtocol {
 	@discardableResult
-	func addObserver<S: StoreDelegate>(_ observer: S) -> StoreUnsubscriber where S.State == State
+	func addObserver<S: StoreDelegate>(_ observer: S) -> StoreUnsubscriber
 }
 
 extension ObservableStoreProtocol {
@@ -17,15 +17,26 @@ extension ObservableStoreProtocol {
 	/// Tells the receiver that the observer wants to be notified about dispatch cycles.
 	@discardableResult
 	@inlinable
-	public func addObserver(_ didChange: @escaping (State, State, ActionProtocol) -> Void) -> StoreUnsubscriber {
-		addObserver(AnyStoreDelegate(didChange))
+	public func addObserver(_ didChange: @escaping (Self) -> Void) -> StoreUnsubscriber {
+		addObserver(
+			AnyStoreDelegate({[weak self] in
+				guard let `self` = self else { return }
+				didChange(self)
+			})
+		)
 	}
 	
 	/// Tells the receiver that the observer wants to be notified about dispatch cycles.
 	@discardableResult
 	@inlinable
-	public func addObserver(_ didChange: @escaping (State) -> Void) -> StoreUnsubscriber {
-		addObserver(AnyStoreDelegate({ _, new, _ in didChange(new) }))
+	public func addObserver(_ didChange: @escaping () -> Void) -> StoreUnsubscriber {
+		addObserver(AnyStoreDelegate(didChange))
+	}
+	
+	@discardableResult
+	@inlinable
+	public func addObserver<S: StoreDelegate & AnyObject>(_ observer: S) -> StoreUnsubscriber {
+		addObserver(WeakStoreDelegate(observer))
 	}
 }
 
@@ -33,7 +44,7 @@ extension ObservableStoreProtocol {
 public class ObservableStore<State> : Store<State>, ObservableStoreProtocol {
     
     @usableFromInline
-    final let observers = Observers<State>()
+    final let observers = Observers()
 		public let objectWillChange = StoreObjectWillChangePublisher()
     
     /// Tells the receiver that the observer wants to be notified about dispatch cycles.
@@ -41,7 +52,7 @@ public class ObservableStore<State> : Store<State>, ObservableStoreProtocol {
     ///     - observer: The object to be notified.
 		@discardableResult
     @inlinable
-		public func addObserver<S: StoreDelegate>(_ observer: S) -> StoreUnsubscriber where S.State == State {
+		public func addObserver<S: StoreDelegate>(_ observer: S) -> StoreUnsubscriber {
         observers.addObserver(observer)
     }
 }
@@ -137,19 +148,14 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
             // the action must have been enqueued by the below while loop
             return
         }
-			
-				let oldState = _state
-				let newState = dispatchActions()
-			
-				guard !isEqual(oldState, newState) else { return }
+		
 				objectWillChange.send()
-				_state = newState
-				observers.notifyAll(old: oldState, new: newState, action: action)
+				dispatchActions()
+				observers.notifyAll()
     }
     
     @usableFromInline
-		func dispatchActions() -> Reducer.State {
-        var newState = _state
+		func dispatchActions() {
         var idx = 0
         
         while idx < enqueuedActions.count {
@@ -160,7 +166,7 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
             for service in services.reversed() {
                 action.beforeUpdate(service: service, store: self, environment: environment)
             }
-            reducer.applyDynamic(action, to: &newState, environment: environment)
+            reducer.applyDynamic(action, to: &_state, environment: environment)
             for service in services {
                 action.afterUpdate(service: service, store: self, environment: environment)
             }
@@ -170,7 +176,6 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
         }
         
         enqueuedActions = []
-        return newState
     }
     
     @usableFromInline
@@ -184,14 +189,6 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
 		public final func shutDown() {
 				send(Actions.AppDeinit())
 				hasShutdown = true
-		}
-	
-		@usableFromInline
-		func isEqual(_ lhs: Reducer.State, _ rhs: Reducer.State) -> Bool {
-			if let left = lhs as? AnyHashable, let right = rhs as? AnyHashable {
-				return left == right
-			}
-			return false
 		}
 }
 

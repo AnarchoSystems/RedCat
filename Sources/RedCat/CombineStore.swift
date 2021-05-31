@@ -7,14 +7,23 @@
 
 import Foundation
 
+@available(*, deprecated, message: "Use 'ObservableStore' instead")
+public typealias CombineStore<State> = ObservableStore<State>
+
 public final class StoreObjectWillChangePublisher {
 	private var observers: [UUID: () -> Void] = [:]
+	private var firstObserver: (() -> Void)?
 	
 	public func send() {
+		firstObserver?()
 		observers.forEach { $0.value() }
 	}
 	
 	func subscribe(_ subscriber: @escaping () -> Void) -> StoreUnsubscriber {
+		if firstObserver == nil {
+			firstObserver = subscriber
+			return StoreUnsubscriber { self.firstObserver = nil }
+		}
 		let id = UUID()
 		observers[id] = subscriber
 		return StoreUnsubscriber { self.observers[id] = nil }
@@ -51,7 +60,6 @@ extension ObservableStore: ObservableObject {
 extension ObservableStoreProtocol {
 	
 	public var publisher: StatePublisher<Self> { StatePublisher(base: self) }
-	public var actionsPublisher: ActionsPublisher<Self> { ActionsPublisher(base: self) }
 	
 	public var subscriber: AnySubscriber<ActionProtocol, Never> {
 		AnySubscriber(
@@ -71,30 +79,24 @@ extension ObservableStoreProtocol {
 @available(iOS 13.0, *)
 public struct StatePublisher<Store: ObservableStoreProtocol>: Publisher {
 	public typealias Failure = Never
-	public typealias Output = Store.State
 	let base: Store
 	
 	public func receive<S: Subscriber>(subscriber: S) where Never == S.Failure, Output == S.Input {
-		let unsubscriber = base.addObserver {
-			_ = subscriber.receive($0)
+		let unsubscriber = base.addObserver { base in
+			_ = subscriber.receive(Output(store: base))
 		}
 		subscriber.receive(subscription: StoreSubscription(unsubscriber))
-		_ = subscriber.receive(base.state)
+		_ = subscriber.receive(Output(store: base))
 	}
-}
-
-@available(OSX 10.15, *)
-@available(iOS 13.0, *)
-public struct ActionsPublisher<Store: ObservableStoreProtocol>: Publisher {
-	public typealias Failure = Never
-	public typealias Output = ActionProtocol
-	let base: Store
 	
-	public func receive<S: Subscriber>(subscriber: S) where Never == S.Failure, Output == S.Input {
-		let unsubscriber = base.addObserver {_, _, action in
-			_ = subscriber.receive(action)
+	@dynamicMemberLookup
+	public struct Output {
+		public let store: Store
+		public var state: Store.State { store.state }
+		
+		public subscript<T>(dynamicMember keyPath: KeyPath<Store.State, T>) -> T {
+			store.state[keyPath: keyPath]
 		}
-		subscriber.receive(subscription: StoreSubscription(unsubscriber))
 	}
 }
 

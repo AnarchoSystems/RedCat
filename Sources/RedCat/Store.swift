@@ -75,41 +75,47 @@ public extension Store {
         return result
     }
 	
-	/// Creates an ```ConnectableStore```.
+	#if os(iOS) || os(macOS)
+	#if canImport(Combine)
+	
+	/// Creates a ```CombineStore```.
 	/// - Parameters:
 	///     - initialState: The initial state of the store.
+	///     - reducer: The method that is used to modify the state.
 	///     - environment: The constants that the reducer and the services need.
 	///     - services: Instances of service classes that can react to state changes and dispatch further actions.
-	/// - Returns: A fully configured ```ConnectableStore```.
-	static func connectable(initialState: State,
-													environment: Dependencies = [],
-													services: [Service<State>] = []) -> ConnectableStore<State> {
-		let concrete = ConcreteStore(initialState: initialState,
-															 reducer: ConnectableReducer(),
-															 environment: environment,
-															 services: services)
-		return ConnectableStore(base: concrete)
+	/// - Returns: A fully configured ```CombineStore```.
+	@available(OSX 10.15, *)
+	@available(iOS 13.0, *)
+	@available(*, deprecated, message: "Use 'create' instead")
+	static func combineStore<Body : ErasedReducer>(initialState: Body.State,
+																								 reducer: Body,
+																								 environment: Dependencies,
+																								 services: [Service<Body.State>]) -> CombineStore<Body.State>
+	where Body.State == State {
+		create(initialState: initialState, reducer: reducer, environment: environment, services: services)
 	}
 	
-	/// Creates an ```ConnectableStore```.
+	
+	/// Creates an ```CombineStore```.
 	/// - Parameters:
 	///     - reducer: The method that is used to modify the state.
 	///     - environment: The constants that the reducer and the services need. Will also be passd to ```configure```.
 	///     - services: Instances of service classes that can react to state changes and dispatch further actions.
 	///     - configure: Creates the initial state of the app from the app's constants.
 	///     - constants: The same as ```environment```.
-	/// - Returns: A fully configured ```ConnectableStore```.
-	static func connectable<Reducer : ErasedReducer>(initialState: State,
-																									 reducer: Reducer,
-																									 environment: Dependencies = [],
-																									 services: [Service<Reducer.State>] = []) -> ConnectableStore<State>
-	where Reducer.State == State {
-		let connectableReducer = ConnectableReducer<State>()
-		connectableReducer.connect(reducer)
-		let concrete = ConcreteStore(initialState: initialState,
-															 reducer: connectableReducer,
-															 environment: environment,
-															 services: services)
-		return ConnectableStore(base: concrete)
+	/// - Returns: A fully configured ```CombineStore```.
+	@available(OSX 10.15, *)
+	@available(iOS 13.0, *)
+	@available(*, deprecated, message: "Use 'create' instead")
+	static func combineStore<Body : ErasedReducer>(reducer: Body,
+																								 environment: Dependencies,
+																								 services: [Service<Body.State>],
+																								 configure: (_ constants: Dependencies) -> State) -> CombineStore<Body.State>
+	where Body.State == State {
+		create(reducer: reducer, environment: environment, services: services, configure: configure)
 	}
+	
+	#endif
+	#endif
 }

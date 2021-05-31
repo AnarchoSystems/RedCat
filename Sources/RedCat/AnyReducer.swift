@@ -9,20 +9,18 @@ import Foundation
 
 public struct AnyReducer<State>: ErasedReducer {
 	
-	private let applyBlock: (ActionProtocol, State, Dependencies) -> State
+	private let applyBlock: (ActionProtocol, inout State, Dependencies) -> Void
 	private let acceptsActionBlock: (ActionProtocol) -> Bool
 	
 	public init<R: ErasedReducer>(_ reducer: R) where R.State == State {
 		applyBlock = {
-			var result = $1
-			reducer.applyDynamic($0, to: &result, environment: $2)
-			return result
+			reducer.applyDynamic($0, to: &$1, environment: $2)
 		}
 		acceptsActionBlock = reducer.acceptsActionDynamic
 	}
 	
 	public func apply<Action>(_ action: Action, to state: inout State, environment: Dependencies) where Action : ActionProtocol {
-		state = applyBlock(action, state, environment)
+		applyBlock(action, &state, environment)
 	}
 	
 	public func acceptsAction<Action>(_ action: Action) -> Bool where Action : ActionProtocol {
