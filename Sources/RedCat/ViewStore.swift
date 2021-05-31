@@ -45,8 +45,8 @@ public final class MapStore<Base: StoreProtocol, State>: Store<State> {
 
 extension MapStore: ObservableStoreProtocol where Base: ObservableStoreProtocol {
 	
-	public func addObserver<S>(_ observer: S) -> StoreUnsubscriber where S : StoreDelegate, State == S.State {
-		base.addObserver(observer.map(transform))
+	public func addObserver<S>(_ observer: S) -> StoreUnsubscriber where S : StoreDelegate {
+		base.addObserver(observer)
 	}
 }
 
