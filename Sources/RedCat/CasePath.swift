@@ -44,7 +44,8 @@ extension Optional : Emptyable {
 public extension Optional {
     
     @inlinable
-    mutating func modify(default defaultValue: Wrapped?, _ closure: @escaping (inout Wrapped) -> Void) {
+    mutating func modify(default defaultValue: Wrapped? = nil,
+                         _ closure: @escaping (inout Wrapped) -> Void) {
         (/Optional.some).mutate(&self, default: defaultValue, closure: closure)
     }
     

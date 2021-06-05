@@ -162,12 +162,15 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
             
             let action = enqueuedActions[idx]
             
-            // services have an outermost to innermost semantics, hence second loop is reversed order
-            for service in services.reversed() {
+            for service in services {
                 action.beforeUpdate(service: service, store: self, environment: environment)
             }
+            
             reducer.applyDynamic(action, to: &_state, environment: environment)
-            for service in services {
+            
+            // services have an outermost to innermost semantics, hence second loop is reversed order
+            
+            for service in services.reversed() {
                 action.afterUpdate(service: service, store: self, environment: environment)
             }
             

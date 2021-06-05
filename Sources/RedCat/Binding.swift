@@ -5,13 +5,13 @@
 //  Created by Markus Pfeifer on 15.05.21.
 //
 
-#if canImport(SwiftUI)
+//https://stackoverflow.com/questions/66716119/cannot-find-swiftui-or-combine-types-when-building-swift-package-for-any-ios-de/67853022#67853022
+
+#if canImport(SwiftUI) && (!os(iOS) || arch(arm64))
+
 import SwiftUI
 
-@available(watchOS 6.0, *)
-@available(tvOS 13.0, *)
-@available(iOS 13.0, *)
-@available(macOS 10.15, *)
+@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
 public extension Store {
     
     /// Exposes a value as a binding, if provided with an action that serves as a setter.
