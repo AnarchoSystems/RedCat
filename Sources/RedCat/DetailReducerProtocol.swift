@@ -26,7 +26,9 @@ public extension DependentDetailReducer {
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
-        guard let action = action as? Self.Action else {return}
+        guard let action = action as? Self.Action else {
+            return
+        }
         apply(action, to: &state[keyPath: keyPath], environment: environment)
     }
     
@@ -54,7 +56,9 @@ public extension DetailReducerProtocol {
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
-        guard let action = action as? Self.Action else {return}
+        guard let action = action as? Self.Action else {
+            return
+        }
         apply(action, to: &state[keyPath: keyPath])
     }
     

@@ -30,7 +30,9 @@ public struct ClosureReducer<State, Act : ActionProtocol> : DependentReducer {
     public func apply<Action : ActionProtocol>(_ action: Action,
                                                to state: inout State,
                                                environment: Dependencies) {
-        guard let action = action as? Act else {return}
+        guard let action = action as? Self.Action else {
+            return
+        }
         closure(action, &state, environment)
     }
     
