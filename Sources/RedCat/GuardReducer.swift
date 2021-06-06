@@ -27,7 +27,7 @@ public struct GuardReducer<Wrapped : ErasedReducer> : ErasedReducer {
         self = GuardReducer(build(), where: condition)
     }
     
-    @inline(__always)
+    @inlinable
     public func apply<Action : ActionProtocol>(_ action: Action,
                                                to state: inout Wrapped.State,
                                                environment: Dependencies) {
@@ -37,7 +37,7 @@ public struct GuardReducer<Wrapped : ErasedReducer> : ErasedReducer {
         wrapped.apply(action, to: &state, environment: environment)
     }
     
-    @inline(__always)
+    @inlinable
     public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         wrapped.acceptsAction(action)
     }

@@ -23,7 +23,7 @@ public protocol DependentDetailReducer : ErasedReducer {
 
 public extension DependentDetailReducer {
     
-    @inline(__always)
+    @inlinable
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
@@ -33,7 +33,7 @@ public extension DependentDetailReducer {
         apply(action, to: &state[keyPath: keyPath], environment: environment)
     }
     
-    @inline(__always)
+    @inlinable
     func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         action is Self.Action
     }
@@ -55,7 +55,7 @@ public protocol DetailReducerProtocol : ErasedReducer {
 
 public extension DetailReducerProtocol {
     
-    @inline(__always)
+    @inlinable
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
@@ -65,7 +65,7 @@ public extension DetailReducerProtocol {
         apply(action, to: &state[keyPath: keyPath])
     }
     
-    @inline(__always)
+    @inlinable
     func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         action is Self.Action
     }
@@ -85,7 +85,7 @@ public protocol DetailReducerWrapper : ErasedReducer {
 
 public extension DetailReducerWrapper {
     
-    @inline(__always)
+    @inlinable
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {

@@ -20,12 +20,12 @@ public protocol DispatchReducer : ErasedReducer {
 
 public extension DispatchReducer {
     
-    @inline(__always)
+    @inlinable
     func apply<Action : ActionProtocol>(_ action: Action, to state: inout Result.State, environment: Dependencies) {
         dispatch(action).apply(action, to: &state, environment: environment)
     }
     
-    @inline(__always)
+    @inlinable
     func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         dispatch(action).acceptsAction(action)
     }

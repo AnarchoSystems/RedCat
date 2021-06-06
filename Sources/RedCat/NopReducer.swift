@@ -14,12 +14,12 @@ public struct NopReducer<State> : ErasedReducer {
     @inlinable
     public init() {}
     
-    @inline(__always)
+    @inlinable
     public func apply<Action : ActionProtocol>(_ action: Action,
                                                to state: inout State,
                                                environment: Dependencies) {}
     
-    @inline(__always)
+    @inlinable
     public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         false
     }

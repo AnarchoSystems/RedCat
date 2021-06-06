@@ -38,14 +38,14 @@ public extension ErasedReducer {
 
 extension ActionProtocol {
     
-    @inline(__always)
+    @inlinable
     func apply<Reducer : ErasedReducer>(to state: inout Reducer.State,
                                         using reducer: Reducer,
                                         environment: Dependencies) {
         reducer.apply(self, to: &state, environment: environment)
     }
     
-    @inline(__always)
+    @inlinable
     func accepts<Reducer : ErasedReducer>(using reducer: Reducer) -> Bool {
         reducer.acceptsAction(self)
     }
@@ -66,7 +66,7 @@ public protocol DependentReducer : ErasedReducer {
 
 public extension DependentReducer {
     
-    @inline(__always)
+    @inlinable
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
@@ -76,7 +76,7 @@ public extension DependentReducer {
         apply(action, to: &state, environment: environment)
     }
     
-    @inline(__always)
+    @inlinable
     func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         action is Self.Action
     }
@@ -93,7 +93,7 @@ public protocol ReducerProtocol : DependentReducer {
 
 public extension ReducerProtocol {
     
-    @inline(__always)
+    @inlinable
     func apply(_ action: Action,
                to state: inout State,
                environment: Dependencies) {

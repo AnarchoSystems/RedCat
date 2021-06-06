@@ -24,7 +24,7 @@ public struct ClosureReducer<State, Action : ActionProtocol> : DependentReducer 
         self = Self {action, state, _ in closure(action, &state)}
     }
     
-    @inline(__always)
+    @inlinable
     public func apply(_ action: Action,
                       to state: inout State,
                       environment: Dependencies) {

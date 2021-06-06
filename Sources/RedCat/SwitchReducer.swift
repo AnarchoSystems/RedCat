@@ -14,7 +14,7 @@ public enum IfReducer<R1 : ErasedReducer, R2 : ErasedReducer> : ErasedReducer wh
     case ifReducer(R1)
     case elseReducer(R2)
     
-    @inline(__always)
+    @inlinable
     public func apply<Action : ActionProtocol>(_ action: Action, to state: inout R1.State, environment: Dependencies) {
         switch self {
         case .ifReducer(let reducer):
@@ -24,7 +24,7 @@ public enum IfReducer<R1 : ErasedReducer, R2 : ErasedReducer> : ErasedReducer wh
         }
     }
     
-    @inline(__always)
+    @inlinable
     public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         switch self {
         case .ifReducer(let reducer):
@@ -50,7 +50,7 @@ public enum ElseIfReducer<R1 : ErasedReducer, R2 : ErasedReducer, R3 : ErasedRed
     case elseIfReducer(R2)
     case elseReducer(R3)
     
-    @inline(__always)
+    @inlinable
     public func apply<Action : ActionProtocol>(_ action: Action, to state: inout R1.State, environment: Dependencies) {
         switch self {
         case .ifReducer(let reducer):
@@ -62,7 +62,7 @@ public enum ElseIfReducer<R1 : ErasedReducer, R2 : ErasedReducer, R3 : ErasedRed
         }
     }
     
-    @inline(__always)
+    @inlinable
     public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         switch self {
         case .ifReducer(let reducer):
@@ -90,7 +90,7 @@ public enum Switch4Reducer<R1 : ErasedReducer, R2 : ErasedReducer, R3 : ErasedRe
     case case3Reducer(R3)
     case defaultReducer(R4)
     
-    @inline(__always)
+    @inlinable
     public func apply<Action : ActionProtocol>(_ action: Action, to state: inout R1.State, environment: Dependencies) {
         switch self {
         case .case1Reducer(let reducer):
@@ -104,7 +104,7 @@ public enum Switch4Reducer<R1 : ErasedReducer, R2 : ErasedReducer, R3 : ErasedRe
         }
     }
     
-    @inline(__always)
+    @inlinable
     public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         switch self {
         case .case1Reducer(let reducer):

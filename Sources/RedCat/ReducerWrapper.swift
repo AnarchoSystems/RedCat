@@ -19,7 +19,7 @@ public protocol ReducerWrapper : ErasedReducer {
 
 public extension ReducerWrapper {
     
-    @inline(__always)
+    @inlinable
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout Body.State,
                                         environment: Dependencies) {
@@ -28,7 +28,7 @@ public extension ReducerWrapper {
                    environment: environment)
     }
     
-    @inline(__always)
+    @inlinable
     func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         body.acceptsAction(action)
     }
