@@ -20,13 +20,13 @@ public struct AnyReducer<State>: ErasedReducer {
 		}
 		acceptsActionBlock = reducer.acceptsActionDynamic
 	}
-	
-    @inlinable
+    
+    @inline(__always)
 	public func apply<Action>(_ action: Action, to state: inout State, environment: Dependencies) where Action : ActionProtocol {
 		applyBlock(action, &state, environment)
 	}
     
-    @inlinable
+    @inline(__always)
 	public func acceptsAction<Action>(_ action: Action) -> Bool where Action : ActionProtocol {
 		acceptsActionBlock(action)
 	}

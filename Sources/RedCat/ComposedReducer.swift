@@ -42,13 +42,13 @@ public struct ComposedReducer<R1 : ErasedReducer, R2 : ErasedReducer> : ErasedRe
     @usableFromInline
     init(_ re1: R1, _ re2: R2) {(self.re1, self.re2) = (re1, re2)}
     
-    @inlinable
+    @inline(__always)
     public func apply<Action : ActionProtocol>(_ action: Action, to state: inout R1.State, environment: Dependencies) {
         re1.apply(action, to: &state, environment: environment)
         re2.apply(action, to: &state, environment: environment)
     }
     
-    @inlinable
+    @inline(__always)
     public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         re1.acceptsAction(action)
             || re2.acceptsAction(action)

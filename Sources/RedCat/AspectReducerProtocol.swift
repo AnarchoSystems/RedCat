@@ -24,7 +24,7 @@ public protocol DependentAspectReducer : ErasedReducer {
 
 public extension DependentAspectReducer where State : Releasable {
     
-    @inlinable
+    @inline(__always)
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
@@ -36,7 +36,7 @@ public extension DependentAspectReducer where State : Releasable {
         }
     }
     
-    @inlinable
+    @inline(__always)
     func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         action is Self.Action
     }
@@ -57,7 +57,7 @@ public protocol AspectReducerProtocol : ErasedReducer {
 
 public extension AspectReducerProtocol where State : Releasable {
     
-    @inlinable
+    @inline(__always)
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
@@ -69,7 +69,7 @@ public extension AspectReducerProtocol where State : Releasable {
         }
     }
     
-    @inlinable
+    @inline(__always)
     func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         action is Self.Action
     }
@@ -89,7 +89,7 @@ public protocol AspectReducerWrapper : ErasedReducer {
 
 public extension AspectReducerWrapper where State : Releasable {
     
-    @inlinable
+    @inline(__always)
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
@@ -98,6 +98,7 @@ public extension AspectReducerWrapper where State : Releasable {
         }
     }
     
+    @inline(__always)
     func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         body.acceptsAction(action)
     }

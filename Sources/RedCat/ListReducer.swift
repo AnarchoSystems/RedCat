@@ -50,7 +50,7 @@ public struct ActionListHandling<I : ErasedReducer> : ErasedReducer {
     @inlinable
     init(_ wrapped: I) {self.wrapped = wrapped}
     
-    @inlinable
+    @inline(__always)
     public func apply<Action : ActionProtocol>(_ action: Action, to state: inout I.State, environment: Dependencies) {
         
         guard var list = action as? ActionGroup else {
@@ -65,7 +65,7 @@ public struct ActionListHandling<I : ErasedReducer> : ErasedReducer {
         
     }
     
-    @inlinable
+    @inline(__always)
     public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         wrapped.acceptsAction(action) || action is ActionGroup
     }
@@ -81,7 +81,7 @@ public struct UndoListHandling<I : ErasedReducer> : ErasedReducer {
     @inlinable
     init(_ wrapped: I) {self.wrapped = wrapped}
     
-    @inlinable
+    @inline(__always)
     public func apply<Action : ActionProtocol>(_ action: Action, to state: inout I.State, environment: Dependencies) {
         
         guard var list = action as? UndoGroup else {
@@ -96,7 +96,7 @@ public struct UndoListHandling<I : ErasedReducer> : ErasedReducer {
         
     }
     
-    @inlinable
+    @inline(__always)
     public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         wrapped.acceptsAction(action) || action is UndoGroup
     }

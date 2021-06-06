@@ -30,7 +30,7 @@ public struct BindChange<Root, Changer : PropertyChange> : DetailReducerProtocol
         self.keyPath = property
     }
     
-    @inlinable
+    @inline(__always)
     public func apply(_ action: Changer, to state: inout Changer.Value) {
         state = action.newValue
     }
@@ -48,7 +48,7 @@ public struct BindCase<Root : Releasable, Changer : PropertyChange> : AspectRedu
         self.casePath = aspect
     }
     
-    @inlinable
+    @inline(__always)
     public func apply(_ action: Changer, to aspect: inout Changer.Value) {
         aspect = action.newValue
     }
