@@ -11,8 +11,10 @@ import Foundation
 public final class Observers {
     
     //faster than reading from dict
-    private var firstObserver : (id: UUID, delegate: StoreDelegate)?
-    private var otherObservers : [UUID : StoreDelegate] = [:]
+    @usableFromInline
+    internal var firstObserver : (id: UUID, delegate: StoreDelegate)?
+    @usableFromInline
+    internal var otherObservers : [UUID : StoreDelegate] = [:]
     
     @usableFromInline
     internal func addObserver<O : StoreDelegate & AnyObject>(_ observer: O) {

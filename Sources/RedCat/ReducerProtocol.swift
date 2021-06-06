@@ -39,12 +39,12 @@ public extension ErasedReducer {
 
 
 extension ActionProtocol {
-    @usableFromInline
+    @inlinable
     func apply<Reducer : ErasedReducer>(to state: inout Reducer.State, using reducer: Reducer, environment: Dependencies) {
         reducer.apply(self, to: &state, environment: environment)
     }
 	
-	@usableFromInline
+	@inlinable
 	func accepts<Reducer : ErasedReducer>(using reducer: Reducer) -> Bool {
 		reducer.acceptsAction(self)
 	}

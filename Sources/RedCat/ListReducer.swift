@@ -29,7 +29,7 @@ public struct ListHandling<I : ErasedReducer> : ReducerWrapper {
     @usableFromInline
     let wrapped : I
     
-    @usableFromInline
+    @inlinable
     init(_ wrapped: I) {
         self.wrapped = wrapped
     }
@@ -47,7 +47,7 @@ public struct ActionListHandling<I : ErasedReducer> : ErasedReducer {
     @usableFromInline
     let wrapped : I
     
-    @usableFromInline
+    @inlinable
     init(_ wrapped: I) {self.wrapped = wrapped}
     
     @inlinable
@@ -78,7 +78,7 @@ public struct UndoListHandling<I : ErasedReducer> : ErasedReducer {
     @usableFromInline
     let wrapped : I
     
-    @usableFromInline
+    @inlinable
     init(_ wrapped: I) {self.wrapped = wrapped}
     
     @inlinable

@@ -26,13 +26,13 @@ open class Service<State> {
 internal extension ActionProtocol {
     
     /// Called by the store each time an action is about to be sent to the reducer.
-    @usableFromInline
+    @inlinable
     func beforeUpdate<State>(service: Service<State>, store: Store<State>, environment: Dependencies) {
         service.beforeUpdate(store: store, action: self, environment: environment)
     }
     
     /// Called by the store each time an action has just been sent to the reducer.
-    @usableFromInline
+    @inlinable
     func afterUpdate<State>(service: Service<State>, store: Store<State>, environment: Dependencies) {
         service.afterUpdate(store: store, action: self, environment: environment)
     }
@@ -53,6 +53,7 @@ open class DetailService<State, Detail : Equatable> : Service<State> {
     @usableFromInline
     var _oldValue : Detail?
     
+    @inlinable
     public init(detail: @escaping (State) -> Detail) {self.detail = detail}
     
     

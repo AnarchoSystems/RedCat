@@ -62,6 +62,13 @@ extension __ObservableStoreProtocol {
 	}
 }
 
+extension ActionProtocol {
+    @inlinable
+    func send<S: __StoreProtocol>(to store: S) {
+        store.send(self)
+    }
+}
+
 @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
 public struct StatePublisher<Store: __ObservableStoreProtocol>: Publisher {
 	public typealias Failure = Never

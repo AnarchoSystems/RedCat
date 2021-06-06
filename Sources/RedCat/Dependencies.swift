@@ -75,7 +75,9 @@ public struct Dependencies {
 class SwiftMutableDict {
     @usableFromInline
     var dict : [String : Any] = [:]
-    @usableFromInline
+    @inlinable
+    init(){}
+    @inlinable
     func copy() -> SwiftMutableDict {
         let result = SwiftMutableDict()
         result.dict = dict
@@ -87,7 +89,7 @@ public struct Bind {
     
     @usableFromInline
     let update : (inout Dependencies) -> Void
-    @usableFromInline
+    @inlinable
     init(update: @escaping (inout Dependencies) -> Void) {
         self.update = update
     }

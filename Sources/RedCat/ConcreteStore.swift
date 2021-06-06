@@ -24,7 +24,7 @@ public extension Dependencies {
 
 final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.State> {
     
-    @usableFromInline
+    @inlinable
     override var state : Reducer.State {
         _state
     }
@@ -103,7 +103,7 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
         dispatchActions()
     }
     
-    @usableFromInline
+    @inlinable
     func dispatchActions() {
         var idx = 0
         
@@ -130,7 +130,7 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
         enqueuedActions = []
     }
     
-    @usableFromInline
+    @inlinable
     override func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         reducer.acceptsAction(action)
     }
@@ -144,9 +144,3 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
     }
 }
 
-extension ActionProtocol {
-    @usableFromInline
-    func send<S: __StoreProtocol>(to store: S) {
-        store.send(self)
-    }
-}

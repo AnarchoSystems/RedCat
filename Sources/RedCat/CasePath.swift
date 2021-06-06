@@ -67,7 +67,7 @@ public extension CasePath where Root : Releasable {
 
 extension CasePath where Root : Releasable {
     
-    @usableFromInline
+    @inlinable
     func mutate(_ whole: inout Root, optionalDefault fallback: Root?, closure: (inout Value) -> Void) {
         
         guard var part = extract(from: whole) else {
