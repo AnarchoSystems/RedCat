@@ -7,36 +7,25 @@
 
 import Foundation
 
-@available(*, deprecated, message: "Use 'ObservableStore' instead")
-public typealias CombineStore<State> = ObservableStore<State>
+public typealias StoreObjectWillChangePublisher = Observers
 
-public final class StoreObjectWillChangePublisher {
-	private var observers: [UUID: () -> Void] = [:]
-	private var firstObserver: (() -> Void)?
-	
-	public func send() {
-		firstObserver?()
-		observers.forEach { $0.value() }
-	}
-	
-	func subscribe(_ subscriber: @escaping () -> Void) -> StoreUnsubscriber {
-		if firstObserver == nil {
-			firstObserver = subscriber
-			return StoreUnsubscriber { self.firstObserver = nil }
-		}
-		let id = UUID()
-		observers[id] = subscriber
-		return StoreUnsubscriber { self.observers[id] = nil }
-	}
+public extension StoreObjectWillChangePublisher {
+    
+    func subscribe(_ observer: @escaping () -> Void) -> StoreUnsubscriber {
+        addObserver(ClosureStoreDelegate(observer))
+    }
+    
 }
 
-#if os(iOS) || os(macOS)
+#if os(iOS) || os(macOS) || os(tvOS) || os(watchOS)
 #if canImport(Combine)
 
 import Combine
 
-@available(OSX 10.15, *)
-@available(iOS 13.0, *)
+public typealias CombineStore<State> = ObservableStore<State>
+
+
+@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
 extension StoreObjectWillChangePublisher: Publisher {
 	public typealias Output = Void
 	public typealias Failure = Never
@@ -49,15 +38,13 @@ extension StoreObjectWillChangePublisher: Publisher {
 	}
 }
 
-@available(OSX 10.15, *)
-@available(iOS 13.0, *)
+@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
 extension ObservableStore: ObservableObject {
 	public typealias ObjectWillChangePublisher = StoreObjectWillChangePublisher
 }
 
-@available(OSX 10.15, *)
-@available(iOS 13.0, *)
-extension ObservableStoreProtocol {
+@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+extension __ObservableStoreProtocol {
 	
 	public var publisher: StatePublisher<Self> { StatePublisher(base: self) }
 	
@@ -75,9 +62,8 @@ extension ObservableStoreProtocol {
 	}
 }
 
-@available(OSX 10.15, *)
-@available(iOS 13.0, *)
-public struct StatePublisher<Store: ObservableStoreProtocol>: Publisher {
+@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+public struct StatePublisher<Store: __ObservableStoreProtocol>: Publisher {
 	public typealias Failure = Never
 	let base: Store
 	
@@ -91,17 +77,19 @@ public struct StatePublisher<Store: ObservableStoreProtocol>: Publisher {
 	
 	@dynamicMemberLookup
 	public struct Output {
-		public let store: Store
+        
+		@usableFromInline
+        internal let store: Store
 		public var state: Store.State { store.state }
 		
 		public subscript<T>(dynamicMember keyPath: KeyPath<Store.State, T>) -> T {
 			store.state[keyPath: keyPath]
 		}
+        
 	}
 }
 
-@available(OSX 10.15, *)
-@available(iOS 13.0, *)
+@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
 private final class StoreSubscription: Subscription {
 	let unsubscriber: StoreUnsubscriber
 	

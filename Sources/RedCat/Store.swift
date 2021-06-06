@@ -9,10 +9,10 @@ import Foundation
 
 /// A ```Store``` contains the "global" AppState and exposes the main methods to mutate the state.
 @dynamicMemberLookup
-public class Store<State>: StoreProtocol {
-
+public class Store<State>: __StoreProtocol {
+    
     /// The "global" state of the application.
-	public var state : State {
+    public var state : State {
         fatalError()
     }
     
@@ -25,11 +25,11 @@ public class Store<State>: StoreProtocol {
     ///     - action: The action to dispatch.
     ///
     /// This method is not threadsafe and has to be called on the mainthread.
-		public func send<Action : ActionProtocol>(_ action: Action) {
+    public func send<Action : ActionProtocol>(_ action: Action) {
         fatalError()
     }
     
-		public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+    public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         fatalError()
     }
 }
@@ -74,48 +74,48 @@ public extension Store {
                                    services: services)
         return result
     }
-	
-	#if os(iOS) || os(macOS)
-	#if canImport(Combine)
-	
-	/// Creates a ```CombineStore```.
-	/// - Parameters:
-	///     - initialState: The initial state of the store.
-	///     - reducer: The method that is used to modify the state.
-	///     - environment: The constants that the reducer and the services need.
-	///     - services: Instances of service classes that can react to state changes and dispatch further actions.
-	/// - Returns: A fully configured ```CombineStore```.
-	@available(OSX 10.15, *)
-	@available(iOS 13.0, *)
-	@available(*, deprecated, message: "Use 'create' instead")
-	static func combineStore<Body : ErasedReducer>(initialState: Body.State,
-																								 reducer: Body,
-																								 environment: Dependencies,
-																								 services: [Service<Body.State>]) -> CombineStore<Body.State>
-	where Body.State == State {
-		create(initialState: initialState, reducer: reducer, environment: environment, services: services)
-	}
-	
-	
-	/// Creates an ```CombineStore```.
-	/// - Parameters:
-	///     - reducer: The method that is used to modify the state.
-	///     - environment: The constants that the reducer and the services need. Will also be passd to ```configure```.
-	///     - services: Instances of service classes that can react to state changes and dispatch further actions.
-	///     - configure: Creates the initial state of the app from the app's constants.
-	///     - constants: The same as ```environment```.
-	/// - Returns: A fully configured ```CombineStore```.
-	@available(OSX 10.15, *)
-	@available(iOS 13.0, *)
-	@available(*, deprecated, message: "Use 'create' instead")
-	static func combineStore<Body : ErasedReducer>(reducer: Body,
-																								 environment: Dependencies,
-																								 services: [Service<Body.State>],
-																								 configure: (_ constants: Dependencies) -> State) -> CombineStore<Body.State>
-	where Body.State == State {
-		create(reducer: reducer, environment: environment, services: services, configure: configure)
-	}
-	
-	#endif
-	#endif
+    
+    #if os(iOS) || os(macOS) || os(tvOS) || os(watchOS)
+    #if canImport(Combine)
+    
+    /// Creates a ```CombineStore```.
+    /// - Parameters:
+    ///     - initialState: The initial state of the store.
+    ///     - reducer: The method that is used to modify the state.
+    ///     - environment: The constants that the reducer and the services need.
+    ///     - services: Instances of service classes that can react to state changes and dispatch further actions.
+    /// - Returns: A fully configured ```CombineStore```.
+    /// - Note: Exactly the same as Store.create(initialState:reducer:environment:services:).
+
+    @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+    static func combineStore<Body : ErasedReducer>(initialState: Body.State,
+                                                   reducer: Body,
+                                                   environment: Dependencies,
+                                                   services: [Service<Body.State>]) -> CombineStore<Body.State>
+    where Body.State == State {
+        create(initialState: initialState, reducer: reducer, environment: environment, services: services)
+    }
+    
+    
+    /// Creates an ```CombineStore```.
+    /// - Parameters:
+    ///     - reducer: The method that is used to modify the state.
+    ///     - environment: The constants that the reducer and the services need. Will also be passd to ```configure```.
+    ///     - services: Instances of service classes that can react to state changes and dispatch further actions.
+    ///     - configure: Creates the initial state of the app from the app's constants.
+    ///     - constants: The same as ```environment```.
+    /// - Returns: A fully configured ```CombineStore```.
+    /// - Note: Exactly the same as Store.create(reducer:environment:services:configure:).
+    
+    @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+    static func combineStore<Body : ErasedReducer>(reducer: Body,
+                                                   environment: Dependencies,
+                                                   services: [Service<Body.State>],
+                                                   configure: (_ constants: Dependencies) -> State) -> CombineStore<Body.State>
+    where Body.State == State {
+        create(reducer: reducer, environment: environment, services: services, configure: configure)
+    }
+    
+    #endif
+    #endif
 }

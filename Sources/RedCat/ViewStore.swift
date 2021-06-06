@@ -6,22 +6,22 @@
 //
 
 
-public extension StoreProtocol {
+extension __StoreProtocol {
     
-    func map<NewState>(_ transform: @escaping (State) -> NewState) -> MapStore<Self, NewState> {
+    public func map<NewState>(_ transform: @escaping (State) -> NewState) -> MapStore<Self, NewState> {
         MapStore(base: self, transform: transform)
     }
-	
-		subscript<NewState>(dynamicMember keyPath: KeyPath<State, NewState>) -> MapStore<Self, NewState> {
-				MapStore(base: self, transform: { $0[keyPath: keyPath] })
-		}
+    
+    public subscript<NewState>(dynamicMember keyPath: KeyPath<State, NewState>) -> MapStore<Self, NewState> {
+        MapStore(base: self, transform: { $0[keyPath: keyPath] })
+    }
 }
 
 
-public final class MapStore<Base: StoreProtocol, State>: Store<State> {
+public final class MapStore<Base: __StoreProtocol, State>: Store<State> {
     
     let base : Base
-		let transform : (Base.State) -> State
+    let transform : (Base.State) -> State
     
     public override var state : State {
         transform(base.state)
@@ -34,32 +34,36 @@ public final class MapStore<Base: StoreProtocol, State>: Store<State> {
         super.init()
     }
     
-		public override func send<Action: ActionProtocol>(_ action: Action) {
-			base.send(action)
+    public override func send<Action: ActionProtocol>(_ action: Action) {
+        base.send(action)
     }
     
-		public override func acceptsAction<Action>(_ action: Action) -> Bool where Action : ActionProtocol {
-				base.acceptsAction(action)
-		}
+    public override func acceptsAction<Action>(_ action: Action) -> Bool where Action : ActionProtocol {
+        base.acceptsAction(action)
+    }
 }
 
-extension MapStore: ObservableStoreProtocol where Base: ObservableStoreProtocol {
-	
-	public func addObserver<S>(_ observer: S) -> StoreUnsubscriber where S : StoreDelegate {
-		base.addObserver(observer)
-	}
+extension MapStore: __ObservableStoreProtocol where Base: __ObservableStoreProtocol {
+    
+    public func addObserver<S>(_ observer: S) -> StoreUnsubscriber where S : StoreDelegate {
+        base.addObserver(observer)
+    }
+
+    public func addObserver<S>(_ observer: S) where S : AnyObject, S : StoreDelegate {
+        base.addObserver(observer)
+    }
+    
 }
 
-#if os(iOS) || os(macOS)
+#if os(iOS) || os(macOS) || os(tvOS) || os(watchOS)
 #if canImport(Combine)
 
 import Combine
 
-@available(OSX 10.15, *)
-@available(iOS 13.0, *)
+@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
 extension MapStore: ObservableObject where Base: ObservableObject {
-	public typealias ObjectWillChangePublisher = Base.ObjectWillChangePublisher
-	public var objectWillChange: Base.ObjectWillChangePublisher { base.objectWillChange }
+    public typealias ObjectWillChangePublisher = Base.ObjectWillChangePublisher
+    public var objectWillChange: Base.ObjectWillChangePublisher { base.objectWillChange }
 }
 #endif
 #endif
@@ -78,7 +82,7 @@ public final class ViewStore<Base, State> : Store<State> {
         super.init()
     }
     
-		public override func send<Action: ActionProtocol>(_ action: Action) {
+    public override func send<Action: ActionProtocol>(_ action: Action) {
         base.send(action)
     }
     

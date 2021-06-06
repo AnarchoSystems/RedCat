@@ -188,11 +188,10 @@ Another key feature of ```Dependencies``` is memoization. Whenever the ```Depend
 
 If you're done composing the reducer, you may wonder how to make it do something useful. Unidirectional data flow frameworks are opinionated about this: There should only be one "global" app state, and the view should be a function of this. In order to make this work, there is a ```Store``` type.
 
-In RedCat, this comes in three main flavours:
+In RedCat, this comes in two main flavours:
 
 1. The erased ```Store<State>``` type seen by the services (see below).
-2. The ```ObservableStore<State>``` that can be observed using ```addObserver```.
-3. The ```CombineStore<State>``` that exists whenever ```Combine``` can be imported and that conforms to ```ObsevableObject```.
+2. The ```ObservableStore<State>``` that can be observed using ```addObserver```. If Combine can be imported, this store is also known as ```CombineStore<State>```.
 
 Actions are sent to the store via its ```send``` or ```sendWithUndo``` methods. This is assumed to happen on the main thread. The action will then be enqueued, sent to the services (which may or may not enqueue further actions), sent to the reducer (which mutates the global state) and then sent to the services again (which may again enqueue further actions). This process is repeated until no service has further actions to enqueue (or they enqueue them asynchronously). For this whole process, the observers are notified exactly once.
 

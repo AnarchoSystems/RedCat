@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  AnyReducer.swift
 //  
 //
 //  Created by Данил Войдилов on 29.05.2021.

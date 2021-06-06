@@ -7,7 +7,8 @@
 
 //https://stackoverflow.com/questions/66716119/cannot-find-swiftui-or-combine-types-when-building-swift-package-for-any-ios-de/67853022#67853022
 
-#if canImport(SwiftUI) && (!os(iOS) || arch(arm64))
+#if os(macOS) || os(watchOS) || os(tvOS) || (os(iOS) && arch(arm64))
+#if canImport(SwiftUI)
 
 import SwiftUI
 
@@ -38,4 +39,5 @@ public extension Store {
     
 }
 
+#endif
 #endif

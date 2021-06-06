@@ -14,7 +14,7 @@ public enum Actions {}
 public extension Actions {
     
     
-    /// ```AppInit``` is dispatched exactly once right after the initialization of a ```CombineStore``` or a ```ObservableStore```.
+    /// ```AppInit``` is dispatched exactly once right after the initialization of an```ObservableStore```.
     struct AppInit : ActionProtocol {}
  
     
