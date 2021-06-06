@@ -28,11 +28,11 @@ public extension DependentAspectReducer where State : Releasable {
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
-        guard let action = action as? Self.Action else {
+        guard Action.self == Self.Action.self else {
             return
         }
         casePath.mutate(&state) {aspect in
-            apply(action, to: &aspect, environment: environment)
+            apply(action as! Self.Action, to: &aspect, environment: environment)
         }
     }
     
@@ -61,11 +61,11 @@ public extension AspectReducerProtocol where State : Releasable {
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
-        guard let action = action as? Self.Action else {
+        guard Action.self == Self.Action.self else {
             return
         }
         casePath.mutate(&state) {aspect in
-            apply(action, to: &aspect)
+            apply(action as! Self.Action, to: &aspect)
         }
     }
     

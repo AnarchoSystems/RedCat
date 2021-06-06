@@ -27,10 +27,10 @@ public extension DependentDetailReducer {
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
-        guard let action = action as? Self.Action else {
+        guard Action.self == Self.Action.self else {
             return
         }
-        apply(action, to: &state[keyPath: keyPath], environment: environment)
+        apply(action as! Self.Action, to: &state[keyPath: keyPath], environment: environment)
     }
     
     @inlinable
@@ -59,10 +59,10 @@ public extension DetailReducerProtocol {
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
-        guard let action = action as? Self.Action else {
+        guard Action.self == Self.Action.self else {
             return
         }
-        apply(action, to: &state[keyPath: keyPath])
+        apply(action as! Self.Action, to: &state[keyPath: keyPath])
     }
     
     @inlinable

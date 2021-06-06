@@ -72,10 +72,10 @@ public extension DependentReducer {
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
-        guard let action = action as? Self.Action else {
+        guard Action.self == Self.Action.self else {
             return
         }
-        apply(action, to: &state, environment: environment)
+        apply(action as! Self.Action, to: &state, environment: environment)
     }
     
     @inlinable
