@@ -23,6 +23,7 @@ public protocol DependentDetailReducer : ErasedReducer {
 
 public extension DependentDetailReducer {
     
+    @inlinable
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
@@ -53,6 +54,7 @@ public protocol DetailReducerProtocol : ErasedReducer {
 
 public extension DetailReducerProtocol {
     
+    @inlinable
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {

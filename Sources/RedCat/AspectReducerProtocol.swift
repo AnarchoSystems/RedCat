@@ -24,6 +24,7 @@ public protocol DependentAspectReducer : ErasedReducer {
 
 public extension DependentAspectReducer where State : Releasable {
     
+    @inlinable
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
@@ -55,6 +56,7 @@ public protocol AspectReducerProtocol : ErasedReducer {
 
 public extension AspectReducerProtocol where State : Releasable {
     
+    @inlinable
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
