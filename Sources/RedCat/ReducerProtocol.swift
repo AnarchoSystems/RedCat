@@ -24,12 +24,14 @@ public protocol ErasedReducer {
 
 public extension ErasedReducer {
     
+    @inlinable
     func applyDynamic(_ action: ActionProtocol,
                       to state: inout State,
                       environment: Dependencies = []) {
         action.apply(to: &state, using: self, environment: environment)
     }
     
+    @inlinable
     func acceptsActionDynamic(_ action: ActionProtocol) -> Bool {
         action.accepts(using: self)
     }

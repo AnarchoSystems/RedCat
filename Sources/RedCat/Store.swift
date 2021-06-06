@@ -18,6 +18,7 @@ public class Store<State>: __StoreProtocol {
     
     // prevent external initialization
     // makes external subclasses uninitializable
+    @usableFromInline 
     internal init() {}
     
     /// Applies an action to the state using the App's main reducer.
@@ -43,6 +44,7 @@ public extension Store {
     ///     - environment: The constants that the reducer and the services need.
     ///     - services: Instances of service classes that can react to state changes and dispatch further actions.
     /// - Returns: A fully configured ```ObservableStore```.
+    @inlinable
     static func create<Reducer : ErasedReducer>(initialState: Reducer.State,
                                                 reducer: Reducer,
                                                 environment: Dependencies = [],
@@ -63,6 +65,7 @@ public extension Store {
     ///     - configure: Creates the initial state of the app from the app's constants.
     ///     - constants: The same as ```environment```.
     /// - Returns: A fully configured ```ObservableStore```.
+    @inlinable
     static func create<Reducer : ErasedReducer>(reducer: Reducer,
                                                 environment: Dependencies = [],
                                                 services: [Service<Reducer.State>] = [],
@@ -88,6 +91,7 @@ public extension Store {
     /// - Note: Exactly the same as Store.create(initialState:reducer:environment:services:).
 
     @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+    @inlinable
     static func combineStore<Body : ErasedReducer>(initialState: Body.State,
                                                    reducer: Body,
                                                    environment: Dependencies,
@@ -108,6 +112,7 @@ public extension Store {
     /// - Note: Exactly the same as Store.create(reducer:environment:services:configure:).
     
     @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+    @inlinable
     static func combineStore<Body : ErasedReducer>(reducer: Body,
                                                    environment: Dependencies,
                                                    services: [Service<Body.State>],

@@ -22,6 +22,7 @@ public extension Dependencies {
     }
 }
 
+@usableFromInline
 final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.State> {
     
     @inlinable
@@ -45,8 +46,10 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
     @usableFromInline
     var environment : Dependencies
     
+    @usableFromInline
     var enqueuedActions = [ActionProtocol]()
     
+    @inlinable
     init(initialState: Reducer.State,
          reducer: Reducer,
          environment: Dependencies,
@@ -60,7 +63,7 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
     }
     
     
-    @usableFromInline
+    @inlinable
     override func send<Action : ActionProtocol>(_ action: Action) {
         
         if action is Actions.AppInit {
