@@ -13,9 +13,9 @@ public protocol ErasedReducer {
     
     associatedtype State
     
-    func apply<Action : ActionProtocol>(_ action: Action,
-                                        to state: inout State,
-                                        environment: Dependencies)
+    func applyErased<Action : ActionProtocol>(_ action: Action,
+                                              to state: inout State,
+                                              environment: Dependencies)
     
     func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool
     
@@ -44,7 +44,7 @@ extension ActionProtocol {
     func apply<Reducer : ErasedReducer>(to state: inout Reducer.State,
                                         using reducer: Reducer,
                                         environment: Dependencies) {
-        reducer.apply(self, to: &state, environment: environment)
+        reducer.applyErased(self, to: &state, environment: environment)
     }
     
     @inlinable
@@ -69,9 +69,9 @@ public protocol DependentReducer : ErasedReducer {
 public extension DependentReducer {
     
     @inlinable
-    func apply<Action : ActionProtocol>(_ action: Action,
-                                        to state: inout State,
-                                        environment: Dependencies) {
+    func applyErased<Action : ActionProtocol>(_ action: Action,
+                                              to state: inout State,
+                                              environment: Dependencies) {
         guard Action.self == Self.Action.self else {
             return
         }

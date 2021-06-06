@@ -15,9 +15,9 @@ public struct NopReducer<State> : ErasedReducer {
     public init() {}
     
     @inlinable
-    public func apply<Action : ActionProtocol>(_ action: Action,
-                                               to state: inout State,
-                                               environment: Dependencies) {}
+    public func applyErased<Action : ActionProtocol>(_ action: Action,
+                                                     to state: inout State,
+                                                     environment: Dependencies) {}
     
     @inlinable
     public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {

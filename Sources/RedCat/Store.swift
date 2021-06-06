@@ -26,6 +26,7 @@ public class Store<State>: __StoreProtocol {
     ///     - action: The action to dispatch.
     ///
     /// This method is not threadsafe and has to be called on the mainthread.
+    @inlinable
     public func send<Action : ActionProtocol>(_ action: Action) {
         fatalError()
     }

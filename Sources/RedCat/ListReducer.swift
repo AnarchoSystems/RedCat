@@ -51,10 +51,10 @@ public struct ActionListHandling<I : ErasedReducer> : ErasedReducer {
     init(_ wrapped: I) {self.wrapped = wrapped}
     
     @inlinable
-    public func apply<Action : ActionProtocol>(_ action: Action, to state: inout I.State, environment: Dependencies) {
+    public func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout I.State, environment: Dependencies) {
         
         guard var list = action as? ActionGroup else {
-            return wrapped.apply(action, to: &state, environment: environment)
+            return wrapped.applyErased(action, to: &state, environment: environment)
         }
         
         list.unroll()
@@ -82,10 +82,10 @@ public struct UndoListHandling<I : ErasedReducer> : ErasedReducer {
     init(_ wrapped: I) {self.wrapped = wrapped}
     
     @inlinable
-    public func apply<Action : ActionProtocol>(_ action: Action, to state: inout I.State, environment: Dependencies) {
+    public func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout I.State, environment: Dependencies) {
         
         guard var list = action as? UndoGroup else {
-            return wrapped.apply(action, to: &state, environment: environment)
+            return wrapped.applyErased(action, to: &state, environment: environment)
         }
         
         list.unroll()

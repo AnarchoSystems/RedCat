@@ -22,7 +22,7 @@ public struct AnyReducer<State>: ErasedReducer {
 	}
     
     @inlinable
-	public func apply<Action>(_ action: Action, to state: inout State, environment: Dependencies) where Action : ActionProtocol {
+	public func applyErased<Action>(_ action: Action, to state: inout State, environment: Dependencies) where Action : ActionProtocol {
 		applyBlock(action, &state, environment)
 	}
     

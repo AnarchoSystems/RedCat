@@ -20,6 +20,7 @@ extension __StoreProtocol {
 
 public final class MapStore<Base: __StoreProtocol, State>: Store<State> {
     
+    @usableFromInline
     let base : Base
     let transform : (Base.State) -> State
     
@@ -34,6 +35,7 @@ public final class MapStore<Base: __StoreProtocol, State>: Store<State> {
         super.init()
     }
     
+    @inlinable
     public override func send<Action: ActionProtocol>(_ action: Action) {
         base.send(action)
     }
@@ -70,6 +72,7 @@ extension MapStore: ObservableObject where Base: ObservableObject {
 
 public final class ViewStore<Base, State> : Store<State> {
     
+    @usableFromInline
     let base : Store<Base>
     public override var state : State {
         _state
@@ -82,6 +85,7 @@ public final class ViewStore<Base, State> : Store<State> {
         super.init()
     }
     
+    @inlinable
     public override func send<Action: ActionProtocol>(_ action: Action) {
         base.send(action)
     }

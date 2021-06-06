@@ -15,12 +15,12 @@ public enum IfReducer<R1 : ErasedReducer, R2 : ErasedReducer> : ErasedReducer wh
     case elseReducer(R2)
     
     @inlinable
-    public func apply<Action : ActionProtocol>(_ action: Action, to state: inout R1.State, environment: Dependencies) {
+    public func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout R1.State, environment: Dependencies) {
         switch self {
         case .ifReducer(let reducer):
-            reducer.apply(action, to: &state, environment: environment)
+            reducer.applyErased(action, to: &state, environment: environment)
         case .elseReducer(let reducer):
-            reducer.apply(action, to: &state, environment: environment)
+            reducer.applyErased(action, to: &state, environment: environment)
         }
     }
     
@@ -51,14 +51,14 @@ public enum ElseIfReducer<R1 : ErasedReducer, R2 : ErasedReducer, R3 : ErasedRed
     case elseReducer(R3)
     
     @inlinable
-    public func apply<Action : ActionProtocol>(_ action: Action, to state: inout R1.State, environment: Dependencies) {
+    public func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout R1.State, environment: Dependencies) {
         switch self {
         case .ifReducer(let reducer):
-            reducer.apply(action, to: &state, environment: environment)
+            reducer.applyErased(action, to: &state, environment: environment)
         case .elseIfReducer(let reducer):
-            reducer.apply(action, to: &state, environment: environment)
+            reducer.applyErased(action, to: &state, environment: environment)
         case .elseReducer(let reducer):
-            reducer.apply(action, to: &state, environment: environment)
+            reducer.applyErased(action, to: &state, environment: environment)
         }
     }
     
@@ -91,16 +91,16 @@ public enum Switch4Reducer<R1 : ErasedReducer, R2 : ErasedReducer, R3 : ErasedRe
     case defaultReducer(R4)
     
     @inlinable
-    public func apply<Action : ActionProtocol>(_ action: Action, to state: inout R1.State, environment: Dependencies) {
+    public func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout R1.State, environment: Dependencies) {
         switch self {
         case .case1Reducer(let reducer):
-            reducer.apply(action, to: &state, environment: environment)
+            reducer.applyErased(action, to: &state, environment: environment)
         case .case2Reducer(let reducer):
-            reducer.apply(action, to: &state, environment: environment)
+            reducer.applyErased(action, to: &state, environment: environment)
         case .case3Reducer(let reducer):
-            reducer.apply(action, to: &state, environment: environment)
+            reducer.applyErased(action, to: &state, environment: environment)
         case .defaultReducer(let reducer):
-            reducer.apply(action, to: &state, environment: environment)
+            reducer.applyErased(action, to: &state, environment: environment)
         }
     }
     

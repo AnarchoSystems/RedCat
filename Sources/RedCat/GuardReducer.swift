@@ -28,13 +28,13 @@ public struct GuardReducer<Wrapped : ErasedReducer> : ErasedReducer {
     }
     
     @inlinable
-    public func apply<Action : ActionProtocol>(_ action: Action,
-                                               to state: inout Wrapped.State,
-                                               environment: Dependencies) {
+    public func applyErased<Action : ActionProtocol>(_ action: Action,
+                                                     to state: inout Wrapped.State,
+                                                     environment: Dependencies) {
         guard condition(state) else {
             return
         }
-        wrapped.apply(action, to: &state, environment: environment)
+        wrapped.applyErased(action, to: &state, environment: environment)
     }
     
     @inlinable
@@ -88,7 +88,7 @@ public extension Reducer {
 
 
 public extension ErasedReducer {
- 
+    
     func filter(_ condition: @escaping (State) -> Bool) -> GuardReducer<Self> {
         GuardReducer(self, where: condition)
     }

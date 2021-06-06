@@ -21,8 +21,8 @@ public protocol DispatchReducer : ErasedReducer {
 public extension DispatchReducer {
     
     @inlinable
-    func apply<Action : ActionProtocol>(_ action: Action, to state: inout Result.State, environment: Dependencies) {
-        dispatch(action).apply(action, to: &state, environment: environment)
+    func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout Result.State, environment: Dependencies) {
+        dispatch(action).applyErased(action, to: &state, environment: environment)
     }
     
     @inlinable

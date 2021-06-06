@@ -66,7 +66,7 @@ The answer is that the root protocol from which all other reducer protocols inhe
 public protocol ErasedReducer {
 
    associatedtype State 
-   func apply<Action : ActionProtocol>(_ action: Action, to state: inout State, environment: Dependencies)
+   func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout State, environment: Dependencies)
 
 }
 ```

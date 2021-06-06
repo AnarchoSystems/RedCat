@@ -25,9 +25,9 @@ public protocol DependentAspectReducer : ErasedReducer {
 public extension DependentAspectReducer where State : Releasable {
     
     @inlinable
-    func apply<Action : ActionProtocol>(_ action: Action,
-                                        to state: inout State,
-                                        environment: Dependencies) {
+    func applyErased<Action : ActionProtocol>(_ action: Action,
+                                              to state: inout State,
+                                              environment: Dependencies) {
         guard Action.self == Self.Action.self else {
             return
         }
@@ -58,9 +58,9 @@ public protocol AspectReducerProtocol : ErasedReducer {
 public extension AspectReducerProtocol where State : Releasable {
     
     @inlinable
-    func apply<Action : ActionProtocol>(_ action: Action,
-                                        to state: inout State,
-                                        environment: Dependencies) {
+    func applyErased<Action : ActionProtocol>(_ action: Action,
+                                              to state: inout State,
+                                              environment: Dependencies) {
         guard Action.self == Self.Action.self else {
             return
         }
@@ -90,11 +90,11 @@ public protocol AspectReducerWrapper : ErasedReducer {
 public extension AspectReducerWrapper where State : Releasable {
     
     @inlinable
-    func apply<Action : ActionProtocol>(_ action: Action,
-                                        to state: inout State,
-                                        environment: Dependencies) {
+    func applyErased<Action : ActionProtocol>(_ action: Action,
+                                              to state: inout State,
+                                              environment: Dependencies) {
         casePath.mutate(&state) {aspect in
-            body.apply(action, to: &aspect, environment: environment)
+            body.applyErased(action, to: &aspect, environment: environment)
         }
     }
     

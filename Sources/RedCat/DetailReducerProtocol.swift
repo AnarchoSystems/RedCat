@@ -24,9 +24,9 @@ public protocol DependentDetailReducer : ErasedReducer {
 public extension DependentDetailReducer {
     
     @inlinable
-    func apply<Action : ActionProtocol>(_ action: Action,
-                                        to state: inout State,
-                                        environment: Dependencies) {
+    func applyErased<Action : ActionProtocol>(_ action: Action,
+                                              to state: inout State,
+                                              environment: Dependencies) {
         guard Action.self == Self.Action.self else {
             return
         }
@@ -56,9 +56,9 @@ public protocol DetailReducerProtocol : ErasedReducer {
 public extension DetailReducerProtocol {
     
     @inlinable
-    func apply<Action : ActionProtocol>(_ action: Action,
-                                        to state: inout State,
-                                        environment: Dependencies) {
+    func applyErased<Action : ActionProtocol>(_ action: Action,
+                                              to state: inout State,
+                                              environment: Dependencies) {
         guard Action.self == Self.Action.self else {
             return
         }
@@ -86,10 +86,10 @@ public protocol DetailReducerWrapper : ErasedReducer {
 public extension DetailReducerWrapper {
     
     @inlinable
-    func apply<Action : ActionProtocol>(_ action: Action,
-                                        to state: inout State,
-                                        environment: Dependencies) {
-        body.apply(action, to: &state[keyPath: keyPath], environment: environment)
+    func applyErased<Action : ActionProtocol>(_ action: Action,
+                                              to state: inout State,
+                                              environment: Dependencies) {
+        body.applyErased(action, to: &state[keyPath: keyPath], environment: environment)
     }
     
     func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {

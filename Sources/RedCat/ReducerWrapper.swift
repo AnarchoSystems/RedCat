@@ -10,22 +10,22 @@ import CasePaths
 
 
 public protocol ReducerWrapper : ErasedReducer {
-
+    
     associatedtype Body : ErasedReducer
     var body : Body {get}
-
+    
 }
 
 
 public extension ReducerWrapper {
     
     @inlinable
-    func apply<Action : ActionProtocol>(_ action: Action,
-                                        to state: inout Body.State,
-                                        environment: Dependencies) {
-        body.apply(action,
-                   to: &state,
-                   environment: environment)
+    func applyErased<Action : ActionProtocol>(_ action: Action,
+                                              to state: inout Body.State,
+                                              environment: Dependencies) {
+        body.applyErased(action,
+                         to: &state,
+                         environment: environment)
     }
     
     @inlinable
@@ -68,5 +68,5 @@ public struct Reducer<Body : ErasedReducer> : ReducerWrapper {
     where Body == DetailReducer<State, R> {
         self.body = DetailReducer(detail, reducer: body())
     }
-
+    
 }

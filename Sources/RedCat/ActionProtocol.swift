@@ -8,7 +8,7 @@
 import Foundation
 
 
-/// All Actions that are sent to the ```Store``` have to conform to ```ActionProtocol```.
+/// All Actions that are sent to the ```Store``` have to conform to ```ActionProtocol```. Allowed types have to be enums, structs or final classes.
 public protocol ActionProtocol {
     
     /// Seqentially chains the action with another action so they can be dispatched in a block.
