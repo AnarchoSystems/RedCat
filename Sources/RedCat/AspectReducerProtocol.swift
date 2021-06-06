@@ -36,6 +36,7 @@ public extension DependentAspectReducer where State : Releasable {
         }
     }
     
+    @inlinable
     func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         action is Self.Action
     }
@@ -68,6 +69,7 @@ public extension AspectReducerProtocol where State : Releasable {
         }
     }
     
+    @inlinable
     func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         action is Self.Action
     }

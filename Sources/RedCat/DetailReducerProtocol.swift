@@ -33,6 +33,7 @@ public extension DependentDetailReducer {
         apply(action, to: &state[keyPath: keyPath], environment: environment)
     }
     
+    @inlinable
     func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         action is Self.Action
     }
@@ -64,6 +65,7 @@ public extension DetailReducerProtocol {
         apply(action, to: &state[keyPath: keyPath])
     }
     
+    @inlinable
     func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         action is Self.Action
     }
@@ -83,6 +85,7 @@ public protocol DetailReducerWrapper : ErasedReducer {
 
 public extension DetailReducerWrapper {
     
+    @inlinable
     func apply<Action : ActionProtocol>(_ action: Action,
                                         to state: inout State,
                                         environment: Dependencies) {
@@ -101,11 +104,13 @@ public struct DetailReducer<State, Reducer : ErasedReducer> : DetailReducerWrapp
     public let keyPath: WritableKeyPath<State, Reducer.State>
     public let body : Reducer
     
+    @inlinable
     public init(_ detail: WritableKeyPath<State, Reducer.State>, reducer: Reducer) {
         self.keyPath = detail
         self.body = reducer
     }
     
+    @inlinable
     public init(_ detail: WritableKeyPath<State, Reducer.State>, build: @escaping () -> Reducer) {
         self.keyPath = detail
         self.body = build()
@@ -116,6 +121,7 @@ public struct DetailReducer<State, Reducer : ErasedReducer> : DetailReducerWrapp
 
 public extension ErasedReducer {
     
+    @inlinable
     func bind<Root>(to property: WritableKeyPath<Root, State>) -> DetailReducer<Root, Self> {
         DetailReducer(property, reducer: self)
     }

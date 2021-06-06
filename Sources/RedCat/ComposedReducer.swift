@@ -48,6 +48,7 @@ public struct ComposedReducer<R1 : ErasedReducer, R2 : ErasedReducer> : ErasedRe
         re2.apply(action, to: &state, environment: environment)
     }
     
+    @inlinable
     public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         re1.acceptsAction(action)
             || re2.acceptsAction(action)

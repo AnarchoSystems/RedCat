@@ -9,8 +9,10 @@ import Foundation
 
 public struct AnyReducer<State>: ErasedReducer {
 	
-	private let applyBlock: (ActionProtocol, inout State, Dependencies) -> Void
-	private let acceptsActionBlock: (ActionProtocol) -> Bool
+    @usableFromInline
+	internal let applyBlock: (ActionProtocol, inout State, Dependencies) -> Void
+    @usableFromInline
+	internal let acceptsActionBlock: (ActionProtocol) -> Bool
 	
 	public init<R: ErasedReducer>(_ reducer: R) where R.State == State {
 		applyBlock = {
@@ -19,10 +21,12 @@ public struct AnyReducer<State>: ErasedReducer {
 		acceptsActionBlock = reducer.acceptsActionDynamic
 	}
 	
+    @inlinable
 	public func apply<Action>(_ action: Action, to state: inout State, environment: Dependencies) where Action : ActionProtocol {
 		applyBlock(action, &state, environment)
 	}
-	
+    
+    @inlinable
 	public func acceptsAction<Action>(_ action: Action) -> Bool where Action : ActionProtocol {
 		acceptsActionBlock(action)
 	}

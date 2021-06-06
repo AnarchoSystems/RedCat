@@ -25,10 +25,12 @@ public struct BindChange<Root, Changer : PropertyChange> : DetailReducerProtocol
     public typealias State = Root
     public let keyPath : WritableKeyPath<Root, Changer.Value>
     
+    @inlinable
     public init(of property: WritableKeyPath<Root, Changer.Value>, to actionType: Changer.Type) {
         self.keyPath = property
     }
     
+    @inlinable
     public func apply(_ action: Changer, to state: inout Changer.Value) {
         state = action.newValue
     }
@@ -41,10 +43,12 @@ public struct BindCase<Root : Releasable, Changer : PropertyChange> : AspectRedu
     public typealias State = Root
     public let casePath: CasePath<Root, Changer.Value>
     
+    @inlinable
     public init(of aspect: CasePath<Root, Changer.Value>, to actionType: Changer.Type) {
         self.casePath = aspect
     }
     
+    @inlinable
     public func apply(_ action: Changer, to aspect: inout Changer.Value) {
         aspect = action.newValue
     }

@@ -31,23 +31,25 @@ public extension ErasedReducer {
         action.apply(to: &state, using: self, environment: environment)
     }
     
-		@inlinable
-		func acceptsActionDynamic(_ action: ActionProtocol) -> Bool {
-			action.accepts(using: self)
-		}
+    @inlinable
+    func acceptsActionDynamic(_ action: ActionProtocol) -> Bool {
+        action.accepts(using: self)
+    }
 }
 
 
 extension ActionProtocol {
+    
     @inlinable
     func apply<Reducer : ErasedReducer>(to state: inout Reducer.State, using reducer: Reducer, environment: Dependencies) {
         reducer.apply(self, to: &state, environment: environment)
     }
-	
-	@inlinable
-	func accepts<Reducer : ErasedReducer>(using reducer: Reducer) -> Bool {
-		reducer.acceptsAction(self)
-	}
+    
+    @inlinable
+    func accepts<Reducer : ErasedReducer>(using reducer: Reducer) -> Bool {
+        reducer.acceptsAction(self)
+    }
+    
 }
 
 

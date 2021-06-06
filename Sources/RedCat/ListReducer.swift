@@ -65,7 +65,7 @@ public struct ActionListHandling<I : ErasedReducer> : ErasedReducer {
         
     }
     
-    
+    @inlinable
     public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         wrapped.acceptsAction(action) || action is ActionGroup
     }
@@ -96,6 +96,7 @@ public struct UndoListHandling<I : ErasedReducer> : ErasedReducer {
         
     }
     
+    @inlinable
     public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         wrapped.acceptsAction(action) || action is UndoGroup
     }
