@@ -138,10 +138,7 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
         reducer.acceptsAction(action)
     }
     
-    /// Dispatches ```AppDeinit``` and invalidates the receiver.
-    ///
-    /// Use this method when your App is about to terminate to trigger cleanup actions.
-    public final func shutDown() {
+    public override final func shutDown() {
         send(Actions.AppDeinit())
         hasShutdown = true
     }

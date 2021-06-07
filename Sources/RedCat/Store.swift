@@ -31,9 +31,19 @@ public class Store<State>: __StoreProtocol {
         fatalError()
     }
     
+    @inlinable
     public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         fatalError()
     }
+    
+    /// Dispatches ```AppDeinit``` and invalidates the receiver.
+    ///
+    /// Use this method when your App is about to terminate to trigger cleanup actions.
+    @inlinable
+    public func shutDown(){
+        fatalError()
+    }
+    
 }
 
 public extension Store {
