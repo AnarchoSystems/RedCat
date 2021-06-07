@@ -39,7 +39,7 @@ public extension ErasedReducer {
 
 extension ActionProtocol {
     
-    @inlinable
+    @usableFromInline
     func apply<Reducer : ErasedReducer>(to state: inout Reducer.State,
                                         using reducer: Reducer,
                                         environment: Dependencies) {
