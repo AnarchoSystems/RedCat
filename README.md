@@ -27,8 +27,7 @@ The type of the above example will be inferred to ```Reducer<ClosureReducer<Int,
 
 ```swift
 struct IncDecReducer : ReducerProtocol {
-
-   typealias State = Int 
+ 
    func apply(_ action: IncDec, to state: inout State) {
       switch action {
          case .inc:

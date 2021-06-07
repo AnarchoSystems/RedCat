@@ -11,9 +11,9 @@ import Foundation
 
 public protocol DispatchReducer : ErasedReducer {
     
-    associatedtype Result : ErasedReducer
+    associatedtype Dispatched : ErasedReducer
     
-    func dispatch<Action : ActionProtocol>(_ action: Action) -> Result
+    func dispatch<Action : ActionProtocol>(_ action: Action) -> Dispatched
     
 }
 
@@ -21,7 +21,7 @@ public protocol DispatchReducer : ErasedReducer {
 public extension DispatchReducer {
     
     @inlinable
-    func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout Result.State, environment: Dependencies) {
+    func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout Dispatched.State, environment: Dependencies) {
         dispatch(action).applyErased(action, to: &state, environment: environment)
     }
     
@@ -34,7 +34,7 @@ public extension DispatchReducer {
 
 extension Optional : ErasedReducer, DispatchReducer where Wrapped : ErasedReducer {
     
-    public typealias State = Wrapped.State
+    public typealias State = Dispatched.State
     
     @inlinable
     public func dispatch<Action : ActionProtocol>(_ action: Action) -> IfReducer<Wrapped, NopReducer<Wrapped.State>> {

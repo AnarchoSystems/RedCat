@@ -8,10 +8,11 @@
 import Foundation
 
 
-public protocol DependentDetailReducer : ErasedReducer {
+public protocol DependentDetailReducer : DependentReducer {
     
+    associatedtype State
     associatedtype Detail
-    associatedtype Action : ActionProtocol
+    associatedtype Action
     
     var keyPath : WritableKeyPath<State, Detail> {get}
     func apply(_ action: Action,
@@ -24,27 +25,21 @@ public protocol DependentDetailReducer : ErasedReducer {
 public extension DependentDetailReducer {
     
     @inlinable
-    func applyErased<Action : ActionProtocol>(_ action: Action,
-                                              to state: inout State,
-                                              environment: Dependencies) {
-        guard Action.self == Self.Action.self else {
-            return
-        }
-        apply(action as! Self.Action, to: &state[keyPath: keyPath], environment: environment)
-    }
-    
-    @inlinable
-    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
-        action is Self.Action
+    func apply(_ action: Action,
+               to state: inout State,
+               environment: Dependencies) {
+        apply(action, to: &state[keyPath: keyPath],
+              environment: environment)
     }
     
 }
 
 
-public protocol DetailReducerProtocol : ErasedReducer {
+public protocol DetailReducerProtocol : DependentDetailReducer {
     
+    associatedtype State
     associatedtype Detail
-    associatedtype Action : ActionProtocol
+    associatedtype Action
     
     var keyPath : WritableKeyPath<State, Detail> {get}
     func apply(_ action: Action,
@@ -56,18 +51,10 @@ public protocol DetailReducerProtocol : ErasedReducer {
 public extension DetailReducerProtocol {
     
     @inlinable
-    func applyErased<Action : ActionProtocol>(_ action: Action,
-                                              to state: inout State,
-                                              environment: Dependencies) {
-        guard Action.self == Self.Action.self else {
-            return
-        }
-        apply(action as! Self.Action, to: &state[keyPath: keyPath])
-    }
-    
-    @inlinable
-    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
-        action is Self.Action
+    func apply(_ action: Action,
+               to detail: inout Detail,
+               environment: Dependencies) {
+        apply(action, to: &detail)
     }
     
 }

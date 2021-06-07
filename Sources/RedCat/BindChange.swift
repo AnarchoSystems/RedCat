@@ -22,7 +22,6 @@ public extension PropertyChange {
 
 public struct BindChange<Root, Changer : PropertyChange> : DetailReducerProtocol {
 
-    public typealias State = Root
     public let keyPath : WritableKeyPath<Root, Changer.Value>
     
     @inlinable
@@ -40,7 +39,6 @@ public struct BindChange<Root, Changer : PropertyChange> : DetailReducerProtocol
 
 public struct BindCase<Root : Releasable, Changer : PropertyChange> : AspectReducerProtocol {
     
-    public typealias State = Root
     public let casePath: CasePath<Root, Changer.Value>
     
     @inlinable

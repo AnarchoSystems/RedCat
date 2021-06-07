@@ -9,10 +9,11 @@ import CasePaths
 
 
 
-public protocol DependentAspectReducer : ErasedReducer {
+public protocol DependentAspectReducer : DependentReducer {
     
+    associatedtype State
+    associatedtype Action
     associatedtype Aspect
-    associatedtype Action : ActionProtocol
     
     var casePath : CasePath<State, Aspect> {get}
     func apply(_ action: Action,
@@ -25,28 +26,21 @@ public protocol DependentAspectReducer : ErasedReducer {
 public extension DependentAspectReducer where State : Releasable {
     
     @inlinable
-    func applyErased<Action : ActionProtocol>(_ action: Action,
-                                              to state: inout State,
-                                              environment: Dependencies) {
-        guard Action.self == Self.Action.self else {
-            return
-        }
+    func apply(_ action: Action,
+               to state: inout State,
+               environment: Dependencies) {
         casePath.mutate(&state) {aspect in
-            apply(action as! Self.Action, to: &aspect, environment: environment)
+            apply(action, to: &aspect, environment: environment)
         }
-    }
-    
-    @inlinable
-    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
-        action is Self.Action
     }
     
 }
 
-public protocol AspectReducerProtocol : ErasedReducer {
+public protocol AspectReducerProtocol : DependentAspectReducer {
     
+    associatedtype State
+    associatedtype Action
     associatedtype Aspect
-    associatedtype Action : ActionProtocol
     
     var casePath : CasePath<State, Aspect> {get}
     func apply(_ action: Action,
@@ -55,23 +49,13 @@ public protocol AspectReducerProtocol : ErasedReducer {
 }
 
 
-public extension AspectReducerProtocol where State : Releasable {
+public extension AspectReducerProtocol {
     
     @inlinable
-    func applyErased<Action : ActionProtocol>(_ action: Action,
-                                              to state: inout State,
-                                              environment: Dependencies) {
-        guard Action.self == Self.Action.self else {
-            return
-        }
-        casePath.mutate(&state) {aspect in
-            apply(action as! Self.Action, to: &aspect)
-        }
-    }
-    
-    @inlinable
-    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
-        action is Self.Action
+    func apply(_ action: Action,
+               to aspect: inout Aspect,
+               environment: Dependencies) {
+            apply(action, to: &aspect)
     }
     
 }

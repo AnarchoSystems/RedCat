@@ -57,6 +57,7 @@ extension ActionProtocol {
 
 public protocol DependentReducer : ErasedReducer {
     
+    associatedtype State 
     associatedtype Action : ActionProtocol
     
     func apply(_ action: Action,
@@ -87,6 +88,9 @@ public extension DependentReducer {
 
 
 public protocol ReducerProtocol : DependentReducer {
+    
+    associatedtype State
+    associatedtype Action
     
     func apply(_ action: Action,
                to state: inout State)
