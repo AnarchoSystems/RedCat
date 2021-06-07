@@ -18,7 +18,7 @@ public class Store<State>: __StoreProtocol {
     
     // prevent external initialization
     // makes external subclasses uninitializable
-    @usableFromInline 
+    @inlinable
     internal init() {}
     
     /// Applies an action to the state using the App's main reducer.
@@ -26,12 +26,10 @@ public class Store<State>: __StoreProtocol {
     ///     - action: The action to dispatch.
     ///
     /// This method is not threadsafe and has to be called on the mainthread.
-    @inlinable
     public func send<Action : ActionProtocol>(_ action: Action) {
         fatalError()
     }
     
-    @inlinable
     public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         fatalError()
     }
@@ -39,7 +37,6 @@ public class Store<State>: __StoreProtocol {
     /// Dispatches ```AppDeinit``` and invalidates the receiver.
     ///
     /// Use this method when your App is about to terminate to trigger cleanup actions.
-    @inlinable
     public func shutDown(){
         fatalError()
     }

@@ -62,8 +62,7 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
         self.send(Actions.AppInit())
     }
     
-    
-    @inlinable
+    @usableFromInline 
     override func send<Action : ActionProtocol>(_ action: Action) {
         
         if action is Actions.AppInit {
@@ -107,7 +106,7 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
     }
     
     @inlinable
-    func dispatchActions() {
+    internal func dispatchActions() {
         var idx = 0
         
         while idx < enqueuedActions.count {
