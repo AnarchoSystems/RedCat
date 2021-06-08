@@ -43,7 +43,7 @@ internal extension ActionProtocol {
 open class DetailService<State, Detail : Equatable> : Service<State> {
     
     
-    public let detail : (State) -> Detail
+    public final let detail : (State) -> Detail
     
     @inlinable
     public final var oldValue : Detail? {
@@ -56,17 +56,42 @@ open class DetailService<State, Detail : Equatable> : Service<State> {
     @inlinable
     public init(detail: @escaping (State) -> Detail) {self.detail = detail}
     
+    public final override func beforeUpdate<Action : ActionProtocol>(store: Store<State>,
+                                                                     action: Action,
+                                                                     environment: Dependencies) {
+        
+    }
     
-    public override func afterUpdate<Action : ActionProtocol>(store: Store<State>,
+    public final override func afterUpdate<Action : ActionProtocol>(store: Store<State>,
                                                               action: Action,
                                                               environment: Dependencies) {
+        if Action.self == Actions.AppInit.self {
+            onAppInit(store: store, environment: environment)
+        }
+        if Action.self == Actions.AppDeinit.self {
+            onShutdown(store: store, environment: environment)
+        }
         let detail = self.detail(store.state)
         guard detail != oldValue else {return}
         onUpdate(newValue: detail, store: store, environment: environment)
         _oldValue = detail
     }
     
+    open func onAppInit(store: Store<State>,
+                        environment: Dependencies) {
+        
+    }
+    
+    open func onShutdown(store: Store<State>,
+                         environment: Dependencies) {
+        
+    }
+    
     open func onUpdate(newValue: Detail, store: Store<State>, environment: Dependencies) {
         
     }
+    
 }
+
+
+public enum Services {}

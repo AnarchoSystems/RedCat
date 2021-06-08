@@ -5,22 +5,13 @@
 //  Created by Markus Pfeifer on 20.05.21.
 //
 
-#if canImport(CoreMotion)
+#if canImport(CoreMotion) && os(iOS) || os(watchOS)
 
 import CoreMotion
+import RedCat
 
 
-public enum MotionManager : Dependency {
-    public static var defaultValue : ResolvedMotionManager {
-        #if os(iOS) || os(watchOS) || os(tvOS)
-        return CMMotionManager()
-        #else
-        fatalError("RedCat: Default value for motionManager not available on this OS!")
-        #endif
-    }
-}
-
-public protocol ResolvedMotionManager : AnyObject {
+public protocol MotionManager : AnyObject {
     
     var accelerometerUpdateInterval : TimeInterval {get set}
     func stopAccelerometerUpdates()
@@ -42,16 +33,7 @@ public protocol ResolvedMotionManager : AnyObject {
     
 }
 
-#if os(iOS) || os(watchOS) || os(tvOS)
-extension CMMotionManager : ResolvedMotionManager {}
-#endif
-
-public extension Dependencies {
-    var motionManager : ResolvedMotionManager {
-        get {self[MotionManager.self]}
-        set {self[MotionManager.self] = newValue}
-    }
-}
+extension CMMotionManager : MotionManager {}
 
 public protocol BasicSensor {
     associatedtype UpdateData
@@ -59,14 +41,14 @@ public protocol BasicSensor {
                       withHandler handler: @escaping (UpdateData?, Error?) -> Void)
     func stopUpdates()
     var updateInterval : TimeInterval {get nonmutating set}
-    init(mgr: ResolvedMotionManager)
+    init(mgr: MotionManager)
 }
 
 public struct AccelerationSensor : BasicSensor {
     
-    let mgr : ResolvedMotionManager
+    let mgr : MotionManager
     
-    public init(mgr: ResolvedMotionManager) {self.mgr = mgr}
+    public init(mgr: MotionManager) {self.mgr = mgr}
     
     public func startUpdates(to queue: OperationQueue,
                              withHandler handler: @escaping CMAccelerometerHandler) {
@@ -86,9 +68,9 @@ public struct AccelerationSensor : BasicSensor {
 
 public struct GyroSensor : BasicSensor {
     
-    let mgr : ResolvedMotionManager
+    let mgr : MotionManager
     
-    public init(mgr: ResolvedMotionManager) {self.mgr = mgr}
+    public init(mgr: MotionManager) {self.mgr = mgr}
     
     public func startUpdates(to queue: OperationQueue,
                              withHandler handler: @escaping CMGyroHandler) {
@@ -108,9 +90,9 @@ public struct GyroSensor : BasicSensor {
 
 public struct MagneticSensor : BasicSensor {
     
-    let mgr : ResolvedMotionManager
+    let mgr : MotionManager
     
-    public init(mgr: ResolvedMotionManager) {self.mgr = mgr}
+    public init(mgr: MotionManager) {self.mgr = mgr}
     
     public func startUpdates(to queue: OperationQueue,
                              withHandler handler: @escaping (CMMagnetometerData?, Error?) -> Void) {
@@ -159,7 +141,7 @@ public class Sensor<State, Config : SensorWatchConfig, Kind : BasicSensor> : Det
                                   store: Store<State>,
                                   environment: Dependencies) {
         
-        let mgr = Kind(mgr: environment.motionManager)
+        let mgr = Kind(mgr: environment.native.motionManager)
         mgr.stopUpdates()
         
         guard let newValue = newValue else {
@@ -223,7 +205,7 @@ public final class DeviceMotionSensor<State, Config : DeviceMotionWatchConfig> :
                                   store: Store<State>,
                                   environment: Dependencies) {
         
-        let mgr = environment.motionManager
+        let mgr = environment.native.motionManager
         mgr.stopDeviceMotionUpdates()
         
         guard let newValue = newValue else {
@@ -290,5 +272,40 @@ public extension Actions {
     
 }
 
+public extension Services {
+    enum Sensors {}
+}
+
+public extension Services.Sensors {
+    
+    static func accelerometer<State, Config : AccelerometerWatchConfig>(_ stateType: State.Type = State.self,
+                                                                        configType: Config.Type,
+                                                                        callbackQueue: OperationQueue,
+                                                                        configure: @escaping (State) -> Config?) -> Accelerometer<State, Config> {
+        Accelerometer(on: callbackQueue, detail: configure)
+    }
+    
+    static func gyroscope<State, Config : GyroWatchConfig>(_ stateType: State.Type = State.self,
+                                                           configType: Config.Type,
+                                                           callbackQueue: OperationQueue,
+                                                           configure: @escaping (State) -> Config?) -> Gyroscope<State, Config> {
+        Gyroscope(on: callbackQueue, detail: configure)
+    }
+    
+    static func magnetometer<State, Config : MagnetometerWatchConfig>(_ stateType: State.Type = State.self,
+                                                                      configType: Config.Type,
+                                                                      callbackQueue: OperationQueue,
+                                                                      configure: @escaping (State) -> Config?) -> Magnetometer<State, Config> {
+        Magnetometer(on: callbackQueue, detail: configure)
+    }
+    
+    static func deviceMotion<State, Config : DeviceMotionWatchConfig>(_ stateType: State.Type = State.self,
+                                                                      configType: Config.Type,
+                                                                      callbackQueue: OperationQueue,
+                                                                      configure: @escaping (State) -> Config?) -> DeviceMotionSensor<State, Config> {
+        DeviceMotionSensor(on: callbackQueue, detail: configure)
+    }
+    
+}
 
 #endif

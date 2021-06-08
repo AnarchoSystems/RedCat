@@ -93,11 +93,19 @@ public final class ViewStore<Base, State> : Store<State> {
 }
 
 
+#if (os(iOS) && arch(arm64)) || os(macOS) || os(tvOS) || os(watchOS)
+#if canImport(SwiftUI)
+
+import SwiftUI
+
 public extension Store {
     
     func withViewStore<T, U>(_ transform: (State) -> T,
-                             completion: (ViewStore<State, T>) -> U) -> U {
+                             @ViewBuilder completion: (ViewStore<State, T>) -> U) -> U {
         completion(ViewStore(base: self, transform: transform))
     }
     
 }
+
+#endif
+#endif

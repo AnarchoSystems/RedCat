@@ -8,34 +8,7 @@
 import Foundation
 
 
-public protocol DependentDetailReducer : DependentReducer {
-    
-    associatedtype State
-    associatedtype Detail
-    associatedtype Action
-    
-    var keyPath : WritableKeyPath<State, Detail> {get}
-    func apply(_ action: Action,
-               to detail: inout Detail,
-               environment: Dependencies)
-    
-}
-
-
-public extension DependentDetailReducer {
-    
-    @inlinable
-    func apply(_ action: Action,
-               to state: inout State,
-               environment: Dependencies) {
-        apply(action, to: &state[keyPath: keyPath],
-              environment: environment)
-    }
-    
-}
-
-
-public protocol DetailReducerProtocol : DependentDetailReducer {
+public protocol DetailReducerProtocol : ReducerProtocol {
     
     associatedtype State
     associatedtype Detail
@@ -52,9 +25,8 @@ public extension DetailReducerProtocol {
     
     @inlinable
     func apply(_ action: Action,
-               to detail: inout Detail,
-               environment: Dependencies) {
-        apply(action, to: &detail)
+               to state: inout State) {
+        apply(action, to: &state[keyPath: keyPath])
     }
     
 }
@@ -74,9 +46,8 @@ public extension DetailReducerWrapper {
     
     @inlinable
     func applyErased<Action : ActionProtocol>(_ action: Action,
-                                              to state: inout State,
-                                              environment: Dependencies) {
-        body.applyErased(action, to: &state[keyPath: keyPath], environment: environment)
+                                              to state: inout State) {
+        body.applyErased(action, to: &state[keyPath: keyPath])
     }
     
     func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
@@ -103,6 +74,14 @@ public struct DetailReducer<State, Reducer : ErasedReducer> : DetailReducerWrapp
         self.body = build()
     }
     
+    @inlinable
+    public init<Detail, Action : ActionProtocol>(_ detail: WritableKeyPath<State, Detail>,
+                                                 closure: @escaping (Action, inout Detail) -> Void)
+    where Reducer == ClosureReducer<Detail, Action> {
+        self.keyPath = detail
+        self.body = ClosureReducer(closure)
+    }
+    
 }
 
 
@@ -111,6 +90,17 @@ public extension ErasedReducer {
     @inlinable
     func bind<Root>(to property: WritableKeyPath<Root, State>) -> DetailReducer<Root, Self> {
         DetailReducer(property, reducer: self)
+    }
+    
+}
+
+
+public extension Reducers.Native {
+    
+    func detailReducer<State, Detail, Action : ActionProtocol>(_ detail: WritableKeyPath<State, Detail>,
+                                                               _ closure: @escaping (Action, inout Detail) -> Void)
+    -> DetailReducer<State, ClosureReducer<Detail, Action>> {
+        DetailReducer(detail, closure: closure)
     }
     
 }

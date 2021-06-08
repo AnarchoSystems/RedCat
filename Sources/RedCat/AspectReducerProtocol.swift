@@ -8,35 +8,7 @@
 import CasePaths
 
 
-
-public protocol DependentAspectReducer : DependentReducer {
-    
-    associatedtype State
-    associatedtype Action
-    associatedtype Aspect
-    
-    var casePath : CasePath<State, Aspect> {get}
-    func apply(_ action: Action,
-               to aspect: inout Aspect,
-               environment: Dependencies)
-    
-}
-
-
-public extension DependentAspectReducer where State : Releasable {
-    
-    @inlinable
-    func apply(_ action: Action,
-               to state: inout State,
-               environment: Dependencies) {
-        casePath.mutate(&state) {aspect in
-            apply(action, to: &aspect, environment: environment)
-        }
-    }
-    
-}
-
-public protocol AspectReducerProtocol : DependentAspectReducer {
+public protocol AspectReducerProtocol : ReducerProtocol {
     
     associatedtype State
     associatedtype Action
@@ -49,13 +21,14 @@ public protocol AspectReducerProtocol : DependentAspectReducer {
 }
 
 
-public extension AspectReducerProtocol {
+public extension AspectReducerProtocol where State : Releasable {
     
     @inlinable
     func apply(_ action: Action,
-               to aspect: inout Aspect,
-               environment: Dependencies) {
+               to state: inout State) {
+        casePath.mutate(&state) {aspect in
             apply(action, to: &aspect)
+        }
     }
     
 }
@@ -75,10 +48,9 @@ public extension AspectReducerWrapper where State : Releasable {
     
     @inlinable
     func applyErased<Action : ActionProtocol>(_ action: Action,
-                                              to state: inout State,
-                                              environment: Dependencies) {
+                                              to state: inout State) {
         casePath.mutate(&state) {aspect in
-            body.applyErased(action, to: &aspect, environment: environment)
+            body.applyErased(action, to: &aspect)
         }
     }
     
@@ -109,13 +81,32 @@ public struct AspectReducer<State : Releasable, Reducer : ErasedReducer> : Aspec
         self.body = build()
     }
     
+    @inlinable
+    public init<Aspect, Action : ActionProtocol>(_ aspect: CasePath<State, Aspect>,
+                                                 closure: @escaping (Action, inout Aspect) -> Void)
+    where Reducer == ClosureReducer<Aspect, Action> {
+        self.casePath = aspect
+        self.body = ClosureReducer(closure)
+    }
+    
 }
 
 
 public extension ErasedReducer {
     
-    func bind<Root>(to property: CasePath<Root, State>) -> AspectReducer<Root, Self> {
-        AspectReducer(property, reducer: self)
+    func bind<Root>(to aspect: CasePath<Root, State>) -> AspectReducer<Root, Self> {
+        AspectReducer(aspect, reducer: self)
+    }
+    
+}
+
+
+public extension Reducers.Native {
+    
+    func detailReducer<State : Releasable, Aspect, Action : ActionProtocol>(_ aspect: CasePath<State, Aspect>,
+                                                               _ closure: @escaping (Action, inout Aspect) -> Void)
+    -> AspectReducer<State, ClosureReducer<Aspect, Action>> {
+        AspectReducer(aspect, closure: closure)
     }
     
 }

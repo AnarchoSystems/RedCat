@@ -9,26 +9,29 @@ import Foundation
 
 
 
-public struct ClosureReducer<State, Action : ActionProtocol> : DependentReducer {
+public struct ClosureReducer<State, Action : ActionProtocol> : ReducerProtocol {
     
     @usableFromInline
-    let closure : (Action, inout State, Dependencies) -> Void
+    let closure : (Action, inout State) -> Void
     
     @inlinable
-    public init(_ closure: @escaping (Action, inout State, Dependencies) -> Void) {
+    public init(_ closure: @escaping (Action, inout State) -> Void) {
         self.closure = closure
     }
     
     @inlinable
-    public init(_ closure: @escaping (Action, inout State) -> Void) {
-        self = Self {action, state, _ in closure(action, &state)}
+    public func apply(_ action: Action,
+                      to state: inout State) {
+        closure(action, &state)
     }
     
-    @inlinable
-    public func apply(_ action: Action,
-                      to state: inout State,
-                      environment: Dependencies) {
-        closure(action, &state, environment)
+}
+
+
+public extension Reducers.Native {
+    
+    func withClosure<State, Action : ActionProtocol>(_ closure: @escaping (Action, inout State) -> Void) -> ClosureReducer<State, Action> {
+        ClosureReducer(closure)
     }
     
 }

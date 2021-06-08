@@ -76,12 +76,21 @@ extension ActionProtocol {
 public extension UnrecognizedActionDebugger where Logger == DefaultUnknownActionLogger {
     
     @inlinable
-    convenience init(trapOnDebug: Bool) {
+    convenience init(trapOnDebug: Bool = true) {
         self.init(logger: Logger(trapOnDebug: trapOnDebug))
     }
     
 }
 
+public extension Services {
+    
+    enum Debug {
+        public static func unrecognizedActions<State>(_ stateType: State.Type = State.self) -> UnrecognizedActionDebugger<State, DefaultUnknownActionLogger> {
+            UnrecognizedActionDebugger()
+        }
+    }
+    
+}
 
 public struct DefaultUnknownActionLogger : UnknownActionLogger {
     

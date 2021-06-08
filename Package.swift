@@ -7,9 +7,10 @@ let package = Package(
     name: "RedCat",
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
-        .library(
-            name: "RedCat",
-            targets: ["RedCat"]),
+        .library(name: "RedCat",
+                 targets: ["RedCat"]),
+        .library(name: "AnOx",
+                 targets: ["AnOx"])
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -19,11 +20,11 @@ let package = Package(
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
-        .target(
-            name: "RedCat",
-            dependencies: [.product(name: "CasePaths", package: "swift-case-paths")]),
-        .testTarget(
-            name: "RedCatTests",
-            dependencies: ["RedCat"]),
+        .target(name: "RedCat",
+                dependencies: [.product(name: "CasePaths", package: "swift-case-paths")]),
+        .target(name: "AnOx",
+                dependencies: ["RedCat"]),
+        .testTarget(name: "RedCatTests",
+                    dependencies: ["RedCat"]),
     ]
 )

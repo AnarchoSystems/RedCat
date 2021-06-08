@@ -52,3 +52,18 @@ public struct BindCase<Root : Releasable, Changer : PropertyChange> : AspectRedu
     }
     
 }
+
+
+public extension Reducers.Native {
+    
+    func bind<Root, Changer : PropertyChange>(_ property: WritableKeyPath<Root, Changer.Value>,
+                                              to actionType: Changer.Type) -> BindChange<Root, Changer> {
+        BindChange(of: property, to: actionType)
+    }
+    
+    func bind<Root : Releasable, Changer : PropertyChange>(_ aspect: CasePath<Root, Changer.Value>,
+                                                           to actionType: Changer.Type) -> BindCase<Root, Changer> {
+        BindCase(of: aspect, to: actionType)
+    }
+    
+}

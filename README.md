@@ -65,7 +65,7 @@ The answer is that the root protocol from which all other reducer protocols inhe
 public protocol ErasedReducer {
 
    associatedtype State 
-   func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout State, environment: Dependencies)
+   func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout State)
 
 }
 ```
@@ -118,12 +118,11 @@ let enumReducer = reducer3.compose(with: property3, aspect: /EnumType.bar)
 
 ### Naming Schemes
 
-Plain reducers, aspect reducers and detail reducers come in multiple forms: For each of them, there are protocols:
+Plain reducers, aspect reducers and detail reducers come in two flavors:
 
 ```swift
-DependentXXXReducer // required method takes environment as argument
-XXXReducerProtocol // required method doesn't take environment as argument
-XXXReducerWrapper // requirements are a wrapped reducer called "body" and possibly a keypath/casepath
+XXXReducerProtocol // protocol requires "apply" method
+XXXReducerWrapper // protocol requires another reducer as "body"
 ```
 
 and a struct ```XXXReducer```. The plain ```Reducer``` can be initialized using a closure or using a keypath/casepath and a wrapped reducer. This makes ```Aspect/Detail``` in ```Aspect/DetailReducer``` optional, as the ```Reducer``` will then just wrap itself around the appropriate type.
@@ -138,9 +137,30 @@ func dispatch<Action : ActionProtocol>(_ action: Action) -> Result
 
 where ```Result``` is an associatedtype conforming to ErasedReducer. If you actually want to apply different reducers given different actions, use one of the following: ```IfReducer```, ```IfElseReducer``` or ```Switch4Reducer```.
 
+For discoverability, we recommend adding reducer types, "namespaced" by their ```State```type, as nested types to ```Reducers```, a public "namespace" provided by RedCat.
+
+### The Store 
+
+If you're done composing the reducer, you may wonder how to make it do something useful. Unidirectional data flow frameworks are opinionated about this: There should only be one "global" app state, and the view should be a function of this. In order to make this work, there is a ```Store``` type.
+
+In RedCat, this comes in two main flavours:
+
+1. The erased ```Store<State>``` type seen by the services (see below).
+2. The ```ObservableStore<State>``` that can be observed using ```addObserver```. If Combine can be imported, this store is also known as ```CombineStore<State>```.
+
+Actions are sent to the store via its ```send``` or ```sendWithUndo``` methods. This is assumed to happen on the main thread. The action will then be enqueued, sent to the services (which may or may not enqueue further actions), sent to the reducer (which mutates the global state) and then sent to the services again (which may again enqueue further actions). This process is repeated until no service has further actions to enqueue (or they enqueue them asynchronously). For this whole process, the observers are notified exactly once.
+
+For discoverability, we recommend adding action types as nested types to ```Actions```, a public "namespace" provided by RedCat.
+
+### Services
+
+Every app has to handle side effects somehow. For this, RedCat has a dedicated ```Service``` class. This class exposes two methods that can be overridden: ```beforeUpdate``` and ```afterUpdate```. Both methods take the dispatched action, the app's ```Dependencies``` (see below) and the state before or after the action is applied. The services are the perfect place to orchestrate further actions, either immediately or by registering an event listener and hopping back to the main queue whenever an event arrives. The ```Dependencies``` passed to the service are the ideal place to configure, e.g, the source of asynchronous events.
+
+For discoverability, we recommend adding service types as nested types to ```Services```, a public "namespace" provided by RedCat.
+
 ### Environment
 
-As you can see above, some reducers may depend on some ```Dependencies``` type. This type works quite similarly to ```SwiftUI```'s environment, except it's named ```Dependencies``` in order to avoid name conflicts that break your property wrappers. The main way to work with this is as follows:
+As mentioned above, services depend on some ```Dependencies``` type. This type works quite similarly to ```SwiftUI```'s environment, except it's named ```Dependencies``` in order to avoid name conflicts that break your property wrappers. The main way to work with this is as follows:
 
 1. You declare some type that will be used as a key for ```Dependencies```' subscript:
 
@@ -182,21 +202,6 @@ enum MyKey : Config {
 This is very useful if the value usually only depends on other stored properties and only sometimes needs to be overridden.
 
 Another key feature of ```Dependencies``` is memoization. Whenever the ```Dependencies``` instance doesn't find a stored value, it computes the default value - and stores it. This is done by reference (hence, the nonmutating getter), hence, if the associated value is a reference type, it will be retained. This is desirable whenever your dependency is designated for a service rather than a reducer. The only tradeoff is that reading environment values is not threadsafe and has to occur on the main thread.
-
-### The Store 
-
-If you're done composing the reducer, you may wonder how to make it do something useful. Unidirectional data flow frameworks are opinionated about this: There should only be one "global" app state, and the view should be a function of this. In order to make this work, there is a ```Store``` type.
-
-In RedCat, this comes in two main flavours:
-
-1. The erased ```Store<State>``` type seen by the services (see below).
-2. The ```ObservableStore<State>``` that can be observed using ```addObserver```. If Combine can be imported, this store is also known as ```CombineStore<State>```.
-
-Actions are sent to the store via its ```send``` or ```sendWithUndo``` methods. This is assumed to happen on the main thread. The action will then be enqueued, sent to the services (which may or may not enqueue further actions), sent to the reducer (which mutates the global state) and then sent to the services again (which may again enqueue further actions). This process is repeated until no service has further actions to enqueue (or they enqueue them asynchronously). For this whole process, the observers are notified exactly once.
-
-### Services
-
-Every app has to handle side effects somehow. For this, RedCat has a dedicated ```Service``` class. This class exposes two methods that can be overridden: ```beforeUpdate``` and ```afterUpdate```. Both methods take the dispatched action, the app's environment and the state before or after the action is applied. The services are the perfect place to orchestrate further actions, either immediately or by registering an event listener and hopping back to the main queue whenever an event arrives. The ```Dependencies``` passed to the service are the ideal place to configure the source of the events.
 
 ## Proofs of Concept
 
