@@ -70,7 +70,7 @@ public protocol ErasedReducer {
 }
 ```
 
-Every reducer protocol that has an associatedtype ```Action``` provides a default implementation that tries to downcast the generic action to its own ```Action``` type and only handles that case. In optimized builds, this can be quite efficient because the downcast can in principle be resolved at compile time. Moreover, the compiler can in principle optimize away empty function calls. That means: as you send an action to your composed reducer, there will be no runtime overhead (in optimized builds) from finding the reducers handling the given action!
+Every reducer protocol that has an associatedtype ```Action``` provides a default implementation that tries to downcast the generic action to its own ```Action``` type and only handles that case. In optimized builds, this can be quite efficient because the success or failure of the downcast can in principle be resolved at compile time thanks to generic specialization and RedCat being a static library (disclaimer: unfortunately, Swift's compiler does not guarantee generic specialization even in optimized builds and there is no way (yet?) to force the compiler to specialize generic functions as aggressively as possible; as of Swift 5.4, chances are that your reducer will not benefit from this optimization). Moreover, the compiler can in principle optimize away empty function calls through inlining. That means: as you send an action to your composed reducer, there will be no runtime overhead (in optimized builds) from finding the reducers handling the given action!
 
 ### Modularization
 
@@ -213,7 +213,7 @@ In ```Package.swift```, add the following:
 
 ```swift
 dependencies: [
-        .package(url: "https://github.com/AnarchoSystems/RedCat.git", .branch("main"))
+        .package(url: "https://github.com/AnarchoSystems/RedCat.git", from: "0.3.1")
     ]
 ```
 
