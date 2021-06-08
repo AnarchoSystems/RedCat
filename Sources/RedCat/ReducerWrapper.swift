@@ -21,11 +21,9 @@ public extension ReducerWrapper {
     
     @inlinable
     func applyErased<Action : ActionProtocol>(_ action: Action,
-                                              to state: inout Body.State,
-                                              environment: Dependencies) {
+                                              to state: inout Body.State) {
         body.applyErased(action,
-                         to: &state,
-                         environment: environment)
+                         to: &state)
     }
     
     @inlinable
@@ -43,12 +41,6 @@ public struct Reducer<Body : ErasedReducer> : ReducerWrapper {
     @inlinable
     public init(_ body: () -> Body) {
         self.body = body()
-    }
-    
-    @inlinable
-    public init<State, Action : ActionProtocol>(_ closure: @escaping (Action, inout State, Dependencies) -> Void)
-    where Body == ClosureReducer<State, Action> {
-        self.body = ClosureReducer(closure)
     }
     
     @inlinable

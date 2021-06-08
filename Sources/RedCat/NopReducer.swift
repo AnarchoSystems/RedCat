@@ -16,12 +16,20 @@ public struct NopReducer<State> : ErasedReducer {
     
     @inlinable
     public func applyErased<Action : ActionProtocol>(_ action: Action,
-                                                     to state: inout State,
-                                                     environment: Dependencies) {}
+                                                     to state: inout State) {}
     
     @inlinable
     public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         false
+    }
+    
+}
+
+
+public extension Reducers.Native {
+    
+    func nop<State>(stateType: State.Type = State.self) -> NopReducer<State> {
+        NopReducer()
     }
     
 }

@@ -6,22 +6,12 @@
 //
 
 import Foundation
+import RedCat
 
 
-public enum NetworkHandler : Dependency {
-    public static let defaultValue : ResolvedNetworkHandler = URLSession.shared
-}
-
-public protocol ResolvedNetworkHandler {
+public protocol NetworkHandler {
     func dataTask(with request: URLRequest,
                   completionHandler: @escaping (Result<URLSessionResponse, Error>) -> Void) -> URLDataTask
-}
-
-public extension Dependencies {
-    var networkHandler : ResolvedNetworkHandler {
-        get {self[NetworkHandler.self]}
-        set {self[NetworkHandler.self] = newValue}
-    }
 }
 
 public protocol URLDataTask {
@@ -36,7 +26,7 @@ public struct URLSessionResponse {
 
 extension URLSessionDataTask : URLDataTask {}
 
-extension URLSession : ResolvedNetworkHandler {
+extension URLSession : NetworkHandler {
     
     public func dataTask(with request: URLRequest,
                          completionHandler: @escaping (Result<URLSessionResponse, Error>) -> Void) -> URLDataTask {
@@ -54,12 +44,12 @@ extension URLSession : ResolvedNetworkHandler {
 }
 
 public protocol URLRequestProtocol {
-    func dataTask(networkHandler: ResolvedNetworkHandler,
+    func dataTask(networkHandler: NetworkHandler,
                   completion: @escaping (Result<URLSessionResponse, Error>) -> Void) -> URLDataTask
 }
 
 extension URLRequest : URLRequestProtocol {
-    public func dataTask(networkHandler: ResolvedNetworkHandler,
+    public func dataTask(networkHandler: NetworkHandler,
                          completion: @escaping (Result<URLSessionResponse, Error>) -> Void) -> URLDataTask {
         networkHandler.dataTask(with: self, completionHandler: completion)
     }
@@ -101,7 +91,7 @@ public final class APIService<Whole, Orchestration : APIHandler> :
         guard let request = newValue else {return}
         
         let requestHandler = orchestration.onRequest(request)
-            .dataTask(networkHandler: environment.networkHandler) {
+            .dataTask(networkHandler: environment.native.networkHandler) {
             result in
             DispatchQueue.main.async {
                 guard self.lastRequest?.value == request else {return}

@@ -51,16 +51,16 @@ public struct ActionListHandling<I : ErasedReducer> : ErasedReducer {
     init(_ wrapped: I) {self.wrapped = wrapped}
     
     @inlinable
-    public func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout I.State, environment: Dependencies) {
+    public func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout I.State) {
         
         guard var list = action as? ActionGroup else {
-            return wrapped.applyErased(action, to: &state, environment: environment)
+            return wrapped.applyErased(action, to: &state)
         }
         
         list.unroll()
         
         for elm in list.values {
-            wrapped.applyDynamic(elm, to: &state, environment: environment)
+            wrapped.applyDynamic(elm, to: &state)
         }
         
     }
@@ -82,16 +82,16 @@ public struct UndoListHandling<I : ErasedReducer> : ErasedReducer {
     init(_ wrapped: I) {self.wrapped = wrapped}
     
     @inlinable
-    public func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout I.State, environment: Dependencies) {
+    public func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout I.State) {
         
         guard var list = action as? UndoGroup else {
-            return wrapped.applyErased(action, to: &state, environment: environment)
+            return wrapped.applyErased(action, to: &state)
         }
         
         list.unroll()
         
         for elm in list.values {
-            wrapped.applyDynamic(elm, to: &state, environment: environment)
+            wrapped.applyDynamic(elm, to: &state)
         }
         
     }

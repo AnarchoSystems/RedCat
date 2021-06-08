@@ -11,6 +11,7 @@ import CasePaths
 
 public protocol Releasable {
     
+    ///Releases any associated memory that is reference counted. For instance, an ```Array?``` could change its value to nil.
     mutating func releaseCopy()
     
 }

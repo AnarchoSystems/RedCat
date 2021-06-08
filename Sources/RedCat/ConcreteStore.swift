@@ -7,21 +7,6 @@
 
 import Foundation
 
-enum AppInitCheck : Config {
-    static func value(given: Dependencies) -> Bool {
-        given.debug
-    }
-}
-
-public extension Dependencies {
-    
-    /// If true, a warning will be printed, if the ```AppInit``` is somehow sent more than once.
-    var __appInitCheck : Bool {
-        get {self[AppInitCheck.self]}
-        set {self[AppInitCheck.self] = newValue}
-    }
-}
-
 @usableFromInline
 final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.State> {
     
@@ -66,8 +51,8 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
     override func send<Action : ActionProtocol>(_ action: Action) {
         
         if action is Actions.AppInit {
-            if hasInitialized && environment.__appInitCheck {
-                print("RedCat: AppInit has been sent more than once. Please file a bug report.\nIf your app works fine otherwise, you can silence this warning by setting __appInitCheck to false in the environment.")
+            if hasInitialized && environment.internalFlags.appInitCheck {
+                print("RedCat: AppInit has been sent more than once. Please file a bug report.\nIf your app works fine otherwise, you can silence this warning by setting internalFlags.appInitCheck to false in the environment.")
             }
             hasInitialized = true
         }
@@ -101,7 +86,7 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
             return
         }
         
-        objectWillChange.notifyAll()
+        objectWillChange.notifyAll(warnInefficientObservers: environment.internalFlags.warnInefficientObservers)
         dispatchActions()
     }
     
@@ -117,7 +102,7 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
                 action.beforeUpdate(service: service, store: self, environment: environment)
             }
             
-            reducer.applyDynamic(action, to: &_state, environment: environment)
+            reducer.applyDynamic(action, to: &_state)
             
             // services have an outermost to innermost semantics, hence second loop is reversed order
             
