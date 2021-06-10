@@ -7,6 +7,8 @@
 
 import Foundation
 
+
+///```AnyReducer``` is the proper type erasure for all reducers.
 public struct AnyReducer<State>: ErasedReducer {
 	
     @usableFromInline
@@ -14,6 +16,10 @@ public struct AnyReducer<State>: ErasedReducer {
     @usableFromInline
 	internal let acceptsActionBlock: (ActionProtocol) -> Bool
 	
+    
+    /// Initializes the erased reducer from an arbitrary other reducer.
+    /// - Parameters:
+    ///     - reducer: The reducer to type-erase.
 	public init<R: ErasedReducer>(_ reducer: R) where R.State == State {
 		applyBlock = {
 			reducer.applyDynamic($0, to: &$1)
@@ -35,7 +41,7 @@ public struct AnyReducer<State>: ErasedReducer {
 
 public extension Reducers.Native {
     
-    func anyReducer<Wrapped : ErasedReducer>(_ wrapped: Wrapped) -> AnyReducer<Wrapped.State> {
+    static func anyReducer<Wrapped : ErasedReducer>(_ wrapped: Wrapped) -> AnyReducer<Wrapped.State> {
         AnyReducer(wrapped)
     }
     

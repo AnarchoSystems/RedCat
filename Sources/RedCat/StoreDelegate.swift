@@ -10,6 +10,7 @@ import Foundation
 
 /// Implement this protocol (in absence of ```Combine```) to monitor the store for dispatch cycles that are about to happen.
 public protocol StoreDelegate {
+    /// Indicates if this ```StoreDelegate``` is still interested in updates. If this property is ```false```, the ```StoreDelegate``` will be removed automatically from the subscriber list at the next dispatch cycle.
 	var isAlive: Bool { get }
 	/// The store will call this method whenever a dispatch cycle is about to happen.
 	/// - Important: The method will be called *once* per dispatch cycle, *not* per change of state.

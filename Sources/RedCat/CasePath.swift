@@ -8,17 +8,19 @@
 import CasePaths
 
 
-
+/// A ```Releasable``` enum type provides some mechanism to release the current stored associated counted references.
 public protocol Releasable {
     
-    ///Releases any associated memory that is reference counted. For instance, an ```Array?``` could change its value to nil.
+    /// Releases any associated memory that is reference counted. For instance, an ```Array?``` could change its value to nil.
     mutating func releaseCopy()
     
 }
 
 
+/// An ```Emptyable``` enum type has at least one enum case that can be considered "empty".
 public protocol Emptyable : Releasable {
     
+    /// An enum case that can be created without significant effort.
     static var empty : Self {get}
     
 }
@@ -47,7 +49,8 @@ public extension Optional {
     @inlinable
     mutating func modify(default defaultValue: Wrapped? = nil,
                          _ closure: @escaping (inout Wrapped) -> Void) {
-        (/Optional.some).mutate(&self, default: defaultValue, closure: closure)
+        (/Optional.some).mutate(&self, default: defaultValue,
+                                closure: closure)
     }
     
 }

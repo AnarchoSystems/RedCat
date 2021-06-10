@@ -9,6 +9,7 @@ import Foundation
 import CasePaths
 
 
+/// Applies actions only when the state matches some condition.
 public struct GuardReducer<Wrapped : ErasedReducer> : ErasedReducer {
     
     @usableFromInline
@@ -36,6 +37,9 @@ public struct GuardReducer<Wrapped : ErasedReducer> : ErasedReducer {
         wrapped.applyErased(action, to: &state)
     }
     
+    /// Indicates if the wrapped reducer accepts the action.
+    ///
+    /// - Important: Only the action type is checked. The guard condition of this reducer has no impact here.
     @inlinable
     public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
         wrapped.acceptsAction(action)
@@ -46,7 +50,7 @@ public struct GuardReducer<Wrapped : ErasedReducer> : ErasedReducer {
 
 public extension Reducers.Native {
     
-    func guarded<Wrapped : ErasedReducer>(_ reducer: Wrapped,
+    static func guarded<Wrapped : ErasedReducer>(_ reducer: Wrapped,
                                                  where condition: @escaping (Wrapped.State) -> Bool) -> GuardReducer<Wrapped> {
         GuardReducer(reducer, where: condition)
     }
@@ -97,6 +101,7 @@ public extension Reducer {
 
 public extension ErasedReducer {
     
+    /// Handles actions only when the state satisfies some condition.
     func filter(_ condition: @escaping (State) -> Bool) -> GuardReducer<Self> {
         GuardReducer(self, where: condition)
     }

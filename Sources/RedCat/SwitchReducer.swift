@@ -129,11 +129,11 @@ public enum Switch4Reducer<R1 : ErasedReducer, R2 : ErasedReducer, R3 : ErasedRe
 
 public extension Reducers.Native {
     
-    func ifReducer<R1 : ErasedReducer, R2 : ErasedReducer>(_ r1: R1, otherType: R2.Type = R2.self) -> IfReducer<R1, R2> {
+    static func ifReducer<R1 : ErasedReducer, R2 : ErasedReducer>(_ r1: R1, otherType: R2.Type = R2.self) -> IfReducer<R1, R2> {
         IfReducer.ifReducer(r1)
     }
     
-    func elseReducer<R1 : ErasedReducer, R2 : ErasedReducer>(_ r2: R2, otherType: R1.Type = R1.self) -> IfReducer<R1, R2> {
+    static func elseReducer<R1 : ErasedReducer, R2 : ErasedReducer>(_ r2: R2, otherType: R1.Type = R1.self) -> IfReducer<R1, R2> {
         IfReducer.elseReducer(r2)
     }
     

@@ -8,7 +8,7 @@
 import Foundation
 
 
-
+/// A ```NopReducer``` accepts no actions and will do absolutely nothing when it sees one. This is useful in conjunction with ```DispatchReducer```s that return an ```IfReducer```.
 public struct NopReducer<State> : ErasedReducer {
     
     @inlinable
@@ -28,7 +28,7 @@ public struct NopReducer<State> : ErasedReducer {
 
 public extension Reducers.Native {
     
-    func nop<State>(stateType: State.Type = State.self) -> NopReducer<State> {
+    static func nop<State>(stateType: State.Type = State.self) -> NopReducer<State> {
         NopReducer()
     }
     

@@ -9,9 +9,12 @@ import CasePaths
 
 
 
+/// A ```ReducerWrapper``` is a type used for indirect composition. The implementation of what should happen to the state given an ```Action``` is given via the ```body``` property. The single responsibility of ```ReducerWrapper``` is to hide complex composed body types in the absence of opaque return types with accessible associatedtype.
 public protocol ReducerWrapper : ErasedReducer {
     
     associatedtype Body : ErasedReducer
+    
+    /// The reducer to apply to the ```State```.
     var body : Body {get}
     
 }
@@ -34,6 +37,7 @@ public extension ReducerWrapper {
 }
 
 
+/// An "anonymous" ```ReducerWrapper```. A lot of initializers are provided to make it easy to write small reducers.
 public struct Reducer<Body : ErasedReducer> : ReducerWrapper {
     
     public let body : Body

@@ -8,16 +8,24 @@
 import Foundation
 
 
+/// Types conforming to ```Config``` define values that can be stored in the ```Dependencies```. If no value is stored, an appropriate default value will be computed from other dependencies.
 public protocol Config {
     
     associatedtype Value
-    static func value(given: Dependencies) -> Value
+    
+    /// Computes an appropriate default value given the rest of the environment.
+    /// - Parameters:
+    ///     - environment: The dependency graph that needs a default value.
+    static func value(given environment: Dependencies) -> Value
     
 }
 
 
+/// Types conforming to ```Config``` define values that can be stored in the ```Dependencies```. If no value is stored, the static default value from this protocol will be assumed.
 public protocol Dependency : Config where StaticValue == Value {
     associatedtype StaticValue
+    
+    /// The default value, if nothing else is stored.
     static var defaultValue : StaticValue {get}
 }
 

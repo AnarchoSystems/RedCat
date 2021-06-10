@@ -22,6 +22,7 @@ public extension StoreObjectWillChangePublisher {
 
 import Combine
 
+/// ```CombineStore``` is the preferred spelling of ```ObservableStore``` if you intend to use Combine. It is, however, the exact same type.
 public typealias CombineStore<State> = ObservableStore<State>
 
 
