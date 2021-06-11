@@ -8,41 +8,49 @@
 
 extension __StoreProtocol {
     
-    public func map<NewState>(_ transform: @escaping (State) -> NewState) -> MapStore<Self, NewState> {
-        MapStore(base: self, transform: transform)
+    public func map<NewState, NewAction>(onAction: @escaping (NewAction) -> Action,
+        _ transform: @escaping (State) -> NewState) -> MapStore<Self, NewState, NewAction> {
+        MapStore(base: self, transform: transform, embed: onAction)
     }
     
-    public subscript<NewState>(dynamicMember keyPath: KeyPath<State, NewState>) -> MapStore<Self, NewState> {
-        MapStore(base: self, transform: { $0[keyPath: keyPath] })
+    public func map<NewState>(_ transform: @escaping (State) -> NewState) -> MapStore<Self, NewState, Action> {
+        map(onAction: {$0}, transform)
+    }
+    
+    public subscript<NewState>(dynamicMember keyPath: KeyPath<State, NewState>) -> MapStore<Self, NewState, Action> {
+        MapStore(base: self, transform: { $0[keyPath: keyPath] }, embed: {$0})
     }
 }
 
 
-public final class MapStore<Base: __StoreProtocol, State>: Store<State> {
+public final class MapStore<Base: __StoreProtocol, State, Action>: Store<State, Action> {
     
     @usableFromInline
     let base : Base
+    @usableFromInline
     let transform : (Base.State) -> State
+    @usableFromInline
+    let embed : (Action) -> Base.Action
     
+    @inlinable
     public override var state : State {
         transform(base.state)
     }
     
     init(base: Base,
-         transform: @escaping (Base.State) -> State) {
+         transform: @escaping (Base.State) -> State,
+         embed: @escaping (Action) -> Base.Action) {
         self.base = base
         self.transform = transform
+        self.embed = embed
         super.init()
     }
     
     @inlinable
-    public override func send<Action: ActionProtocol>(_ action: Action) {
-        base.send(action)
+    public override func send(_ action: Action) {
+        base.send(embed(action))
     }
     
-    public override func acceptsAction<Action>(_ action: Action) -> Bool where Action : ActionProtocol {
-        base.acceptsAction(action)
-    }
 }
 
 extension MapStore: __ObservableStoreProtocol where Base: __ObservableStoreProtocol {
@@ -70,28 +78,6 @@ extension MapStore: ObservableObject where Base: ObservableObject {
 #endif
 #endif
 
-public final class ViewStore<Base, State> : Store<State> {
-    
-    @usableFromInline
-    let base : Store<Base>
-    public override var state : State {
-        _state
-    }
-    let _state : State
-    
-    init(base: Store<Base>, transform: (Base) -> State) {
-        self.base = base
-        self._state = transform(base.state)
-        super.init()
-    }
-    
-    @inlinable
-    public override func send<Action: ActionProtocol>(_ action: Action) {
-        base.send(action)
-    }
-    
-}
-
 
 #if (os(iOS) && arch(arm64)) || os(macOS) || os(tvOS) || os(watchOS)
 #if canImport(SwiftUI)
@@ -100,9 +86,10 @@ import SwiftUI
 
 public extension Store {
     
-    func withViewStore<T, U>(_ transform: (State) -> T,
-                             @ViewBuilder completion: (ViewStore<State, T>) -> U) -> U {
-        completion(ViewStore(base: self, transform: transform))
+    func withViewStore<A, T, U>(onAction: @escaping (A) -> Action,
+                             _ transform: @escaping (State) -> T,
+                             @ViewBuilder completion: (MapStore<Store<State, Action>, T, A>) -> U) -> U {
+        completion(map(onAction: onAction, transform))
     }
     
 }

@@ -10,7 +10,7 @@ import CasePaths
 
 
 /// Applies actions only when the state matches some condition.
-public struct GuardReducer<Wrapped : ErasedReducer> : ErasedReducer {
+public struct GuardReducer<Wrapped : ReducerProtocol> : ReducerProtocol {
     
     @usableFromInline
     let condition : (Wrapped.State) -> Bool
@@ -29,20 +29,12 @@ public struct GuardReducer<Wrapped : ErasedReducer> : ErasedReducer {
     }
     
     @inlinable
-    public func applyErased<Action : ActionProtocol>(_ action: Action,
-                                                     to state: inout Wrapped.State) {
+    public func apply(_ action: Wrapped.Action,
+                      to state: inout Wrapped.State) {
         guard condition(state) else {
             return
         }
-        wrapped.applyErased(action, to: &state)
-    }
-    
-    /// Indicates if the wrapped reducer accepts the action.
-    ///
-    /// - Important: Only the action type is checked. The guard condition of this reducer has no impact here.
-    @inlinable
-    public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
-        wrapped.acceptsAction(action)
+        wrapped.apply(action, to: &state)
     }
     
 }
@@ -50,7 +42,7 @@ public struct GuardReducer<Wrapped : ErasedReducer> : ErasedReducer {
 
 public extension Reducers.Native {
     
-    static func guarded<Wrapped : ErasedReducer>(_ reducer: Wrapped,
+    static func guarded<Wrapped : ReducerProtocol>(_ reducer: Wrapped,
                                                  where condition: @escaping (Wrapped.State) -> Bool) -> GuardReducer<Wrapped> {
         GuardReducer(reducer, where: condition)
     }
@@ -60,7 +52,7 @@ public extension Reducers.Native {
 
 public extension DetailReducer {
     
-    init<Reducer : ErasedReducer>(_ detail: WritableKeyPath<State, Reducer.State>,
+    init<Reducer : ReducerProtocol>(_ detail: WritableKeyPath<State, Reducer.State>,
                                   where condition: @escaping (Reducer.State) -> Bool,
                                   build: @escaping () -> Reducer) where Self.Body == GuardReducer<Reducer> {
         self = DetailReducer(detail, reducer: GuardReducer(where: condition, build: build))
@@ -70,7 +62,7 @@ public extension DetailReducer {
 
 public extension AspectReducer {
     
-    init<Reducer : ErasedReducer>(_ aspect: CasePath<State, Reducer.State>,
+    init<Reducer : ReducerProtocol>(_ aspect: CasePath<State, Reducer.State>,
                                   where condition: @escaping (Reducer.State) -> Bool,
                                   build: @escaping () -> Reducer) where Self.Body == GuardReducer<Reducer> {
         self = AspectReducer(aspect, reducer: GuardReducer(where: condition, build: build))
@@ -79,7 +71,7 @@ public extension AspectReducer {
 
 public extension Reducer {
     
-    init<State, Wrapped : ErasedReducer>(_ detail: WritableKeyPath<State, Wrapped.State>,
+    init<State, Wrapped : ReducerProtocol>(_ detail: WritableKeyPath<State, Wrapped.State>,
                                          where condition: @escaping (Wrapped.State) -> Bool,
                                          build: @escaping () -> Wrapped) where Body == DetailReducer<State, GuardReducer<Wrapped>> {
         self = Reducer {
@@ -88,7 +80,7 @@ public extension Reducer {
     }
     
     
-    init<State, Wrapped : ErasedReducer>(_ aspect: CasePath<State, Wrapped.State>,
+    init<State, Wrapped : ReducerProtocol>(_ aspect: CasePath<State, Wrapped.State>,
                                          where condition: @escaping (Wrapped.State) -> Bool,
                                          build: @escaping () -> Wrapped) where Body == AspectReducer<State, GuardReducer<Wrapped>> {
         self = Reducer {
@@ -99,34 +91,34 @@ public extension Reducer {
 }
 
 
-public extension ErasedReducer {
+public extension ReducerProtocol {
     
     /// Handles actions only when the state satisfies some condition.
     func filter(_ condition: @escaping (State) -> Bool) -> GuardReducer<Self> {
         GuardReducer(self, where: condition)
     }
     
-    func compose<Next : ErasedReducer>(with next: Next,
+    func compose<Next : ReducerProtocol>(with next: Next,
                                        where condition: @escaping (State) -> Bool)
     -> ComposedReducer<Self, GuardReducer<Next>> where State == Next.State {
         compose(with: next.filter(condition))
     }
     
-    func compose<Next : ErasedReducer>(with next: Next,
+    func compose<Next : ReducerProtocol>(with next: Next,
                                        property: WritableKeyPath<State, Next.State>,
                                        where condition: @escaping (State) -> Bool)
     -> ComposedReducer<Self, GuardReducer<DetailReducer<State, Next>>> {
         compose(with: next.bind(to: property).filter(condition))
     }
     
-    func compose<Next : ErasedReducer>(with next: Next,
+    func compose<Next : ReducerProtocol>(with next: Next,
                                        property: WritableKeyPath<State, Next.State>,
                                        where condition: @escaping (Next.State) -> Bool)
     -> ComposedReducer<Self, DetailReducer<State, GuardReducer<Next>>> {
         compose(with: next.filter(condition).bind(to: property))
     }
     
-    func compose<Next : ErasedReducer>(with next: Next,
+    func compose<Next : ReducerProtocol>(with next: Next,
                                        aspect: CasePath<State, Next.State>,
                                        where condition: @escaping (Next.State) -> Bool)
     -> ComposedReducer<Self, AspectReducer<State, GuardReducer<Next>>> where State : Emptyable {

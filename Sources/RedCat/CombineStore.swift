@@ -23,7 +23,7 @@ public extension StoreObjectWillChangePublisher {
 import Combine
 
 /// ```CombineStore``` is the preferred spelling of ```ObservableStore``` if you intend to use Combine. It is, however, the exact same type.
-public typealias CombineStore<State> = ObservableStore<State>
+public typealias CombineStore = ObservableStore
 
 
 @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
@@ -49,13 +49,13 @@ extension __ObservableStoreProtocol {
 	
 	public var publisher: StatePublisher<Self> { StatePublisher(base: self) }
 	
-	public var subscriber: AnySubscriber<ActionProtocol, Never> {
+	public var subscriber: AnySubscriber<Action, Never> {
 		AnySubscriber(
 			receiveSubscription: {
 				$0.request(.unlimited)
 			},
 			receiveValue: {
-				$0.send(to: self)
+                self.send($0)
 				return .unlimited
 			},
 			receiveCompletion: nil
@@ -63,12 +63,6 @@ extension __ObservableStoreProtocol {
 	}
 }
 
-extension ActionProtocol {
-    @inlinable
-    func send<S: __StoreProtocol>(to store: S) {
-        store.send(self)
-    }
-}
 
 @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
 public struct StatePublisher<Store: __ObservableStoreProtocol>: Publisher {

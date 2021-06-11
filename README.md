@@ -62,7 +62,7 @@ Wait, what? In the above example, we have seen that reducers have *two* associat
 The answer is that the root protocol from which all other reducer protocols inherit actually looks like this:
 
 ```swift
-public protocol ErasedReducer {
+public protocol ReducerProtocol {
 
    associatedtype State 
    func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout State)
@@ -135,7 +135,7 @@ A distinguishing feature of RedCat is the ```DispatchReducer``` protocol. Someti
 func dispatch<Action : ActionProtocol>(_ action: Action) -> Result
 ```
 
-where ```Result``` is an associatedtype conforming to ErasedReducer. If you actually want to apply different reducers given different actions, use one of the following: ```IfReducer```, ```IfElseReducer``` or ```Switch4Reducer```.
+where ```Result``` is an associatedtype conforming to ReducerProtocol. If you actually want to apply different reducers given different actions, use one of the following: ```IfReducer```, ```IfElseReducer``` or ```Switch4Reducer```.
 
 For discoverability, we recommend adding reducer types, "namespaced" by their ```State```type, as nested types to ```Reducers```, a public "namespace" provided by RedCat.
 

@@ -45,9 +45,11 @@ public extension AspectReducerProtocol where State : Releasable {
 }
 
 /// An ```AspectReducerWrapper``` is a type used for indirect composition. The implementation of what should happen to the state given an ```Action``` is given via the ```body``` property, and the wrapper's single responsibility is delegating the action to the body whenever the state matches a certain enum case.
-public protocol AspectReducerWrapper : ErasedReducer {
+public protocol AspectReducerWrapper : ReducerProtocol where Action == Body.Action {
     
-    associatedtype Body : ErasedReducer
+    associatedtype State
+    associatedtype Action = Body.Action 
+    associatedtype Body : ReducerProtocol
     
     /// The enum case of the enum-typed ```State``` for which this reducer is used.
     var casePath : CasePath<State, Body.State> {get}
@@ -61,23 +63,18 @@ public protocol AspectReducerWrapper : ErasedReducer {
 public extension AspectReducerWrapper where State : Releasable {
     
     @inlinable
-    func applyErased<Action : ActionProtocol>(_ action: Action,
-                                              to state: inout State) {
+    func apply(_ action: Body.Action,
+               to state: inout State) {
         casePath.mutate(&state) {aspect in
-            body.applyErased(action, to: &aspect)
+            body.apply(action, to: &aspect)
         }
-    }
-    
-    @inlinable
-    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
-        body.acceptsAction(action)
     }
     
 }
 
 
 /// An "anonymous" ```AspectReducerWrapper```.
-public struct AspectReducer<State : Releasable, Reducer : ErasedReducer> : AspectReducerWrapper {
+public struct AspectReducer<State : Releasable, Reducer : ReducerProtocol> : AspectReducerWrapper {
     
     public let casePath : CasePath<State, Reducer.State>
     public let body : Reducer
@@ -97,8 +94,8 @@ public struct AspectReducer<State : Releasable, Reducer : ErasedReducer> : Aspec
     }
     
     @inlinable
-    public init<Aspect, Action : ActionProtocol>(_ aspect: CasePath<State, Aspect>,
-                                                 closure: @escaping (Action, inout Aspect) -> Void)
+    public init<Aspect, Action>(_ aspect: CasePath<State, Aspect>,
+                        closure: @escaping (Action, inout Aspect) -> Void)
     where Reducer == ClosureReducer<Aspect, Action> {
         self.casePath = aspect
         self.body = ClosureReducer(closure)
@@ -107,7 +104,7 @@ public struct AspectReducer<State : Releasable, Reducer : ErasedReducer> : Aspec
 }
 
 
-public extension ErasedReducer {
+public extension ReducerProtocol {
     
     func bind<Root>(to aspect: CasePath<Root, State>) -> AspectReducer<Root, Self> {
         AspectReducer(aspect, reducer: self)
@@ -118,7 +115,7 @@ public extension ErasedReducer {
 
 public extension Reducers.Native {
     
-    static func detailReducer<State : Releasable, Aspect, Action : ActionProtocol>(_ aspect: CasePath<State, Aspect>,
+    static func detailReducer<State : Releasable, Aspect, Action>(_ aspect: CasePath<State, Aspect>,
                                                                _ closure: @escaping (Action, inout Aspect) -> Void)
     -> AspectReducer<State, ClosureReducer<Aspect, Action>> {
         AspectReducer(aspect, closure: closure)

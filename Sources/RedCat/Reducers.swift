@@ -9,7 +9,7 @@ import Foundation
 
 
 
-/// ```Reducers``` is the "namespace" for everything that conforms to ```ErasedReducer```. It is recommended to add new reducer types to this namespace for discoverability.
+/// ```Reducers``` is the "namespace" for everything that conforms to ```ReducerProtocol```. It is recommended to add new reducer types to this namespace for discoverability.
 public enum Reducers {}
 
 public extension Reducers {

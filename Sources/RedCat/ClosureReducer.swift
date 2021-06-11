@@ -9,7 +9,7 @@ import Foundation
 
 
 /// An anonymous instance of ```ReducerProtocol```, created using a closure.
-public struct ClosureReducer<State, Action : ActionProtocol> : ReducerProtocol {
+public struct ClosureReducer<State, Action> : ReducerProtocol {
     
     @usableFromInline
     let closure : (Action, inout State) -> Void
@@ -30,7 +30,7 @@ public struct ClosureReducer<State, Action : ActionProtocol> : ReducerProtocol {
 
 public extension Reducers.Native {
     
-    static func withClosure<State, Action : ActionProtocol>(_ closure: @escaping (Action, inout State) -> Void) -> ClosureReducer<State, Action> {
+    static func withClosure<State, Action>(_ closure: @escaping (Action, inout State) -> Void) -> ClosureReducer<State, Action> {
         ClosureReducer(closure)
     }
     

@@ -21,7 +21,8 @@ enum TestReducers {
     
     struct IncReducer<State> : ReducerProtocol {
         
-        func apply(_ action: Inc<State>, to state: inout State) {
+        func apply(_ action: IncDec<State>, to state: inout State) {
+            guard case .inc = action.kind else {return}
             state[keyPath: action.value] += 1
         }
         
@@ -29,7 +30,8 @@ enum TestReducers {
     
     struct DecReducer<State> : ReducerProtocol {
         
-        func apply(_ action: Dec<State>, to state: inout State) {
+        func apply(_ action: IncDec<State>, to state: inout State) {
+            guard case .dec = action.kind else {return}
             state[keyPath: action.value] -= 1
         }
         
@@ -37,13 +39,6 @@ enum TestReducers {
     
 }
 
-
-struct Inc<State> : ActionProtocol {
-    let value : WritableKeyPath<State, Int>
-}
-struct Dec<State> : ActionProtocol {
-    let value : WritableKeyPath<State, Int>
-}
 
 struct IncDec<State> : Undoable {
     

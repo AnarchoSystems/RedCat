@@ -36,7 +36,7 @@ extension __ObservableStoreProtocol {
 }
 
 /// An ```ObservableStore``` exposes an ```addObserver``` method so other parts can be notified of dispatch cycles (in absence of ```Combine```).
-public class ObservableStore<State> : Store<State>, __ObservableStoreProtocol {
+public class ObservableStore<State, Action> : Store<State, Action>, __ObservableStoreProtocol {
     
     public let objectWillChange = StoreObjectWillChangePublisher()
     

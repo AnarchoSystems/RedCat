@@ -59,18 +59,50 @@ public protocol APIHandler {
     
     associatedtype Request : Equatable
     associatedtype URLRequestType : URLRequestProtocol
-    associatedtype Success : ActionProtocol
-    associatedtype Failure : ActionProtocol
+    associatedtype Response
     
     func onRequest(_ request: Request) -> URLRequestType
-    func onSuccess(_ response: URLSessionResponse, request: Request) -> Success
-    func onFailure(_ failure: Error, request: Request) -> Failure
+    func onSuccess(_ response: URLSessionResponse, request: Request) -> Response
+    func onFailure(_ failure: Error, request: Request) -> Response
+    
+}
+
+
+public struct MapAPIHandler<Base : APIHandler, NewResponse> : APIHandler {
+    
+    @usableFromInline
+    let base : Base
+    @usableFromInline
+    let transform : (Base.Response) -> NewResponse
+    
+    @inlinable
+    public func onRequest(_ request: Base.Request) -> Base.URLRequestType {
+        base.onRequest(request)
+    }
+    
+    @inlinable
+    public func onSuccess(_ response: URLSessionResponse, request: Base.Request) -> NewResponse {
+        transform(base.onSuccess(response, request: request))
+    }
+    
+    @inlinable
+    public func onFailure(_ failure: Error, request: Base.Request) -> NewResponse {
+        transform(base.onFailure(failure, request: request))
+    }
+    
+}
+
+public extension APIHandler {
+    
+    func map<NewResponse>(_ transform: @escaping (Response) -> NewResponse) -> MapAPIHandler<Self, NewResponse> {
+        MapAPIHandler(base: self, transform: transform)
+    }
     
 }
 
 
 public final class APIService<Whole, Orchestration : APIHandler> :
-    DetailService<Whole, Orchestration.Request?> {
+DetailService<Whole, Orchestration.Request?, Orchestration.Response> {
     
     let orchestration : Orchestration
     var lastRequest : (value: Orchestration.Request, handler: URLDataTask)?
@@ -82,7 +114,7 @@ public final class APIService<Whole, Orchestration : APIHandler> :
     }
     
     public override func onUpdate(newValue: Orchestration.Request?,
-                                  store: Store<Whole>,
+                                  store: Store<Whole, Orchestration.Response>,
                                   environment: Dependencies) {
         
         lastRequest?.handler.cancel()

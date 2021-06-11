@@ -24,10 +24,10 @@ public extension Dependencies {
 
 public struct ResolvedInternalFlags {
     
-    /// If true, a warning will be printed, if the ```AppInit``` is somehow sent more than once.
-    public var appInitCheck = true
-    
     ///If true, a warning will be printed, if an inefficiency is detected with how the store notifies observers.
     public var warnInefficientObservers = true
+    
+    ///If true, the store will print warnings, if it receives any actions after it has been invalidated.
+    public var warnActionsAfterShutdown = true
     
 }

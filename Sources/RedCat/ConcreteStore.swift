@@ -8,7 +8,7 @@
 import Foundation
 
 @usableFromInline
-final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.State> {
+final class ConcreteStore<Reducer : ReducerProtocol> : ObservableStore<Reducer.State, Reducer.Action> {
     
     @inlinable
     override var state : Reducer.State {
@@ -27,58 +27,38 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
     internal var hasShutdown = false
     
     @usableFromInline
-    let services : [Service<Reducer.State>]
+    let services : [Service<Reducer.State, Action>]
     @usableFromInline
     var environment : Dependencies
     
     @usableFromInline
-    var enqueuedActions = [ActionProtocol]()
+    var enqueuedActions = [Action]()
     
     @inlinable
     init(initialState: Reducer.State,
          reducer: Reducer,
          environment: Dependencies,
-         services: [Service<Reducer.State>]) {
+         services: [Service<Reducer.State, Action>]) {
         self._state = initialState
         self.reducer = reducer
         self.services = services
         self.environment = environment
         super.init()
-        self.send(Actions.AppInit())
+        for service in services {
+            service.onAppInit(store: self, environment: environment)
+        }
     }
     
     @usableFromInline 
-    override func send<Action : ActionProtocol>(_ action: Action) {
-        
-        if action is Actions.AppInit {
-            if hasInitialized && environment.internalFlags.appInitCheck {
-                print("RedCat: AppInit has been sent more than once. Please file a bug report.\nIf your app works fine otherwise, you can silence this warning by setting internalFlags.appInitCheck to false in the environment.")
-            }
-            hasInitialized = true
-        }
+    override func send(_ action: Action) {
         
         guard !hasShutdown else {
-            fatalError("App has shutdown, actions are no longer accepted.")
+            return print("RedCat: The store has been invalidated, actions are no longer accepted.")
         }
         
-        let expectedCount : Int
+        enqueuedActions.append(action)
         
-        if var action = action as? ActionGroup {
-            action.unroll()
-            enqueuedActions.append(contentsOf: action.values)
-            expectedCount = action.values.count
-        }
-        else if var action = action as? UndoGroup {
-            action.unroll()
-            enqueuedActions.append(contentsOf: action.values)
-            expectedCount = action.values.count
-        }
-        else {
-            enqueuedActions.append(action)
-            expectedCount = 1
-        }
-        
-        guard enqueuedActions.count == expectedCount else {
+        guard enqueuedActions.count == 1 else {
             // All calls to this method are assumed to happen on
             // main dispatch queue - a serial queue.
             // Therefore, if more than one action is in the queue,
@@ -88,10 +68,12 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
         
         objectWillChange.notifyAll(warnInefficientObservers: environment.internalFlags.warnInefficientObservers)
         dispatchActions()
+        
     }
     
     @inlinable
     internal func dispatchActions() {
+        
         var idx = 0
         
         while idx < enqueuedActions.count {
@@ -99,15 +81,15 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
             let action = enqueuedActions[idx]
             
             for service in services {
-                action.beforeUpdate(service: service, store: self, environment: environment)
+                service.beforeUpdate(store: self, action: action, environment: environment)
             }
             
-            reducer.applyDynamic(action, to: &_state)
+            reducer.apply(action, to: &_state)
             
             // services have an outermost to innermost semantics, hence second loop is reversed order
             
             for service in services.reversed() {
-                action.afterUpdate(service: service, store: self, environment: environment)
+                service.afterUpdate(store: self, action: action, environment: environment)
             }
             
             idx += 1
@@ -115,15 +97,14 @@ final class ConcreteStore<Reducer : ErasedReducer> : ObservableStore<Reducer.Sta
         }
         
         enqueuedActions = []
+        
     }
     
-    @inlinable
-    override func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
-        reducer.acceptsAction(action)
-    }
     
     public override final func shutDown() {
-        send(Actions.AppDeinit())
+        for service in services {
+            service.onShutdown(store: self, environment: environment)
+        }
         hasShutdown = true
     }
 }

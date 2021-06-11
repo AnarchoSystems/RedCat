@@ -9,7 +9,7 @@ import Foundation
 
 /// A ```Store``` contains the "global" AppState and exposes the main methods to mutate the state.
 @dynamicMemberLookup
-public class Store<State>: __StoreProtocol {
+public class Store<State, Action>: __StoreProtocol {
     
     /// The "global" state of the application.
     public var state : State {
@@ -26,11 +26,7 @@ public class Store<State>: __StoreProtocol {
     ///     - action: The action to dispatch.
     ///
     /// This method is not threadsafe and has to be called on the mainthread.
-    public func send<Action : ActionProtocol>(_ action: Action) {
-        fatalError()
-    }
-    
-    public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
+    public func send(_ action: Action) {
         fatalError()
     }
     
@@ -53,11 +49,11 @@ public extension Store {
     ///     - services: Instances of service classes that can react to state changes and dispatch further actions.
     /// - Returns: A fully configured ```ObservableStore```.
     @inlinable
-    static func create<Reducer : ErasedReducer>(initialState: Reducer.State,
-                                                reducer: Reducer,
-                                                environment: Dependencies = [],
-                                                services: [Service<Reducer.State>] = []) -> ObservableStore<State>
-    where Reducer.State == State {
+    static func create<Reducer : ReducerProtocol>(initialState: Reducer.State,
+                                                  reducer: Reducer,
+                                                  environment: Dependencies = [],
+                                                  services: [Service<State, Action>] = []) -> ObservableStore<State, Action>
+    where Reducer.State == State, Reducer.Action == Action {
         let result = ConcreteStore(initialState: initialState,
                                    reducer: reducer,
                                    environment: environment,
@@ -74,11 +70,11 @@ public extension Store {
     ///     - constants: The same as ```environment```.
     /// - Returns: A fully configured ```ObservableStore```.
     @inlinable
-    static func create<Reducer : ErasedReducer>(reducer: Reducer,
-                                                environment: Dependencies = [],
-                                                services: [Service<Reducer.State>] = [],
-                                                configure: (_ constants: Dependencies) -> State) -> ObservableStore<State>
-    where Reducer.State == State {
+    static func create<Reducer : ReducerProtocol>(reducer: Reducer,
+                                                  environment: Dependencies = [],
+                                                  services: [Service<State, Action>] = [],
+                                                  configure: (_ constants: Dependencies) -> State) -> ObservableStore<State, Action>
+    where Reducer.State == State, Reducer.Action == Action {
         let result = ConcreteStore(initialState: configure(environment),
                                    reducer: reducer,
                                    environment: environment,
@@ -97,14 +93,14 @@ public extension Store {
     ///     - services: Instances of service classes that can react to state changes and dispatch further actions.
     /// - Returns: A fully configured ```CombineStore```.
     /// - Note: Exactly the same as Store.create(initialState:reducer:environment:services:).
-
+    
     @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
     @inlinable
-    static func combineStore<Body : ErasedReducer>(initialState: Body.State,
-                                                   reducer: Body,
-                                                   environment: Dependencies,
-                                                   services: [Service<Body.State>]) -> CombineStore<Body.State>
-    where Body.State == State {
+    static func combineStore<Reducer : ReducerProtocol>(initialState: Reducer.State,
+                                                        reducer: Reducer,
+                                                        environment: Dependencies,
+                                                        services: [Service<State, Action>]) -> CombineStore<State, Action>
+    where Reducer.State == State, Reducer.Action == Action {
         create(initialState: initialState, reducer: reducer, environment: environment, services: services)
     }
     
@@ -121,11 +117,11 @@ public extension Store {
     
     @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
     @inlinable
-    static func combineStore<Body : ErasedReducer>(reducer: Body,
-                                                   environment: Dependencies,
-                                                   services: [Service<Body.State>],
-                                                   configure: (_ constants: Dependencies) -> State) -> CombineStore<Body.State>
-    where Body.State == State {
+    static func combineStore<Reducer : ReducerProtocol>(reducer: Reducer,
+                                                        environment: Dependencies,
+                                                        services: [Service<State, Action>],
+                                                        configure: (_ constants: Dependencies) -> State) -> CombineStore<State, Action>
+    where Reducer.State == State, Reducer.Action == Action {
         create(reducer: reducer, environment: environment, services: services, configure: configure)
     }
     

@@ -8,83 +8,77 @@
 import Foundation
 
 
-/// A ```DispatchReducer``` essentially lifts ```switch``` statements to the reducer level.
+/// A ```DispatchReducerProtocol``` essentially lifts ```switch``` statements to the reducer level.
 ///
-/// ```DispatchReducer```s come in handy when dealing with a state that holds multiple instances of a given partial state. Example usecase:
+/// ```DispatchReducerProtocol```s come in handy when composing heterogenous reducers. Example:
 /// ```swift
-/// protocol DispatchableAction : ActionProtocol {
-///   // attach this to your actions as stored property
-///   // even though the partial reducers don't care
-///   var keyPath : WritableKeyPath<MyConcreteRootState, MyConcretePartialState>
-/// }
 ///
 /// struct Dispatcher : DispatchReducer {
 ///
 ///   @ReducerBuilder
-///   func dispatch<Action : ActionProtocol>(_ action: Action)
-///   -> IfReducer<DetailReducer<MyConcreteRootState,
-///                              MyPartialStateReducer>,
-///                NopReducer<MyConcreteRootState>> {
-///      if let action = action as? DispatchableAction {
-///         DetailReducer(action.keyPath,
-///                       reducer: MyPartialStateReducer())
-///      }
+///   func dispatch(_ action: HighLevelAction) -> AnyReducer<MyConcreteRootState, MyAction> {
+///         switch action {
+///             case .module1(let module1Action):
+///                 DetailReducer(\MyConcreteRootState.module1, reducer: Module1Reducer())
+///             case .module2(let module2Action):
+///                 DetailReducer(\MyConcreteRootState.module2, reducer: Module2Reducer())
+///                 ...
+///         }
 ///   }
 ///
 /// }
 ///
 /// ```
 ///
-///A more exotic usecase could be to dispatch actions according to the configuration of the reducer to ease changing the reducer hierarchy while debugging.
+/// - Note: It is recommended not to use @ReducerBuilder in longer ```switch``` statements for efficiency reasons.
 ///
-public protocol DispatchReducer : ErasedReducer {
+public protocol DispatchReducerProtocol : ReducerProtocol where State == Dispatched.State, Action == Dispatched.Action {
     
-    associatedtype Dispatched : ErasedReducer
+    associatedtype State = Dispatched.State
+    associatedtype Action = Dispatched.Action
+    associatedtype Dispatched : ReducerProtocol
     
     /// Dispatches an action to some concrete reducer.
-    func dispatch<Action : ActionProtocol>(_ action: Action) -> Dispatched
+    func dispatch(_ action: Action) -> Dispatched
     
 }
 
 
-public extension DispatchReducer {
+public extension DispatchReducerProtocol {
     
     @inlinable
-    func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout Dispatched.State) {
-        dispatch(action).applyErased(action, to: &state)
-    }
-    
-    @inlinable
-    func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
-        dispatch(action).acceptsAction(action)
+    func apply(_ action: Action, to state: inout Dispatched.State) {
+        dispatch(action).apply(action, to: &state)
     }
     
 }
 
 /// An anonymous ```DispatchReducer``` accepting a dynamic action.
-public struct ClosureDispatchReducer<Dispatched : ErasedReducer> : DispatchReducer {
+public struct DispatchReducer<Dispatched : ReducerProtocol> : DispatchReducerProtocol {
     
     @usableFromInline
-    let closure : (ActionProtocol) -> Dispatched
+    let closure : (Dispatched.Action) -> Dispatched
     
     @inlinable
-    public init(@ReducerBuilder _ closure: @escaping (ActionProtocol) -> Dispatched) {
+    public init(@ReducerBuilder _ closure: @escaping (Dispatched.Action) -> Dispatched) {
         self.closure = closure
     }
     
     @inlinable
-    public func dispatch<Action>(_ action: Action) -> Dispatched where Action : ActionProtocol {
+    public func dispatch(_ action: Dispatched.Action) -> Dispatched {
         closure(action)
     }
     
 }
 
-extension Optional : ErasedReducer, DispatchReducer where Wrapped : ErasedReducer {
+extension Optional : ReducerProtocol, DispatchReducerProtocol where Wrapped : ReducerProtocol {
     
-    public typealias State = Dispatched.State
+    public typealias State = Wrapped.State
+    public typealias Action = Wrapped.Action
+    public typealias Dispatched = IfReducer<Wrapped, NopReducer<Wrapped.State, Wrapped.Action>> 
     
     @inlinable
-    public func dispatch<Action : ActionProtocol>(_ action: Action) -> IfReducer<Wrapped, NopReducer<Wrapped.State>> {
+    public func dispatch(_ action: Wrapped.Action) -> IfReducer<Wrapped, NopReducer<Wrapped.State, Wrapped.Action>> {
         map(IfReducer.ifReducer) ?? .elseReducer()
     }
     
@@ -92,8 +86,8 @@ extension Optional : ErasedReducer, DispatchReducer where Wrapped : ErasedReduce
 
 public extension Reducers.Native {
     
-    static func dispatch<Dispatched : ErasedReducer>(@ReducerBuilder _ closure: @escaping (ActionProtocol) -> Dispatched) -> ClosureDispatchReducer<Dispatched> {
-        ClosureDispatchReducer(closure)
+    static func dispatch<Dispatched : ReducerProtocol>(@ReducerBuilder _ closure: @escaping (Dispatched.Action) -> Dispatched) -> DispatchReducer<Dispatched> {
+        DispatchReducer(closure)
     }
     
 }

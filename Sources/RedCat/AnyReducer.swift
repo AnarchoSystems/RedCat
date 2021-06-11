@@ -9,39 +9,41 @@ import Foundation
 
 
 ///```AnyReducer``` is the proper type erasure for all reducers.
-public struct AnyReducer<State>: ErasedReducer {
+public struct AnyReducer<State, Action>: ReducerProtocol {
 	
     @usableFromInline
-	internal let applyBlock: (ActionProtocol, inout State) -> Void
-    @usableFromInline
-	internal let acceptsActionBlock: (ActionProtocol) -> Bool
+	internal let applyBlock: (Action, inout State) -> Void
 	
     
     /// Initializes the erased reducer from an arbitrary other reducer.
     /// - Parameters:
     ///     - reducer: The reducer to type-erase.
-	public init<R: ErasedReducer>(_ reducer: R) where R.State == State {
+    public init<R: ReducerProtocol>(_ reducer: R) where R.State == State, R.Action == Action {
 		applyBlock = {
-			reducer.applyDynamic($0, to: &$1)
+			reducer.apply($0, to: &$1)
 		}
-		acceptsActionBlock = reducer.acceptsActionDynamic
 	}
     
     @inlinable
-	public func applyErased<Action>(_ action: Action, to state: inout State) where Action : ActionProtocol {
+	public func apply(_ action: Action, to state: inout State) {
 		applyBlock(action, &state)
 	}
     
-    @inlinable
-	public func acceptsAction<Action>(_ action: Action) -> Bool where Action : ActionProtocol {
-		acceptsActionBlock(action)
-	}
+}
+
+
+public extension ReducerProtocol {
+    
+    func erased() -> AnyReducer<State, Action> {
+        AnyReducer(self)
+    }
+    
 }
 
 
 public extension Reducers.Native {
     
-    static func anyReducer<Wrapped : ErasedReducer>(_ wrapped: Wrapped) -> AnyReducer<Wrapped.State> {
+    static func anyReducer<Wrapped : ReducerProtocol>(_ wrapped: Wrapped) -> AnyReducer<Wrapped.State, Wrapped.Action> {
         AnyReducer(wrapped)
     }
     

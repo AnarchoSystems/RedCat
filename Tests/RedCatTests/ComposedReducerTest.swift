@@ -16,11 +16,11 @@ extension RedCatTests {
         var state = TestState(value: number)
         for _ in 0..<100 {
             if Bool.random() {
-                incReducer.apply(Inc(value: \TestState.value), to: &state)
+                incReducer.apply(.inc(value: \TestState.value), to: &state)
                 number += 1
             }
             else {
-                decReducer.apply(Dec(value: \TestState.value), to: &state)
+                decReducer.apply(.dec(value: \TestState.value), to: &state)
                 number -= 1
             }
             XCTAssertEqual(number, state.value)
@@ -33,14 +33,14 @@ extension RedCatTests {
         for _ in 0..<100 {
             let oldValue = state1.value
             let incDec = Bool.random()
-            let action : ActionProtocol = incOrDec(incDec)
+            let action = incOrDecUndoable(incDec)
             if incDec {
-                incReducer.applyDynamic(action, to: &state1)
+                incReducer.apply(action, to: &state1)
             }
             else {
-                decReducer.applyDynamic(action, to: &state1)
+                decReducer.apply(action, to: &state1)
             }
-            composedReducer.applyDynamic(action, to: &state2)
+            composedReducer.apply(action, to: &state2)
             XCTAssertEqual(state1.value, state2.value)
             XCTAssertEqual(oldValue + (incDec ? 1 : -1), state1.value)
         }
@@ -50,32 +50,28 @@ extension RedCatTests {
         
         for _ in 0..<10 {
             
-            var state1 = TestState(value: Int.random(in: -100...100))
-            var state2 = state1
-            let original = state2
+            var state = TestState(value: Int.random(in: -100...100))
+            let original = state
             
             let list = (0..<100).map {_ in Bool.random()}
             
             for incDec in list {
                 
-                composedReducer.applyDynamic(incOrDec(incDec), to: &state1)
+                composedReducer.apply(incOrDecUndoable(incDec), to: &state)
                 
             }
-            
-            let group1 = ActionGroup(list, build: incOrDec)
-            
-            composedReducer.handlingActionLists().applyDynamic(group1,
-                                                               to: &state2)
-            
-            XCTAssertEqual(state1.value, state2.value)
             
             let group2 = UndoGroup(list,
                                    build: incOrDecUndoable).inverted()
             
-            incDecReducer.handlingUndoLists().applyDynamic(group2,
-                                                           to: &state2)
+            for action in group2 {
             
-            XCTAssertEqual(state2.value, original.value)
+                incDecReducer.apply(action,
+                                    to: &state)
+            
+            }
+            
+            XCTAssertEqual(state.value, original.value)
             
         }
         
@@ -86,9 +82,6 @@ extension RedCatTests {
 
 fileprivate extension RedCatTests {
     
-    func incOrDec(_ inc: Bool) -> ActionProtocol {
-        inc ? Inc(value: \TestState.value) : Dec(value: \TestState.value)
-    }
     
     func incOrDecUndoable(_ inc: Bool) -> IncDec<TestState> {
         inc ? .inc(value: \TestState.value) : .dec(value: \TestState.value)

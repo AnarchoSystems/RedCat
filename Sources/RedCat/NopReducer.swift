@@ -9,26 +9,22 @@ import Foundation
 
 
 /// A ```NopReducer``` accepts no actions and will do absolutely nothing when it sees one. This is useful in conjunction with ```DispatchReducer```s that return an ```IfReducer```.
-public struct NopReducer<State> : ErasedReducer {
+public struct NopReducer<State, Action> : ReducerProtocol {
     
     @inlinable
     public init() {}
     
     @inlinable
-    public func applyErased<Action : ActionProtocol>(_ action: Action,
-                                                     to state: inout State) {}
+    public func apply(_ action: Action,
+                      to state: inout State) {}
     
-    @inlinable
-    public func acceptsAction<Action : ActionProtocol>(_ action: Action) -> Bool {
-        false
-    }
     
 }
 
 
 public extension Reducers.Native {
     
-    static func nop<State>(stateType: State.Type = State.self) -> NopReducer<State> {
+    static func nop<State, Action>(stateType: State.Type = State.self) -> NopReducer<State, Action> {
         NopReducer()
     }
     

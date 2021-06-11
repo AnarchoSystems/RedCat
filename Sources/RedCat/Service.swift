@@ -13,34 +13,23 @@ import Foundation
 /// Before each application of the App's main reducer, each service will receive a ```beforeUpdate``` message and has the opportunity to react to the action and interact with the store and its state before the action is dispatched.
 /// After each application, the services receive ```afterUpdate``` in reversed order.
 /// Services cannot modify the actions already being enqueued, nor can they prevent execution. This should be done by high level reducers.
-open class Service<State> {
+open class Service<State, Action> {
     
     public init() {}
     
-    open func beforeUpdate<Action : ActionProtocol>(store: Store<State>, action: Action, environment: Dependencies) {}
+    open func onAppInit(store: Store<State, Action>, environment: Dependencies) {}
     
-    open func afterUpdate<Action : ActionProtocol>(store: Store<State>, action: Action, environment: Dependencies) {}
+    open func beforeUpdate(store: Store<State, Action>, action: Action, environment: Dependencies) {}
     
-}
-
-internal extension ActionProtocol {
+    open func afterUpdate(store: Store<State, Action>, action: Action, environment: Dependencies) {}
     
-    /// Called by the store each time an action is about to be sent to the reducer.
-    @inlinable
-    func beforeUpdate<State>(service: Service<State>, store: Store<State>, environment: Dependencies) {
-        service.beforeUpdate(store: store, action: self, environment: environment)
-    }
+    open func onShutdown(store: Store<State, Action>, environment: Dependencies) {}
     
-    /// Called by the store each time an action has just been sent to the reducer.
-    @inlinable
-    func afterUpdate<State>(service: Service<State>, store: Store<State>, environment: Dependencies) {
-        service.afterUpdate(store: store, action: self, environment: environment)
-    }
 }
 
 
 /// A ```DetailService``` watches some part of the state for changes and if it detects one, it calls the open method ```onUpdate```.
-open class DetailService<State, Detail : Equatable> : Service<State> {
+open class DetailService<State, Detail : Equatable, Action> : Service<State, Action> {
     
     
     public final let detail : (State) -> Detail
@@ -56,38 +45,22 @@ open class DetailService<State, Detail : Equatable> : Service<State> {
     @inlinable
     public init(detail: @escaping (State) -> Detail) {self.detail = detail}
     
-    public final override func beforeUpdate<Action : ActionProtocol>(store: Store<State>,
-                                                                     action: Action,
-                                                                     environment: Dependencies) {
+    public final override func beforeUpdate(store: Store<State, Action>,
+                                            action: Action,
+                                            environment: Dependencies) {
         
     }
     
-    public final override func afterUpdate<Action : ActionProtocol>(store: Store<State>,
-                                                              action: Action,
-                                                              environment: Dependencies) {
-        if Action.self == Actions.AppInit.self {
-            onAppInit(store: store, environment: environment)
-        }
-        if Action.self == Actions.AppDeinit.self {
-            onShutdown(store: store, environment: environment)
-        }
+    public final override func afterUpdate(store: Store<State, Action>,
+                                           action: Action,
+                                           environment: Dependencies) {
         let detail = self.detail(store.state)
         guard detail != oldValue else {return}
         onUpdate(newValue: detail, store: store, environment: environment)
         _oldValue = detail
     }
     
-    open func onAppInit(store: Store<State>,
-                        environment: Dependencies) {
-        
-    }
-    
-    open func onShutdown(store: Store<State>,
-                         environment: Dependencies) {
-        
-    }
-    
-    open func onUpdate(newValue: Detail, store: Store<State>, environment: Dependencies) {
+    open func onUpdate(newValue: Detail, store: Store<State, Action>, environment: Dependencies) {
         
     }
     
