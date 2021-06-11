@@ -4,7 +4,7 @@ What is RedCat?
 
 A red cat is not [an ox](https://en.wikipedia.org/wiki/Redox#Mnemonics)!
 
-RedCat is a unidirectional data flow framework with an emphasis on static analysis. RedCat provides a couple of useful Reducer protocols based on generic functions to hopefully enable more optimization by the compiler. There are also a handful of concrete Reducer types that enable you to create Reducers with closures like in other such frameworks.
+RedCat is a unidirectional data flow framework with an emphasis on ergonomics. RedCat provides a couple of useful Reducer protocols that make composition of reducers quite readable. There are also a handful of concrete Reducer types that enable you to create Reducers with closures like in other such frameworks.
 
 ## Examples
 
@@ -55,22 +55,30 @@ let reducer = myReducer1
                   .compose(with: myReducer3)
 ```
 
-The only prerequisite is that their state types agree.
+The only prerequisite is that their state and action types agree.
 
-Wait, what? In the above example, we have seen that reducers have *two* associatedtypes: State and Action. Why don't they need to accept the same action type?
-
-The answer is that the root protocol from which all other reducer protocols inherit actually looks like this:
+Since currently there are no wrappers that support changing the action type, we recommend the more verbose spelling:
 
 ```swift
-public protocol ReducerProtocol {
 
-   associatedtype State 
-   func applyErased<Action : ActionProtocol>(_ action: Action, to state: inout State)
+struct Dispatcher : DispatchReducer {
+
+   @ReducerBuilder
+   func dispatch(_ action: HighLevelAction) -> AnyReducer<MyConcreteRootState, MyAction> {
+         switch action {
+             case .module1(let module1Action):
+                 DetailReducer(\MyConcreteRootState.module1, reducer: Module1Reducer())
+             case .module2(let module2Action):
+                 DetailReducer(\MyConcreteRootState.module2, reducer: Module2Reducer())
+                 ...
+         }
+   }
 
 }
+
 ```
 
-Every reducer protocol that has an associatedtype ```Action``` provides a default implementation that tries to downcast the generic action to its own ```Action``` type and only handles that case. In optimized builds, this can be quite efficient because the success or failure of the downcast can in principle be resolved at compile time thanks to generic specialization and RedCat being a static library (disclaimer: unfortunately, Swift's compiler does not guarantee generic specialization even in optimized builds and there is no way (yet?) to force the compiler to specialize generic functions as aggressively as possible; as of Swift 5.4, chances are that your reducer will not benefit from this optimization). Moreover, the compiler can in principle optimize away empty function calls through inlining. That means: as you send an action to your composed reducer, there will be no runtime overhead (in optimized builds) from finding the reducers handling the given action!
+Note that this is also a bit more efficient than the usual composition of reducers with different action types, since the usual composition would destructure the action using ```if case``` (which is dynamic), while an exhaustive ```switch``` over an enum can be [optimized](https://forums.swift.org/t/complexity-of-enum-switching/49440/2). Also, it is safer, since you cannot accidentally miss a case.
 
 ### Modularization
 
@@ -127,16 +135,6 @@ XXXReducerWrapper // protocol requires another reducer as "body"
 
 and a struct ```XXXReducer```. The plain ```Reducer``` can be initialized using a closure or using a keypath/casepath and a wrapped reducer. This makes ```Aspect/Detail``` in ```Aspect/DetailReducer``` optional, as the ```Reducer``` will then just wrap itself around the appropriate type.
 
-### DispatchReducer
-
-A distinguishing feature of RedCat is the ```DispatchReducer``` protocol. Sometimes, you have already careully written reducers that should be applied under different circumstances. You could of course simply store them in a reducer, make your case distinctions and call ```reducer1/2.apply(...)```. But this is a bit verbose. Hence, RedCat provides a ```DispatchReducer``` protocol with the single requirement
-
-```swift
-func dispatch<Action : ActionProtocol>(_ action: Action) -> Result
-```
-
-where ```Result``` is an associatedtype conforming to ReducerProtocol. If you actually want to apply different reducers given different actions, use one of the following: ```IfReducer```, ```IfElseReducer``` or ```Switch4Reducer```.
-
 For discoverability, we recommend adding reducer types, "namespaced" by their ```State```type, as nested types to ```Reducers```, a public "namespace" provided by RedCat.
 
 ### The Store 
@@ -145,8 +143,8 @@ If you're done composing the reducer, you may wonder how to make it do something
 
 In RedCat, this comes in two main flavours:
 
-1. The erased ```Store<State>``` type seen by the services (see below).
-2. The ```ObservableStore<State>``` that can be observed using ```addObserver```. If Combine can be imported, this store is also known as ```CombineStore<State>```.
+1. The erased ```Store<State, Action>``` type seen by the services (see below).
+2. The ```ObservableStore<State, Action>``` that can be observed using ```addObserver```. If Combine can be imported, this store is also known as ```CombineStore<State, Action>```.
 
 Actions are sent to the store via its ```send``` or ```sendWithUndo``` methods. This is assumed to happen on the main thread. The action will then be enqueued, sent to the services (which may or may not enqueue further actions), sent to the reducer (which mutates the global state) and then sent to the services again (which may again enqueue further actions). This process is repeated until no service has further actions to enqueue (or they enqueue them asynchronously). For this whole process, the observers are notified exactly once.
 
@@ -154,7 +152,9 @@ For discoverability, we recommend adding action types as nested types to ```Acti
 
 ### Services
 
-Every app has to handle side effects somehow. For this, RedCat has a dedicated ```Service``` class. This class exposes two methods that can be overridden: ```beforeUpdate``` and ```afterUpdate```. Both methods take the dispatched action, the app's ```Dependencies``` (see below) and the state before or after the action is applied. The services are the perfect place to orchestrate further actions, either immediately or by registering an event listener and hopping back to the main queue whenever an event arrives. The ```Dependencies``` passed to the service are the ideal place to configure, e.g, the source of asynchronous events.
+Every app has to handle side effects somehow. For this, RedCat has a dedicated ```Service``` class. This class exposes four methods that can be overridden: ```onAppInit```,  ```beforeUpdate```, ```afterUpdate``` and ```onShutdown```. The two methods reacting to updates take the dispatched action, the app's ```Dependencies``` (see below) and the state before or after the action is applied. The other two methods only take the store and the app's ```Dependencies```.
+
+The services are the perfect place to orchestrate further actions, either immediately or by registering an event listener and hopping back to the main queue whenever an event arrives. The ```Dependencies``` passed to the service are the ideal place to configure, e.g, the source of asynchronous events.
 
 For discoverability, we recommend adding service types as nested types to ```Services```, a public "namespace" provided by RedCat.
 

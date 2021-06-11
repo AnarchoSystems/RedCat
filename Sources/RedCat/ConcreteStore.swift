@@ -49,16 +49,22 @@ final class ConcreteStore<Reducer : ReducerProtocol> : ObservableStore<Reducer.S
         }
     }
     
+    @usableFromInline
+    override func send(_ list: ActionGroup<Reducer.Action>) {
+        enqueuedActions.append(contentsOf: list.values)
+        dispatchActions(expectedActions: list.values.count)
+    }
+    
     @usableFromInline 
     override func send(_ action: Action) {
-        
-        guard !hasShutdown else {
-            return print("RedCat: The store has been invalidated, actions are no longer accepted.")
-        }
-        
         enqueuedActions.append(action)
+        dispatchActions(expectedActions: 1)
+    }
+    
+    @inlinable
+    internal func dispatchActions(expectedActions: Int) {
         
-        guard enqueuedActions.count == 1 else {
+        guard enqueuedActions.count == expectedActions else {
             // All calls to this method are assumed to happen on
             // main dispatch queue - a serial queue.
             // Therefore, if more than one action is in the queue,
@@ -66,13 +72,14 @@ final class ConcreteStore<Reducer : ReducerProtocol> : ObservableStore<Reducer.S
             return
         }
         
-        objectWillChange.notifyAll(warnInefficientObservers: environment.internalFlags.warnInefficientObservers)
-        dispatchActions()
+        guard !hasShutdown else {
+            if environment.internalFlags.warnActionsAfterShutdown {
+                print("RedCat: The store has been invalidated, actions are no longer accepted.\n If sending actions to a dead store is somehow acceptable for your app, you can silence this warning  by setting internalFlags.warnActionsAfterShutdown to false in the environment.")
+            }
+            return
+        }
         
-    }
-    
-    @inlinable
-    internal func dispatchActions() {
+        objectWillChange.notifyAll(warnInefficientObservers: environment.internalFlags.warnInefficientObservers)
         
         var idx = 0
         

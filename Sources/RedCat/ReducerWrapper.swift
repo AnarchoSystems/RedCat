@@ -51,14 +51,32 @@ public struct Reducer<Body : ReducerProtocol> : ReducerWrapper {
     }
     
     @inlinable
-    public init<State : Releasable, R : ReducerProtocol>(_ aspect: CasePath<State, R.State>, _ body: () -> R)
-    where Body == AspectReducer<State, R> {
+    public init<State : Releasable, R : ReducerProtocol, Action>(_ aspect: CasePath<State, R.State>,
+                                                                 where match: @escaping (R.Action) -> Action,
+                                                                 _ body: () -> R)
+    where Body == AspectReducer<State, R, Action> {
+        self.body = AspectReducer(aspect, matchAction: match, reducer: body())
+    }
+    
+    @inlinable
+    public init<State : Releasable, R : ReducerProtocol>(_ aspect: CasePath<State, R.State>,
+                                                                 _ body: () -> R)
+    where Body == AspectReducer<State, R, R.Action> {
         self.body = AspectReducer(aspect, reducer: body())
     }
     
     @inlinable
-    public init<State, R : ReducerProtocol>(_ detail: WritableKeyPath<State, R.State>, _ body: () -> R)
-    where Body == DetailReducer<State, R> {
+    public init<State, R : ReducerProtocol, Action>(_ detail: WritableKeyPath<State, R.State>,
+                                            where match: @escaping (R.Action) -> Action,
+                                            _ body: () -> R)
+    where Body == DetailReducer<State, R, Action> {
+        self.body = DetailReducer(detail, matchAction: match, reducer: body())
+    }
+    
+    @inlinable
+    public init<State, R : ReducerProtocol>(_ detail: WritableKeyPath<State, R.State>,
+                                            _ body: () -> R)
+    where Body == DetailReducer<State, R, R.Action> {
         self.body = DetailReducer(detail, reducer: body())
     }
     

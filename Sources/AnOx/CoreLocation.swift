@@ -52,22 +52,22 @@ public struct LocationObservationConfiguration : Equatable {
 }
 
 @available(iOS 13, *)
-public final class LocationService<State> : DetailService<State, LocationObservationConfiguration> {
+public final class LocationService<State, Action> : DetailService<State, LocationObservationConfiguration, Action> {
     
-    private let delegate : LocationManagerDelegate<State>
+    private let delegate : LocationManagerDelegate<State, Action>
     
-    public init(_ delegate: LocationManagerDelegate<State>,
-                detail: @escaping (State) -> LocationObservationConfiguration) {
+    public init(_ delegate: LocationManagerDelegate<State, Action>,
+                configure: @escaping (State) -> LocationObservationConfiguration) {
         self.delegate = delegate
-        super.init(detail: detail)
+        super.init(detail: configure)
     }
     
-    override public func onAppInit(store: Store<State>, environment: Dependencies) {
+    override public func onAppInit(store: Store<State, Action>, environment: Dependencies) {
         delegate.store = store
         environment.native.locationManager.delegate = delegate
     }
     
-    override public func onUpdate(newValue: LocationObservationConfiguration, store: Store<State>, environment: Dependencies) {
+    override public func onUpdate(newValue: LocationObservationConfiguration, store: Store<State, Action>, environment: Dependencies) {
         
         if
             let authRequest = newValue.requestedAuthorization,
@@ -120,10 +120,19 @@ public final class LocationService<State> : DetailService<State, LocationObserva
     
 }
 
-open class LocationManagerDelegate<State> : NSObject, CLLocationManagerDelegate {
+open class LocationManagerDelegate<State, Action> : NSObject, CLLocationManagerDelegate {
     
-    fileprivate final weak var store : Store<State>?
+    public final weak var store : Store<State, Action>?
     
+}
+
+@available(iOS 13, *)
+public extension Services {
+    static func location<State, Action>(_ delegate: LocationManagerDelegate<State, Action>,
+                                 configure: @escaping (State) -> LocationObservationConfiguration)
+    -> LocationService<State, Action> {
+        LocationService(delegate, configure: configure)
+    }
 }
 
 #endif

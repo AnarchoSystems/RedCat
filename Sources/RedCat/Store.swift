@@ -11,7 +11,6 @@ import Foundation
 @dynamicMemberLookup
 public class Store<State, Action>: __StoreProtocol {
     
-    /// The "global" state of the application.
     public var state : State {
         fatalError()
     }
@@ -21,19 +20,15 @@ public class Store<State, Action>: __StoreProtocol {
     @inlinable
     internal init() {}
     
-    /// Applies an action to the state using the App's main reducer.
-    /// - Parameters:
-    ///     - action: The action to dispatch.
-    ///
-    /// This method is not threadsafe and has to be called on the mainthread.
     public func send(_ action: Action) {
         fatalError()
     }
     
-    /// Dispatches ```AppDeinit``` and invalidates the receiver.
-    ///
-    /// Use this method when your App is about to terminate to trigger cleanup actions.
     public func shutDown(){
+        fatalError()
+    }
+    
+    public func send(_ list: ActionGroup<Action>) {
         fatalError()
     }
     

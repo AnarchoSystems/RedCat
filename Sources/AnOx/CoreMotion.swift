@@ -112,7 +112,7 @@ public struct MagneticSensor : BasicSensor {
 
 public protocol SensorWatchConfig : Equatable {
     associatedtype ReducerState
-    associatedtype ResultAction : ActionProtocol
+    associatedtype ResultAction
     associatedtype TriggerAction
     var updateInterval : TimeInterval {get}
     var initialState : ReducerState {get}
@@ -126,20 +126,23 @@ public protocol GyroWatchConfig : SensorWatchConfig where
 public protocol MagnetometerWatchConfig : SensorWatchConfig where
     TriggerAction == CMMagnetometerData {}
 
-public class Sensor<State, Config : SensorWatchConfig, Kind : BasicSensor> : DetailService<State, Config?> where Kind.UpdateData == Config.TriggerAction {
+public class Sensor<State, Config : SensorWatchConfig, Kind : BasicSensor, Action> : DetailService<State, Config?, Action> where Kind.UpdateData == Config.TriggerAction {
     
     let queue : OperationQueue
     var currentState : Config.ReducerState?
+    let convert : (Result<Config.ResultAction, Error>) -> Action
     
     public init(on queue: OperationQueue,
-                detail: @escaping (State) -> Config?) {
+                configure: @escaping (State) -> Config?,
+                onEvent: @escaping (Result<Config.ResultAction, Error>) -> Action) {
         self.queue = queue
-        super.init(detail: detail)
+        self.convert = onEvent
+        super.init(detail: configure)
     }
     
     public override func onUpdate(newValue: Config?,
-                                  store: Store<State>,
-                                  environment: Dependencies) {
+                                   store: Store<State, Action>,
+                                   environment: Dependencies) {
         
         let mgr = Kind(mgr: environment.native.motionManager)
         mgr.stopUpdates()
@@ -157,7 +160,7 @@ public class Sensor<State, Config : SensorWatchConfig, Kind : BasicSensor> : Det
             guard let data = data else {
                 return DispatchQueue.main.async {
                     guard self.detail(store.state) == newValue else {return}
-                    store.send(Actions.MotionManager.Failure(error: error ?? UnknownError()))
+                    store.send(self.convert(.failure(error ?? UnknownError())))
                 }
             }
             
@@ -169,7 +172,7 @@ public class Sensor<State, Config : SensorWatchConfig, Kind : BasicSensor> : Det
             if let update = newValue.onUpdate(&currentState, action: data) {
                 DispatchQueue.main.async {
                     guard self.detail(store.state) == newValue else {return}
-                    store.send(update)
+                    store.send(self.convert(.success(update)))
                 }
             }
             
@@ -179,30 +182,33 @@ public class Sensor<State, Config : SensorWatchConfig, Kind : BasicSensor> : Det
     
 }
 
-public typealias Accelerometer<State, Config : AccelerometerWatchConfig>
-    = Sensor<State, Config, AccelerationSensor>
-public typealias Gyroscope<State, Config : GyroWatchConfig>
-    = Sensor<State, Config, GyroSensor>
-public typealias Magnetometer<State, Config : MagnetometerWatchConfig>
-    = Sensor<State, Config, MagneticSensor>
+public typealias Accelerometer<State, Config : AccelerometerWatchConfig, Action>
+    = Sensor<State, Config, AccelerationSensor, Action>
+public typealias Gyroscope<State, Config : GyroWatchConfig, Action>
+    = Sensor<State, Config, GyroSensor, Action>
+public typealias Magnetometer<State, Config : MagnetometerWatchConfig, Action>
+    = Sensor<State, Config, MagneticSensor, Action>
 
 public protocol DeviceMotionWatchConfig : SensorWatchConfig where TriggerAction == CMDeviceMotion {
     var referenceFrame : CMAttitudeReferenceFrame {get}
 }
 
-public final class DeviceMotionSensor<State, Config : DeviceMotionWatchConfig> : DetailService<State, Config?> {
+public final class DeviceMotionSensor<State, Config : DeviceMotionWatchConfig, Action> : DetailService<State, Config?, Action> {
     
     let queue : OperationQueue
     var currentState : Config.ReducerState?
+    let convert : (Result<Config.ResultAction, Error>) -> Action
     
     public init(on queue: OperationQueue,
-                detail: @escaping (State) -> Config?) {
+                configure: @escaping (State) -> Config?,
+                onEvent: @escaping (Result<Config.ResultAction, Error>) -> Action) {
         self.queue = queue
-        super.init(detail: detail)
+        self.convert = onEvent
+        super.init(detail: configure)
     }
     
     public override func onUpdate(newValue: Config?,
-                                  store: Store<State>,
+                                  store: Store<State, Action>,
                                   environment: Dependencies) {
         
         let mgr = environment.native.motionManager
@@ -222,7 +228,7 @@ public final class DeviceMotionSensor<State, Config : DeviceMotionWatchConfig> :
             guard let data = data else {
                 return DispatchQueue.main.async {
                     guard self.detail(store.state) == newValue else {return}
-                    store.send(Actions.MotionManager.Failure(error: error ?? UnknownError()))
+                    store.send(self.convert(.failure(error ?? UnknownError())))
                 }
             }
             
@@ -234,38 +240,10 @@ public final class DeviceMotionSensor<State, Config : DeviceMotionWatchConfig> :
             if let update = newValue.onUpdate(&currentState, action: data) {
                 DispatchQueue.main.async {
                     guard self.detail(store.state) == newValue else {return}
-                    store.send(update)
+                    store.send(self.convert(.success(update)))
                 }
             }
             
-        }
-        
-    }
-    
-}
-
-public extension Actions {
-    
-    enum MotionManager {
-        
-        public struct Acceleration : ActionProtocol {
-            public let data : CMAccelerometerData
-        }
-        
-        public struct RotationRate : ActionProtocol {
-            public let data : CMGyroData
-        }
-        
-        public struct MagneticField : ActionProtocol {
-            public let data : CMMagnetometerData
-        }
-        
-        public struct MotionData : ActionProtocol {
-            public let data : CMDeviceMotion
-        }
-        
-        public struct Failure : ActionProtocol {
-            public let error : Error
         }
         
     }
@@ -278,32 +256,37 @@ public extension Services {
 
 public extension Services.Sensors {
     
-    static func accelerometer<State, Config : AccelerometerWatchConfig>(_ stateType: State.Type = State.self,
-                                                                        configType: Config.Type,
-                                                                        callbackQueue: OperationQueue,
-                                                                        configure: @escaping (State) -> Config?) -> Accelerometer<State, Config> {
-        Accelerometer(on: callbackQueue, detail: configure)
+    static func accelerometer<State,
+                              Config : AccelerometerWatchConfig,
+                              Action>(callbackQueue: OperationQueue,
+                                      configure: @escaping (State) -> Config?,
+                                      onEvent: @escaping (Result<Config.ResultAction, Error>) -> Action) -> Accelerometer<State, Config, Action> {
+        Accelerometer(on: callbackQueue, configure: configure, onEvent: onEvent)
     }
     
-    static func gyroscope<State, Config : GyroWatchConfig>(_ stateType: State.Type = State.self,
-                                                           configType: Config.Type,
-                                                           callbackQueue: OperationQueue,
-                                                           configure: @escaping (State) -> Config?) -> Gyroscope<State, Config> {
-        Gyroscope(on: callbackQueue, detail: configure)
+    static func gyroscope<State,
+                          Config : GyroWatchConfig,
+                          Action>(configType: Config.Type,
+                                  callbackQueue: OperationQueue,
+                                  configure: @escaping (State) -> Config?,
+                                  onEvent: @escaping (Result<Config.ResultAction, Error>) -> Action) -> Gyroscope<State, Config, Action> {
+        Gyroscope(on: callbackQueue, configure: configure, onEvent: onEvent)
     }
     
-    static func magnetometer<State, Config : MagnetometerWatchConfig>(_ stateType: State.Type = State.self,
-                                                                      configType: Config.Type,
-                                                                      callbackQueue: OperationQueue,
-                                                                      configure: @escaping (State) -> Config?) -> Magnetometer<State, Config> {
-        Magnetometer(on: callbackQueue, detail: configure)
+    static func magnetometer<State,
+                             Config : MagnetometerWatchConfig,
+                             Action>(callbackQueue: OperationQueue,
+                                     configure: @escaping (State) -> Config?,
+                                     onEvent: @escaping (Result<Config.ResultAction, Error>) -> Action) -> Magnetometer<State, Config, Action> {
+        Magnetometer(on: callbackQueue, configure: configure, onEvent: onEvent)
     }
     
-    static func deviceMotion<State, Config : DeviceMotionWatchConfig>(_ stateType: State.Type = State.self,
-                                                                      configType: Config.Type,
-                                                                      callbackQueue: OperationQueue,
-                                                                      configure: @escaping (State) -> Config?) -> DeviceMotionSensor<State, Config> {
-        DeviceMotionSensor(on: callbackQueue, detail: configure)
+    static func deviceMotion<State,
+                             Config : DeviceMotionWatchConfig,
+                             Action>(callbackQueue: OperationQueue,
+                                     configure: @escaping (State) -> Config?,
+                                     onEvent: @escaping (Result<Config.ResultAction, Error>) -> Action) -> DeviceMotionSensor<State, Config, Action> {
+        DeviceMotionSensor(on: callbackQueue, configure: configure, onEvent: onEvent)
     }
     
 }

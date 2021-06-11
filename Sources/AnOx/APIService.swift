@@ -108,9 +108,9 @@ DetailService<Whole, Orchestration.Request?, Orchestration.Response> {
     var lastRequest : (value: Orchestration.Request, handler: URLDataTask)?
     
     public init(_ orchestration: Orchestration,
-                detail: @escaping (Whole) -> Orchestration.Request) {
+                request: @escaping (Whole) -> Orchestration.Request) {
         self.orchestration = orchestration
-        super.init(detail: detail)
+        super.init(detail: request)
     }
     
     public override func onUpdate(newValue: Orchestration.Request?,
@@ -143,3 +143,12 @@ DetailService<Whole, Orchestration.Request?, Orchestration.Response> {
     
 }
 
+
+public extension Services {
+    
+    static func api<Whole, Orchestration>(_ orchestration: Orchestration,
+                                          request: @escaping (Whole) -> Orchestration.Request) -> APIService<Whole, Orchestration> {
+        APIService(orchestration, request: request)
+    }
+    
+}
