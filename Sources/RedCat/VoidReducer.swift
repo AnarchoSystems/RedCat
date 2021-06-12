@@ -46,3 +46,16 @@ public extension ReducerProtocol {
     }
     
 }
+
+
+public extension ReducerProtocol where Action == Void {
+    
+    func send() -> VoidReducer<State> {
+        VoidReducer(self, action: ())
+    }
+    
+    func asVoidReducer() -> VoidReducer<State> {
+        send()
+    }
+    
+}
