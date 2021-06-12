@@ -35,11 +35,12 @@ import Foundation
 public protocol DispatchReducerProtocol : ReducerProtocol where State == Dispatched.State, Action == Dispatched.Action {
     
     associatedtype State = Dispatched.State
-    associatedtype Action = Dispatched.Action
+    associatedtype Action
     associatedtype Dispatched : ReducerProtocol
     
     /// Dispatches an action to some concrete reducer.
     func dispatch(_ action: Action) -> Dispatched
+    func convert(_ action: Action) -> Dispatched.Action
     
 }
 
@@ -48,8 +49,24 @@ public extension DispatchReducerProtocol {
     
     @inlinable
     func apply(_ action: Action, to state: inout Dispatched.State) {
-        dispatch(action).apply(action, to: &state)
+        dispatch(action).apply(convert(action), to: &state)
     }
+    
+}
+
+public extension DispatchReducerProtocol where Action == Dispatched.Action {
+    
+    @inlinable
+    func convert(_ action: Action) -> Action {
+        action
+    }
+    
+}
+
+public extension DispatchReducerProtocol where Dispatched.Action == Void {
+    
+    @inlinable
+    func convert(_ action: Action) {}
     
 }
 
