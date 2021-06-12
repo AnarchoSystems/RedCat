@@ -32,7 +32,7 @@ import Foundation
 ///
 /// - Note: It is recommended not to use @ReducerBuilder in longer ```switch``` statements for efficiency reasons.
 ///
-public protocol DispatchReducerProtocol : ReducerProtocol where State == Dispatched.State, Action == Dispatched.Action {
+public protocol DispatchReducerProtocol : ReducerProtocol where State == Dispatched.State {
     
     associatedtype State = Dispatched.State
     associatedtype Action
