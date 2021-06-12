@@ -64,12 +64,14 @@ Since currently there are no wrappers that support changing the action type, we 
 struct Dispatcher : DispatchReducer {
 
    @ReducerBuilder
-   func dispatch(_ action: HighLevelAction) -> AnyReducer<MyConcreteRootState, MyAction> {
+   func dispatch(_ action: HighLevelAction) -> VoidReducer<MyConcreteRootState> {
          switch action {
              case .module1(let module1Action):
-                 DetailReducer(\MyConcreteRootState.module1, reducer: Module1Reducer())
+                 Module1Reducer().bind(to: \.module1).send(module1Action)
              case .module2(let module2Action):
-                 DetailReducer(\MyConcreteRootState.module2, reducer: Module2Reducer())
+                 Module2Reducer().bind(to: \.module2).send(module2Action)
+                 .compose(with: someVoidReducerReactingToModule2Actions)
+                 .asVoidReducer()
                  ...
          }
    }
