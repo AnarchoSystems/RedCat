@@ -44,40 +44,12 @@ public extension ReducerProtocol {
     /// - Parameters:
     ///     - next: The other reducer.
     ///     - property: The property to which the other reducer is bound.
-    ///     - match: The action to match.
-    /// - Returns: A reducer capable to handle all the actions the two individual reducers can handle. If there are actions handled by both reducers, they are handled in sequence.
-    @inlinable
-    func compose<Next : ReducerProtocol>(with next: Next,
-                                       property: WritableKeyPath<State, Next.State>,
-                                       where match: @escaping (Next.Action) -> Action)
-    -> ComposedReducer<Self, DetailReducer<State, Next, Action>> {
-        compose(with: next.bind(to: property, where: match))
-    }
-    
-    /// Composes this reducer with another one.
-    /// - Parameters:
-    ///     - next: The other reducer.
-    ///     - property: The property to which the other reducer is bound.
     /// - Returns: A reducer capable to handle all the actions the two individual reducers can handle. If there are actions handled by both reducers, they are handled in sequence.
     @inlinable
     func compose<Next : ReducerProtocol>(with next: Next,
                                        property: WritableKeyPath<State, Next.State>)
-    -> ComposedReducer<Self, DetailReducer<State, Next, Action>> where Next.Action == Action {
+    -> ComposedReducer<Self, DetailReducer<State, Next>> where Next.Action == Action {
         compose(with: next.bind(to: property))
-    }
-    
-    /// Composes this reducer with another one.
-    /// - Parameters:
-    ///     - next: The other reducer.
-    ///     - aspect: The aspect to which the other reducer is bound.
-    ///     - match: The action to match.
-    /// - Returns: A reducer capable to handle all the actions the two individual reducers can handle. If there are actions handled by both reducers, they are handled in sequence.
-    @inlinable
-    func compose<Next : ReducerProtocol>(with next: Next,
-                                         aspect: CasePath<State, Next.State>,
-                                         where match: @escaping (Next.Action) -> Action)
-    -> ComposedReducer<Self, AspectReducer<State, Next, Action>> where State : Releasable {
-        compose(with: next.bind(to: aspect, where: match))
     }
     
     /// Composes this reducer with another one.
@@ -88,7 +60,7 @@ public extension ReducerProtocol {
     @inlinable
     func compose<Next : ReducerProtocol>(with next: Next,
                                          aspect: CasePath<State, Next.State>)
-    -> ComposedReducer<Self, AspectReducer<State, Next, Action>> where State : Releasable, Next.Action == Action {
+    -> ComposedReducer<Self, AspectReducer<State, Next>> where State : Releasable, Next.Action == Action {
         compose(with: next.bind(to: aspect))
     }
     

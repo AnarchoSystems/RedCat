@@ -54,7 +54,7 @@ public extension DetailReducer {
     
     init<Reducer : ReducerProtocol>(_ detail: WritableKeyPath<State, Reducer.State>,
                                   where condition: @escaping (Reducer.State) -> Bool,
-                                  build: @escaping () -> Reducer) where Self.Body == GuardReducer<Reducer>, Reducer.Action == Action {
+                                  build: @escaping () -> Reducer) where Self.Body == GuardReducer<Reducer> {
         self = DetailReducer(detail, reducer: GuardReducer(where: condition, build: build))
     }
     
@@ -64,7 +64,7 @@ public extension AspectReducer {
     
     init<Reducer : ReducerProtocol>(_ aspect: CasePath<State, Reducer.State>,
                                   where condition: @escaping (Reducer.State) -> Bool,
-                                  build: @escaping () -> Reducer) where Self.Body == GuardReducer<Reducer>, Reducer.Action == Action {
+                                  build: @escaping () -> Reducer) where Self.Body == GuardReducer<Reducer> {
         self = AspectReducer(aspect, reducer: GuardReducer(where: condition, build: build))
     }
 }
@@ -73,7 +73,7 @@ public extension Reducer {
     
     init<State, Wrapped : ReducerProtocol>(_ detail: WritableKeyPath<State, Wrapped.State>,
                                          where condition: @escaping (Wrapped.State) -> Bool,
-                                         build: @escaping () -> Wrapped) where Body == DetailReducer<State, GuardReducer<Wrapped>, Wrapped.Action> {
+                                         build: @escaping () -> Wrapped) where Body == DetailReducer<State, GuardReducer<Wrapped>> {
         self = Reducer {
             DetailReducer(detail, where: condition, build: build)
         }
@@ -82,7 +82,7 @@ public extension Reducer {
     
     init<State, Wrapped : ReducerProtocol>(_ aspect: CasePath<State, Wrapped.State>,
                                                    where condition: @escaping (Wrapped.State) -> Bool,
-                                                   build: @escaping () -> Wrapped) where Body == AspectReducer<State, GuardReducer<Wrapped>, Wrapped.Action> {
+                                                   build: @escaping () -> Wrapped) where Body == AspectReducer<State, GuardReducer<Wrapped>> {
         self = Reducer {
             AspectReducer(aspect, where: condition, build: build)
         }
@@ -107,14 +107,14 @@ public extension ReducerProtocol {
     func compose<Next : ReducerProtocol>(with next: Next,
                                        property: WritableKeyPath<State, Next.State>,
                                        where condition: @escaping (Next.State) -> Bool)
-    -> ComposedReducer<Self, DetailReducer<State, GuardReducer<Next>, Next.Action>> {
+    -> ComposedReducer<Self, DetailReducer<State, GuardReducer<Next>>> {
         compose(with: next.filter(condition).bind(to: property))
     }
     
     func compose<Next : ReducerProtocol>(with next: Next,
                                        aspect: CasePath<State, Next.State>,
                                        where condition: @escaping (Next.State) -> Bool)
-    -> ComposedReducer<Self, AspectReducer<State, GuardReducer<Next>, Next.Action>> where State : Emptyable {
+    -> ComposedReducer<Self, AspectReducer<State, GuardReducer<Next>>> where State : Emptyable {
         compose(with: next.filter(condition).bind(to: aspect))
     }
     

@@ -8,13 +8,13 @@
 
 extension __StoreProtocol {
     
-    public func map<NewState, NewAction>(onAction: @escaping (NewAction) -> Action,
-        _ transform: @escaping (State) -> NewState) -> MapStore<Self, NewState, NewAction> {
+    public func map<NewState, NewAction>(_ transform: @escaping (State) -> NewState,
+                                         onAction: @escaping (NewAction) -> Action) -> MapStore<Self, NewState, NewAction> {
         MapStore(base: self, transform: transform, embed: onAction)
     }
     
     public func map<NewState>(_ transform: @escaping (State) -> NewState) -> MapStore<Self, NewState, Action> {
-        map(onAction: {$0}, transform)
+        map(transform, onAction: {$0})
     }
     
     public subscript<NewState>(dynamicMember keyPath: KeyPath<State, NewState>) -> MapStore<Self, NewState, Action> {
@@ -58,7 +58,7 @@ extension MapStore: __ObservableStoreProtocol where Base: __ObservableStoreProto
     public func addObserver<S>(_ observer: S) -> StoreUnsubscriber where S : StoreDelegate {
         base.addObserver(observer)
     }
-
+    
     public func addObserver<S>(_ observer: S) where S : AnyObject, S : StoreDelegate {
         base.addObserver(observer)
     }
@@ -86,10 +86,10 @@ import SwiftUI
 
 public extension Store {
     
-    func withViewStore<A, T, U>(onAction: @escaping (A) -> Action,
-                             _ transform: @escaping (State) -> T,
-                             @ViewBuilder completion: (MapStore<Store<State, Action>, T, A>) -> U) -> U {
-        completion(map(onAction: onAction, transform))
+    func withViewStore<A, T, U>(_ transform: @escaping (State) -> T,
+                                onAction: @escaping (A) -> Action,
+                                @ViewBuilder completion: (MapStore<Store<State, Action>, T, A>) -> U) -> U {
+        completion(map(transform, onAction: onAction))
     }
     
 }

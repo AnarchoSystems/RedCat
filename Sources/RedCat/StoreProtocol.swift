@@ -41,7 +41,7 @@ public extension __StoreProtocol {
     ///     - list: The list of actions to dispatch in one dispatch cycle.
     ///     - embed: How the actions are to be interpreted by the reducer.
     func send<A>(_ list: ActionGroup<A>,
-              embed: (A) -> Action) {
+                 embed: (A) -> Action) {
         send(ActionGroup(values: list.map(embed)))
     }
     
@@ -52,23 +52,24 @@ public extension __StoreProtocol {
     /// Applies an undoable action to the state using the App's main reducer and registers the inverted action at the specified ```UndoManager```.
     /// - Parameters:
     ///     - action: The action to dispatch.
-    ///     - embed: Turns the given action into an action recognized by the store.
     ///     - undoTitle: The name of the inverted action.
     ///     - redoTitle: The name of the action.
+    ///     - undoManager: An ```UndoManager```, for example the one attached to the current window.
+    ///     - embed: Turns the given action into an action recognized by the store.
     /// This method is not threadsafe and has to be called on the mainthread.
     @available(OSX 10.11, *)
     func sendWithUndo<Action: Undoable>(_ action: Action,
-                                               embed: @escaping (Action) -> Self.Action,
-                                               undoTitle: String? = nil,
-                                               redoTitle: String? = nil,
-                                               undoManager: UndoManager?) {
+                                        undoTitle: String? = nil,
+                                        redoTitle: String? = nil,
+                                        undoManager: UndoManager?,
+                                        embed: @escaping (Action) -> Self.Action) {
         send(embed(action))
         undoManager?.registerUndo(withTarget: self) {target in
             target.sendWithUndo(action.inverted(),
-                                embed: embed,
                                 undoTitle: redoTitle,
                                 redoTitle: undoTitle,
-                                undoManager: undoManager)
+                                undoManager: undoManager,
+                                embed: embed)
         }
         if let undoTitle = undoTitle {
             undoManager?.setActionName(undoTitle)
@@ -78,23 +79,24 @@ public extension __StoreProtocol {
     /// Applies an undoable action to the state using the App's main reducer and registers the inverted action at the specified ```UndoManager```.
     /// - Parameters:
     ///     - list: The actions to dispatch.
-    ///     - embed: Turns the given action into an action recognized by the store.
     ///     - undoTitle: The name of the inverted action.
     ///     - redoTitle: The name of the action.
+    ///     - undoManager: An ```UndoManager```, for example the one attached to the current window.
+    ///     - embed: Turns the given action into an action recognized by the store.
     /// This method is not threadsafe and has to be called on the mainthread.
     @available(OSX 10.11, *)
     func sendWithUndo<Action: Undoable>(_ list: UndoGroup<Action>,
-                                               embed: @escaping (Action) -> Self.Action,
-                                               undoTitle: String? = nil,
-                                               redoTitle: String? = nil,
-                                               undoManager: UndoManager?) {
+                                        undoTitle: String? = nil,
+                                        redoTitle: String? = nil,
+                                        undoManager: UndoManager?,
+                                        embed: @escaping (Action) -> Self.Action) {
         send(ActionGroup(values: list.values), embed: embed)
         undoManager?.registerUndo(withTarget: self) {target in
             target.sendWithUndo(list.inverted(),
-                                embed: embed,
                                 undoTitle: redoTitle,
                                 redoTitle: undoTitle,
-                                undoManager: undoManager)
+                                undoManager: undoManager,
+                                embed: embed)
         }
         if let undoTitle = undoTitle {
             undoManager?.setActionName(undoTitle)
@@ -111,6 +113,7 @@ public extension __StoreProtocol where Action : Undoable {
     ///     - action: The action to dispatch.
     ///     - undoTitle: The name of the inverted action.
     ///     - redoTitle: The name of the action.
+    ///     - undoManager: An ```UndoManager```, for example the one attached to the current window.     
     /// This method is not threadsafe and has to be called on the mainthread.
     @available(OSX 10.11, *)
     func sendWithUndo(_ action: Action,
@@ -132,9 +135,9 @@ public extension __StoreProtocol where Action : Undoable {
     /// Applies an undoable action to the state using the App's main reducer and registers the inverted action at the specified ```UndoManager```.
     /// - Parameters:
     ///     - list: The actions to dispatch.
-    ///     - embed: Turns the given action into an action recognized by the store.
     ///     - undoTitle: The name of the inverted action.
     ///     - redoTitle: The name of the action.
+    ///     - undoManager: An ```UndoManager```, for example the one attached to the current window.
     /// This method is not threadsafe and has to be called on the mainthread.
     @available(OSX 10.11, *)
     func sendWithUndo(_ list: UndoGroup<Action>,

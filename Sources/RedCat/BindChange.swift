@@ -23,13 +23,10 @@ public extension PropertyChange {
 public struct BindChange<Root, Changer : PropertyChange, Action> : DetailReducerProtocol {
 
     public let keyPath : WritableKeyPath<Root, Changer.Value>
-    public let matchAction: CasePath<Action, Changer>
     
     @inlinable
-    public init(of property: WritableKeyPath<Root, Changer.Value>,
-                to match: @escaping (Changer) -> Action) {
+    public init(of property: WritableKeyPath<Root, Changer.Value>) {
         self.keyPath = property
-        self.matchAction = /match
     }
     
     @inlinable
@@ -43,13 +40,10 @@ public struct BindChange<Root, Changer : PropertyChange, Action> : DetailReducer
 public struct BindCase<Root : Releasable, Changer : PropertyChange, Action> : AspectReducerProtocol {
     
     public let casePath: CasePath<Root, Changer.Value>
-    public let matchAction: CasePath<Action, Changer>
     
     @inlinable
-    public init(of aspect: CasePath<Root, Changer.Value>,
-                to match: @escaping (Changer) -> Action) {
+    public init(of aspect: CasePath<Root, Changer.Value>) {
         self.casePath = aspect
-        self.matchAction = /match
     }
     
     @inlinable
@@ -62,14 +56,12 @@ public struct BindCase<Root : Releasable, Changer : PropertyChange, Action> : As
 
 public extension Reducers.Native {
     
-    static func bind<Root, Changer : PropertyChange, Action>(_ property: WritableKeyPath<Root, Changer.Value>,
-                                                     to match: @escaping (Changer) -> Action) -> BindChange<Root, Changer, Action> {
-        BindChange(of: property, to: match)
+    static func bind<Root, Changer : PropertyChange, Action>(_ property: WritableKeyPath<Root, Changer.Value>) -> BindChange<Root, Changer, Action> {
+        BindChange(of: property)
     }
     
-    static func bind<Root : Releasable, Changer : PropertyChange, Action>(_ aspect: CasePath<Root, Changer.Value>,
-                                                                          to match: @escaping (Changer) -> Action) -> BindCase<Root, Changer, Action> {
-        BindCase(of: aspect, to: match)
+    static func bind<Root : Releasable, Changer : PropertyChange, Action>(_ aspect: CasePath<Root, Changer.Value>) -> BindCase<Root, Changer, Action> {
+        BindCase(of: aspect)
     }
     
 }

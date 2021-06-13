@@ -17,23 +17,33 @@ public extension Store {
     
     /// Exposes a value as a binding, if provided with an action that serves as a setter.
     func binding<Value>(for value: @escaping (State) -> Value,
-                                action: @escaping (Value) -> Action)
-    -> Binding<Value> {
+                        action: @escaping (Value) -> Action) -> Binding<Value> {
         Binding(get: {value(self.state)},
                 set: {self.send(action($0))})
     }
     
     /// Exposes a value as a binding, if provided with an action that serves as a setter.
     func binding<Value, A : Undoable>(for value: @escaping (State) -> Value,
-                                           withUndoManager: UndoManager?,
-                                           undoTitle: String? = nil,
-                                           redoTitle: String? = nil,
-                                           embed: @escaping (A) -> Action,
-                                           action: @escaping (Value) -> A)
-    -> Binding<Value> {
+                                      withUndoManager: UndoManager?,
+                                      undoTitle: String? = nil,
+                                      redoTitle: String? = nil,
+                                      embed: @escaping (A) -> Action,
+                                      action: @escaping (Value) -> A) -> Binding<Value> {
         Binding(get: {value(self.state)},
                 set: {self.sendWithUndo(action($0),
-                                        embed: embed,
+                                        undoTitle: undoTitle,
+                                        redoTitle: redoTitle,
+                                        undoManager: withUndoManager,
+                                        embed: embed)})
+    }
+    
+    func binding<Value>(for value: @escaping (State) -> Value,
+                        withUndoManager: UndoManager?,
+                        undoTitle: String? = nil,
+                        redoTitle: String? = nil,
+                        action: @escaping (Value) -> Action) -> Binding<Value> where Action : Undoable {
+        Binding(get: {value(self.state)},
+                set: {self.sendWithUndo(action($0),
                                         undoTitle: undoTitle,
                                         redoTitle: redoTitle,
                                         undoManager: withUndoManager)})
