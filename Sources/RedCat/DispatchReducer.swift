@@ -73,18 +73,18 @@ public extension DispatchReducerProtocol where Dispatched.Action == Void {
 }
 
 /// An anonymous ```DispatchReducer``` accepting a dynamic action.
-public struct DispatchReducer<Dispatched : ReducerProtocol> : DispatchReducerProtocol {
+public struct DispatchReducer<Dispatched : VoidReducerProtocol, Action> : DispatchReducerProtocol {
     
     @usableFromInline
-    let closure : (Dispatched.Action) -> Dispatched
+    let closure : (Action) -> Dispatched
     
     @inlinable
-    public init(@ReducerBuilder _ closure: @escaping (Dispatched.Action) -> Dispatched) {
+    public init(@ReducerBuilder _ closure: @escaping (Action) -> Dispatched) {
         self.closure = closure
     }
     
     @inlinable
-    public func dispatch(_ action: Dispatched.Action) -> Dispatched {
+    public func dispatch(_ action: Action) -> Dispatched {
         closure(action)
     }
     
@@ -105,8 +105,11 @@ extension Optional : ReducerProtocol, DispatchReducerProtocol where Wrapped : Re
 
 public extension Reducers.Native {
     
-    static func dispatch<Dispatched : ReducerProtocol>(@ReducerBuilder _ closure: @escaping (Dispatched.Action) -> Dispatched) -> DispatchReducer<Dispatched> {
+    static func dispatch<Dispatched : VoidReducerProtocol, Action>(@ReducerBuilder _ closure: @escaping (Action) -> Dispatched) -> DispatchReducer<Dispatched, Action> {
         DispatchReducer(closure)
     }
     
 }
+
+
+extension AnyReducer : VoidReducerProtocol where Action == Void {}

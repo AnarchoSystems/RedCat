@@ -18,6 +18,7 @@ public struct AnyReducer<State, Action>: ReducerProtocol {
     /// Initializes the erased reducer from an arbitrary other reducer.
     /// - Parameters:
     ///     - reducer: The reducer to type-erase.
+    @inlinable
     public init<R: ReducerProtocol>(_ reducer: R) where R.State == State, R.Action == Action {
 		applyBlock = {
 			reducer.apply($0, to: &$1)
@@ -34,6 +35,7 @@ public struct AnyReducer<State, Action>: ReducerProtocol {
 
 public extension ReducerProtocol {
     
+    @inlinable
     func erased() -> AnyReducer<State, Action> {
         AnyReducer(self)
     }
@@ -43,6 +45,7 @@ public extension ReducerProtocol {
 
 public extension Reducers.Native {
     
+    @inlinable
     static func anyReducer<Wrapped : ReducerProtocol>(_ wrapped: Wrapped) -> AnyReducer<Wrapped.State, Wrapped.Action> {
         AnyReducer(wrapped)
     }

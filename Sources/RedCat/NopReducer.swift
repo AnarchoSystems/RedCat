@@ -24,6 +24,7 @@ public struct NopReducer<State, Action> : ReducerProtocol {
 
 public extension Reducers.Native {
     
+    @inlinable
     static func nop<State, Action>(stateType: State.Type = State.self) -> NopReducer<State, Action> {
         NopReducer()
     }

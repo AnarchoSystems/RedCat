@@ -79,30 +79,30 @@ public enum ReducerBuilder {
             .compose(with: r6)
     }
     
-    public static func buildEither<R1 : ReducerProtocol,
-                                   R2 : ReducerProtocol>(first component: R1) -> IfReducer<R1, R2> {
-        .ifReducer(component)
+    public static func buildBlock<State>(_ r1: VoidReducer<State>,
+                                         _ r2: VoidReducer<State>,
+                                         _ r3: VoidReducer<State>,
+                                         _ r4: VoidReducer<State>,
+                                         _ r5: VoidReducer<State>,
+                                         _ r6: VoidReducer<State>,
+                                         components: VoidReducer<State>...) -> VoidReducer<State> {
+        VoidReducer{for component in [r1, r2, r3, r4, r5, r6] + components {component.apply((), to: &$0)}}
     }
     
-    public static func buildEither<R1 : ReducerProtocol,
-                                   R2 : ReducerProtocol>(second component: R2) -> IfReducer<R1, R2> {
-        .elseReducer(component)
+    public static func buildEither<R1 : ReducerProtocol>(first component: R1) -> AnyReducer<R1.State, R1.Action> {
+        component.erased()
     }
     
-    public static func buildOptional<R1 : ReducerProtocol>(_ component: R1?) -> IfReducer<R1, NopReducer<R1.State, R1.Action>> {
-        component.map(IfReducer.ifReducer) ?? IfReducer.elseReducer()
+    public static func buildEither<R2 : ReducerProtocol>(second component: R2) -> AnyReducer<R2.State, R2.Action> {
+        component.erased()
+    }
+    
+    public static func buildOptional<R1 : ReducerProtocol>(_ component: R1?) -> AnyReducer<R1.State, R1.Action> {
+        component.map(AnyReducer.init) ?? NopReducer().erased()
     }
     
     public static func buildLimitedAvailability<R : ReducerProtocol>(_ component: R) -> AnyReducer<R.State, R.Action> {
         AnyReducer(component)
     }
-    
-    #if swift(<999) // to be removed when associated types of opaque return types can be specified
-    
-    public static func buildFinalResult<R : ReducerProtocol>(_ component: R) -> AnyReducer<R.State, R.Action> {
-        AnyReducer(component)
-    }
-    
-    #endif
     
 }

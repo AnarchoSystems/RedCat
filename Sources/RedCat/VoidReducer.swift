@@ -19,6 +19,10 @@ public struct VoidReducer<State> : VoidReducerProtocol {
     
     let apply : (inout State) -> Void
     
+    public init(_ closure: @escaping (inout State) -> Void) {
+        apply = closure
+    }
+    
     public func apply(_ action: (), to state: inout State) {
         apply(&state)
     }
@@ -27,10 +31,6 @@ public struct VoidReducer<State> : VoidReducerProtocol {
 
 
 public extension VoidReducer {
-    
-    init(_ closure: @escaping (inout State) -> Void) {
-        apply = closure
-    }
     
     init<R : ReducerProtocol>(_ reducer: R, action: R.Action) where State == R.State {
         apply = {reducer.apply(action, to: &$0)}
