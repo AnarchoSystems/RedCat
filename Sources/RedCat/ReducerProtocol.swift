@@ -27,6 +27,16 @@ public protocol ReducerProtocol {
     
 }
 
+public extension ReducerProtocol {
+    
+    func applyAll<S : Sequence>(_ actions: S,
+                                to state: inout State) where S.Element == Action {
+        for action in actions {
+            apply(action, to: &state)
+        }
+    }
+    
+}
 
 public extension ReducerProtocol {
     

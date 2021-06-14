@@ -110,6 +110,3 @@ public extension Reducers.Native {
     }
     
 }
-
-
-extension AnyReducer : VoidReducerProtocol where Action == Void {}

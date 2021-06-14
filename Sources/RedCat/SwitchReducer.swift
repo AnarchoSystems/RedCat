@@ -26,11 +26,15 @@ public enum IfReducer<R1 : ReducerProtocol, R2 : ReducerProtocol> : ReducerProto
     
     @inlinable
     public static func elseReducer<State, Action>() -> Self where R2 == NopReducer<State, Action> {
-        .elseReducer(NopReducer())
+        .elseReducer(Reducers.Native.nop())
     }
     
 }
 
+// the below types really only make sense when there are opaque return types where you can specify associatedtypes
+
+#if swift(>=999)
+/*
 
 public enum ElseIfReducer<R1 : ReducerProtocol, R2 : ReducerProtocol, R3 : ReducerProtocol> : ReducerProtocol where
     R1.State == R2.State, R2.State == R3.State, R1.Action == R2.Action, R2.Action == R3.Action {
@@ -103,3 +107,6 @@ public extension Reducers.Native {
     }
     
 }
+
+*/
+#endif

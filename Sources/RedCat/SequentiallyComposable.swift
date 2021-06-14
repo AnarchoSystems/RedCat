@@ -54,6 +54,8 @@ public struct ActionGroup<Action> : RandomAccessCollection {
     
 }
 
+extension ActionGroup : Equatable where Action : Equatable {}
+
 @resultBuilder
 public enum ActionBuilder {
     public static func buildBlock<Action>(_ elements: Action...) -> ActionGroup<Action> {

@@ -74,12 +74,18 @@ public struct UndoGroup<Action : Undoable> : Undoable, RandomAccessCollection {
         UndoGroup(values: values + next.values)
     }
     
+    public func asActionGroup() -> ActionGroup<Action> {
+        ActionGroup(values: values)
+    }
+    
     public var startIndex : Int {values.startIndex}
     public var endIndex : Int {values.endIndex}
     public func index(after i: Int) -> Int {values.index(after: i)}
     public subscript(position: Int) -> Action {values[position]}
     
 }
+
+extension UndoGroup : Equatable where Action : Equatable {}
 
 @resultBuilder
 public enum UndoBuilder {

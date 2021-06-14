@@ -89,20 +89,37 @@ public enum ReducerBuilder {
         VoidReducer{for component in [r1, r2, r3, r4, r5, r6] + components {component.apply((), to: &$0)}}
     }
     
+    public static func buildArray<R : ReducerProtocol>(_ components: [R]) -> ReducersChain<R> {
+        ReducersChain(components)
+    }
+    
     public static func buildEither<R1 : ReducerProtocol>(first component: R1) -> AnyReducer<R1.State, R1.Action> {
         component.erased()
     }
     
     public static func buildEither<R2 : ReducerProtocol>(second component: R2) -> AnyReducer<R2.State, R2.Action> {
-        component.erased()
-    }
-    
-    public static func buildOptional<R1 : ReducerProtocol>(_ component: R1?) -> AnyReducer<R1.State, R1.Action> {
-        component.map(AnyReducer.init) ?? NopReducer().erased()
+        Reducers.Native.anyReducer(component)
     }
     
     public static func buildLimitedAvailability<R : ReducerProtocol>(_ component: R) -> AnyReducer<R.State, R.Action> {
         AnyReducer(component)
+    }
+    
+}
+
+
+public struct ReducersChain<R : ReducerProtocol> : ReducerProtocol {
+    
+    @usableFromInline
+    let array : [R]
+    
+    public init(_ array: [R]){self.array = array}
+    
+    @inlinable
+    public func apply(_ action: R.Action, to state: inout R.State) {
+        for r in array {
+            r.apply(action, to: &state)
+        }
     }
     
 }

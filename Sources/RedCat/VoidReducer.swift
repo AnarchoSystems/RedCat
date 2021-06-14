@@ -13,7 +13,19 @@ public protocol VoidReducerProtocol : ReducerProtocol where Action == Void {
     associatedtype State
 }
 
+public extension VoidReducerProtocol {
+    
+    func bindAction<NewAction>(to newAction: NewAction.Type = NewAction.self) -> ActionBinding<Self, NewAction> {
+        bindAction{_ in }
+    }
+    
+}
 
+extension Optional : VoidReducerProtocol where Action == Void {}
+extension AnyReducer : VoidReducerProtocol where Action == Void {}
+extension DetailReducer : VoidReducerProtocol where Action == Void {}
+extension AspectReducer : VoidReducerProtocol where Action == Void {}
+extension Reducer : VoidReducerProtocol where Action == Void {}
 
 public struct VoidReducer<State> : VoidReducerProtocol {
     

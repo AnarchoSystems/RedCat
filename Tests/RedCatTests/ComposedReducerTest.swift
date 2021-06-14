@@ -11,29 +11,31 @@ import XCTest
 
 extension RedCatTests {
     
+    // basic semantic test of reducers
     func testIncDec() {
         var number = Int.random(in: -100...100)
         var state = TestState(value: number)
         for _ in 0..<100 {
             if Bool.random() {
-                incReducer.apply(.inc(value: \TestState.value), to: &state)
+                incReducer.apply(.inc, to: &state)
                 number += 1
             }
             else {
-                decReducer.apply(.dec(value: \TestState.value), to: &state)
+                decReducer.apply(.dec, to: &state)
                 number -= 1
             }
             XCTAssertEqual(number, state.value)
         }
     }
     
+    // test of basic sequential composition
     func testComposed() {
         var state1 = TestState(value: Int.random(in: -100...100))
         var state2 = state1
         for _ in 0..<100 {
             let oldValue = state1.value
             let incDec = Bool.random()
-            let action = incOrDecUndoable(incDec)
+            let action = IncDec(incDec)
             if incDec {
                 incReducer.apply(action, to: &state1)
             }
@@ -46,6 +48,7 @@ extension RedCatTests {
         }
     }
     
+    // basic test of
     func testActionList() {
         
         for _ in 0..<10 {
@@ -55,21 +58,15 @@ extension RedCatTests {
             
             let list = (0..<100).map {_ in Bool.random()}
             
-            for incDec in list {
-                
-                composedReducer.apply(incOrDecUndoable(incDec), to: &state)
-                
-            }
+            let group1 = ActionGroup(list, build: IncDec.init)
             
-            let group2 = UndoGroup(list,
-                                   build: incOrDecUndoable).inverted()
+            composedReducer.applyAll(group1, to: &state)
             
-            for action in group2 {
             
-                incDecReducer.apply(action,
-                                    to: &state)
+            let group2 = UndoGroup(list, build: IncDec.init).inverted()
             
-            }
+            incDecReducer.applyAll(group2,
+                                   to: &state)
             
             XCTAssertEqual(state.value, original.value)
             
@@ -82,31 +79,37 @@ extension RedCatTests {
 
 fileprivate extension RedCatTests {
     
-    
-    func incOrDecUndoable(_ inc: Bool) -> IncDec<TestState> {
-        inc ? .inc(value: \TestState.value) : .dec(value: \TestState.value)
+    var incReducer : IncReducer {
+        IncReducer()
+    }
+    var decReducer : DecReducer {
+        DecReducer()
     }
     
-    var incReducer : TestReducers.IncReducer<TestState> {
-        TestReducers.inc()
-    }
-    var decReducer : TestReducers.DecReducer<TestState> {
-        TestReducers.dec()
-    }
-    
-    var composedReducer : ComposedReducer<TestReducers.IncReducer<TestState>, TestReducers.DecReducer<TestState>> {
+    var composedReducer : ComposedReducer<IncReducer, DecReducer> {
         incReducer.compose(with: decReducer)
     }
     
-    var incDecReducer : ClosureReducer<TestState, IncDec<TestState>> {
-        ClosureReducer {action, state in
-            switch action.kind {
-            case .inc:
-                state[keyPath: action.value] += 1
-            case .dec:
-                state[keyPath: action.value] -= 1
-            }
+    struct IncReducer : ReducerProtocol {
+        
+        func apply(_ action: IncDec, to state: inout TestState) {
+            guard case .inc = action else {return}
+            RedCatTests.apply(action, to: &state.value)
         }
+        
+    }
+    
+    struct DecReducer : ReducerProtocol {
+        
+        func apply(_ action: IncDec, to state: inout TestState) {
+            guard case .dec = action else {return}
+            RedCatTests.apply(action, to: &state.value)
+        }
+        
+    }
+    
+    var incDecReducer : ClosureReducer<TestState, IncDec> {
+        Reducers.Native.withClosure {RedCatTests.apply($0, to: &$1.value)}
     }
     
 }

@@ -43,48 +43,29 @@ public struct GuardReducer<Wrapped : ReducerProtocol> : ReducerProtocol {
 public extension Reducers.Native {
     
     static func guarded<Wrapped : ReducerProtocol>(_ reducer: Wrapped,
-                                                 where condition: @escaping (Wrapped.State) -> Bool) -> GuardReducer<Wrapped> {
-        GuardReducer(reducer, where: condition)
+                                                   where condition: @escaping (Wrapped.State) -> Bool) -> GuardReducer<Wrapped> {
+        GuardReducer(where: condition) {reducer}
     }
     
 }
 
-
-public extension DetailReducer {
-    
-    init<Reducer : ReducerProtocol>(_ detail: WritableKeyPath<State, Reducer.State>,
-                                  where condition: @escaping (Reducer.State) -> Bool,
-                                  build: @escaping () -> Reducer) where Self.Body == GuardReducer<Reducer> {
-        self = DetailReducer(detail, reducer: GuardReducer(where: condition, build: build))
-    }
-    
-}
-
-public extension AspectReducer {
-    
-    init<Reducer : ReducerProtocol>(_ aspect: CasePath<State, Reducer.State>,
-                                  where condition: @escaping (Reducer.State) -> Bool,
-                                  build: @escaping () -> Reducer) where Self.Body == GuardReducer<Reducer> {
-        self = AspectReducer(aspect, reducer: GuardReducer(where: condition, build: build))
-    }
-}
 
 public extension Reducer {
     
     init<State, Wrapped : ReducerProtocol>(_ detail: WritableKeyPath<State, Wrapped.State>,
-                                         where condition: @escaping (Wrapped.State) -> Bool,
-                                         build: @escaping () -> Wrapped) where Body == DetailReducer<State, GuardReducer<Wrapped>> {
+                                           where condition: @escaping (State) -> Bool,
+                                           build: @escaping () -> Wrapped) where Body == GuardReducer<DetailReducer<State, Wrapped>> {
         self = Reducer {
-            DetailReducer(detail, where: condition, build: build)
+            Reducers.Native.guarded(DetailReducer(detail, build: build), where: condition)
         }
     }
     
     
     init<State, Wrapped : ReducerProtocol>(_ aspect: CasePath<State, Wrapped.State>,
-                                                   where condition: @escaping (Wrapped.State) -> Bool,
-                                                   build: @escaping () -> Wrapped) where Body == AspectReducer<State, GuardReducer<Wrapped>> {
+                                           where condition: @escaping (State) -> Bool,
+                                           build: @escaping () -> Wrapped) where Body == GuardReducer<AspectReducer<State, Wrapped>> {
         self = Reducer {
-            AspectReducer(aspect, where: condition, build: build)
+            AspectReducer(aspect, build: build).filter(condition)
         }
     }
     
@@ -96,26 +77,6 @@ public extension ReducerProtocol {
     /// Handles actions only when the state satisfies some condition.
     func filter(_ condition: @escaping (State) -> Bool) -> GuardReducer<Self> {
         GuardReducer(self, where: condition)
-    }
-    
-    func compose<Next : ReducerProtocol>(with next: Next,
-                                       where condition: @escaping (State) -> Bool)
-    -> ComposedReducer<Self, GuardReducer<Next>> where State == Next.State {
-        compose(with: next.filter(condition))
-    }
-    
-    func compose<Next : ReducerProtocol>(with next: Next,
-                                       property: WritableKeyPath<State, Next.State>,
-                                       where condition: @escaping (Next.State) -> Bool)
-    -> ComposedReducer<Self, DetailReducer<State, GuardReducer<Next>>> {
-        compose(with: next.filter(condition).bind(to: property))
-    }
-    
-    func compose<Next : ReducerProtocol>(with next: Next,
-                                       aspect: CasePath<State, Next.State>,
-                                       where condition: @escaping (Next.State) -> Bool)
-    -> ComposedReducer<Self, AspectReducer<State, GuardReducer<Next>>> where State : Emptyable {
-        compose(with: next.filter(condition).bind(to: aspect))
     }
     
 }

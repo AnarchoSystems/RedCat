@@ -85,17 +85,17 @@ public struct DetailReducer<State, Reducer : ReducerProtocol> : DetailReducerWra
     
     @inlinable
     public init(_ detail: WritableKeyPath<State, Reducer.State>,
-                build: @escaping () -> Reducer) {
-        self.keyPath = detail
-        self.body = build()
+                build: () -> Reducer) {
+        self = DetailReducer(detail, reducer: build())
     }
     
     @inlinable
     public init<Detail, Action>(_ detail: WritableKeyPath<State, Detail>,
                                 closure: @escaping (Action, inout Detail) -> Void)
     where Reducer == ClosureReducer<Detail, Action> {
-        self.keyPath = detail
-        self.body = ClosureReducer(closure)
+        self = DetailReducer(detail) {
+            ClosureReducer(closure)
+        }
     }
     
 }

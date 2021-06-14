@@ -47,21 +47,27 @@ public struct Reducer<Body : ReducerProtocol> : ReducerWrapper {
     @inlinable
     public init<State, Action>(_ closure: @escaping (Action, inout State) -> Void)
     where Body == ClosureReducer<State, Action> {
-        self.body = ClosureReducer(closure)
+        self = Reducer {
+            ClosureReducer(closure)
+        }
     }
     
     @inlinable
     public init<State : Releasable, R : ReducerProtocol>(_ aspect: CasePath<State, R.State>,
                                                                  _ body: () -> R)
     where Body == AspectReducer<State, R> {
-        self.body = AspectReducer(aspect, reducer: body())
+        self = Reducer {
+            AspectReducer(aspect, build: body)
+        }
     }
     
     @inlinable
     public init<State, R : ReducerProtocol>(_ detail: WritableKeyPath<State, R.State>,
                                             _ body: () -> R)
     where Body == DetailReducer<State, R> {
-        self.body = DetailReducer(detail, reducer: body())
+        self = Reducer {
+            DetailReducer(detail, build: body)
+        }
     }
     
 }

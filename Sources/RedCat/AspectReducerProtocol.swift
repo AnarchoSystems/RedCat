@@ -87,17 +87,17 @@ public struct AspectReducer<State : Releasable, Reducer : ReducerProtocol> : Asp
     
     @inlinable
     public init(_ casePath: CasePath<State, Reducer.State>,
-                build: @escaping () -> Reducer) {
-        self.casePath = casePath
-        self.body = build()
+                build: () -> Reducer) {
+        self = AspectReducer(casePath, reducer: build())
     }
     
     @inlinable
     public init<Aspect, Action>(_ aspect: CasePath<State, Aspect>,
                         closure: @escaping (Action, inout Aspect) -> Void)
     where Reducer == ClosureReducer<Aspect, Action> {
-        self.casePath = aspect
-        self.body = ClosureReducer(closure)
+        self = AspectReducer(aspect) {
+            ClosureReducer(closure)
+        }
     }
     
 }
