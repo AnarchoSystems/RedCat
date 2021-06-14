@@ -39,7 +39,7 @@ public struct WeakStoreDelegate: StoreDelegate {
     private weak var delegate : (StoreDelegate & AnyObject)?
 	public var isAlive: Bool { delegate != nil }
 	
-	public init<S: StoreDelegate & AnyObject>(_ delegate: S) {
+	public init(_ delegate: StoreDelegate & AnyObject) {
         self.delegate = delegate
 	}
 	

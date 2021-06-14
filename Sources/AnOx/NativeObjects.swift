@@ -29,12 +29,12 @@ public extension Dependencies {
 public final class ResolvedNativeObjects {
     
     /// The network handler of this app. Defaults to ```URLSession.shared```.
-    public lazy var networkHandler : NetworkHandler = URLSession.shared
+    public private(set) lazy var networkHandler : NetworkHandler = URLSession.shared
     
     #if canImport(CoreMotion) && (os(iOS) || os(watchOS) || os(tvOS))
     
     /// The motion manager of this app. Defaults to ```CMMotionManager()```.
-    public lazy var motionManager : MotionManager = CMMotionManager()
+    public private(set) lazy var motionManager : MotionManager = CMMotionManager()
     
     #endif
   
@@ -43,7 +43,7 @@ public final class ResolvedNativeObjects {
     /// The location manager of this app. Defaults to ```CLLocationManager()```.
     /// Currently, AnOx only supports a constant configuration when it comes to things like accuracy or the distance filter.
     /// If you want to change any of these values, you need to override the locationManager.
-    public lazy var locationManager : LocationManager = CLLocationManager()
+    public private(set) lazy var locationManager : LocationManager = CLLocationManager()
     #endif
     
 }

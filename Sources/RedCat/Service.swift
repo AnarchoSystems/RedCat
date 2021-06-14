@@ -11,7 +11,7 @@ import Foundation
 /// A ```Service``` wraps itself around the reducer to enable side-effects.
 ///
 /// Before each application of the App's main reducer, each service will receive a ```beforeUpdate``` message and has the opportunity to react to the action and interact with the store and its state before the action is dispatched.
-/// After each application, the services receive ```afterUpdate``` in reversed order.
+/// After each application, the services receive ```afterUpdate``` *in reversed order*.
 /// Services cannot modify the actions already being enqueued, nor can they prevent execution. This should be done by high level reducers.
 open class Service<State, Action> {
     

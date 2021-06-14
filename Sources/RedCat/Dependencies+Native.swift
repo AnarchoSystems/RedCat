@@ -23,7 +23,7 @@ public extension Dependencies {
 
 public final class ResolvedNativeValues {
     
-    public lazy var debug : Bool = {
+    public private(set) lazy var debug : Bool = {
         #if DEBUG
         return true
         #else
@@ -31,7 +31,7 @@ public final class ResolvedNativeValues {
         #endif
     }()
     
-    public lazy var isSimulator : Bool = {
+    public private(set) lazy var isSimulator : Bool = {
         #if targetEnvironment(simulator)
         return true
         #else

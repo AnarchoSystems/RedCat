@@ -31,6 +31,8 @@ public final class Observers {
     @usableFromInline
     internal func addObserver<O : StoreDelegate>(_ observer: O) -> StoreUnsubscriber {
         
+        let observer : StoreDelegate = (observer as? AnyObject & StoreDelegate).map(WeakStoreDelegate.init) ?? observer
+        
         let id = UUID()
         if firstObserver == nil {
             firstObserver = (id, observer)
