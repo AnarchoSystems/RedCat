@@ -67,11 +67,15 @@ public struct UndoGroup<Action : Undoable> : Undoable, RandomAccessCollection {
     }
     
     public func then(_ next: Action) -> Self {
-        UndoGroup(values: values + [next])
+        var result = self
+        result.append(next)
+        return result
     }
     
     public func then(_ next: Self) -> Self {
-        UndoGroup(values: values + next.values)
+        var result = self
+        result.append(contentsOf: next)
+        return result 
     }
     
     public func asActionGroup() -> ActionGroup<Action> {

@@ -62,7 +62,7 @@ public final class LocationService<State, Action> : DetailService<State, Locatio
         super.init(detail: configure)
     }
     
-    override public func onAppInit(store: StoreStub<State, Action>, environment: Dependencies) {
+    override public func otherAppInitTasks(store: StoreStub<State, Action>, environment: Dependencies) {
         delegate.store = store
         environment.native.locationManager.delegate = delegate
     }
@@ -71,7 +71,7 @@ public final class LocationService<State, Action> : DetailService<State, Locatio
         
         if
             let authRequest = newValue.requestedAuthorization,
-            authRequest != oldValue?.requestedAuthorization {
+            authRequest != oldValue.requestedAuthorization {
             switch authRequest {
             case .always:
                 environment.native.locationManager.requestAlwaysAuthorization()
@@ -80,7 +80,7 @@ public final class LocationService<State, Action> : DetailService<State, Locatio
             }
         }
         
-        if newValue.observingLocation != oldValue?.observingLocation {
+        if newValue.observingLocation != oldValue.observingLocation {
             switch newValue.observingLocation {
             case true:
                 environment.native.locationManager.startUpdatingLocation()
@@ -89,7 +89,7 @@ public final class LocationService<State, Action> : DetailService<State, Locatio
             }
         }
         
-        if newValue.observingHeading != oldValue?.observingHeading {
+        if newValue.observingHeading != oldValue.observingHeading {
             switch newValue.observingHeading {
             case true:
                 environment.native.locationManager.startUpdatingHeading()
@@ -98,7 +98,7 @@ public final class LocationService<State, Action> : DetailService<State, Locatio
             }
         }
         
-        if newValue.observingVisits != oldValue?.observingVisits {
+        if newValue.observingVisits != oldValue.observingVisits {
             switch newValue.observingVisits {
             case true:
                 environment.native.locationManager.startMonitoringVisits()
@@ -107,11 +107,11 @@ public final class LocationService<State, Action> : DetailService<State, Locatio
             }
         }
         
-        let removedRegions = oldValue?.observedRegions.subtracting(newValue.observedRegions) ?? []
+        let removedRegions = oldValue.observedRegions.subtracting(newValue.observedRegions)
         for region in removedRegions {
             environment.native.locationManager.stopMonitoring(for: region)
         }
-        let addedRegions = newValue.observedRegions.subtracting(oldValue?.observedRegions ?? [])
+        let addedRegions = newValue.observedRegions.subtracting(oldValue.observedRegions)
         for region in addedRegions {
             environment.native.locationManager.startMonitoring(for: region)
         }
@@ -122,7 +122,7 @@ public final class LocationService<State, Action> : DetailService<State, Locatio
 
 open class LocationManagerDelegate<State, Action> : NSObject, CLLocationManagerDelegate {
     
-    public final weak var store : StoreStub<State, Action>?
+    fileprivate(set) public final var store : StoreStub<State, Action>!
     
 }
 

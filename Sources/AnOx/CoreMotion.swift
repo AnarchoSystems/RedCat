@@ -154,8 +154,7 @@ public class Sensor<State, Config : SensorWatchConfig, Kind : BasicSensor, Actio
         currentState = newValue.initialState
         mgr.updateInterval = newValue.updateInterval
         
-        mgr.startUpdates(to: queue) {[weak store] data, error in
-            guard let store = store else {return mgr.stopUpdates()}
+        mgr.startUpdates(to: queue) {data, error in
             
             guard let data = data else {
                 return DispatchQueue.main.async {
@@ -222,8 +221,7 @@ public final class DeviceMotionSensor<State, Config : DeviceMotionWatchConfig, A
         mgr.deviceMotionUpdateInterval = newValue.updateInterval
         
         mgr.startDeviceMotionUpdates(using: newValue.referenceFrame,
-                                     to: queue) {[weak store] data, error in
-            guard let store = store else {return mgr.stopDeviceMotionUpdates()}
+                                     to: queue) { data, error in
             
             guard let data = data else {
                 return DispatchQueue.main.async {

@@ -24,7 +24,7 @@ public struct StoreStub<State, Action> {
     
 }
 
-public extension StoreProtocol {
+public extension StoreProtocol where Self : AnyObject {
     func stub() -> StoreStub<State, Action> {
         StoreStub(base: ConcreteStore(base: self))
     }
@@ -36,15 +36,16 @@ fileprivate class AnyStore<State, Action> {
     func send(_ list: ActionGroup<Action>) {fatalError()}
 }
 
-fileprivate final class ConcreteStore<Store : StoreProtocol> : AnyStore<Store.State, Store.Action> {
-    let base : Store
-    init(base: Store) {self.base = base}
-    override var state : Store.State {base.state}
+fileprivate final class ConcreteStore<Store : StoreProtocol & AnyObject> : AnyStore<Store.State, Store.Action> {
+    let initialState : Store.State
+    weak var base : Store?
+    init(base: Store) {self.base = base; self.initialState = base.state}
+    override var state : Store.State {base?.state ?? initialState}
     override func send(_ action: Store.Action) {
-        base.send(action)
+        base?.send(action)
     }
     override func send(_ list: ActionGroup<Store.Action>) {
-        base.send(list)
+        base?.send(list)
     }
 }
 
