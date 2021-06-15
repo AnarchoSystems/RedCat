@@ -16,32 +16,29 @@ public enum ReducerBuilder {
     
     public static func buildBlock<R1 : ReducerProtocol,
                                   R2 : ReducerProtocol>(_ r1: R1,
-                                                      _ r2: R2)
+                                                        _ r2: R2)
     -> ComposedReducer<R1, R2> {
-        r1.compose(with: r2)
+        buildBlock(r1).compose(with: r2)
     }
     
     public static func buildBlock<R1 : ReducerProtocol,
                                   R2 : ReducerProtocol,
                                   R3 : ReducerProtocol>(_ r1: R1,
-                                                      _ r2: R2,
-                                                      _ r3: R3)
+                                                        _ r2: R2,
+                                                        _ r3: R3)
     -> ComposedReducer<ComposedReducer<R1, R2>, R3> {
-        r1.compose(with: r2)
-            .compose(with: r3)
+        buildBlock(r1, r2).compose(with: r3)
     }
     
     public static func buildBlock<R1 : ReducerProtocol,
                                   R2 : ReducerProtocol,
                                   R3 : ReducerProtocol,
                                   R4 : ReducerProtocol>(_ r1: R1,
-                                                      _ r2: R2,
-                                                      _ r3: R3,
-                                                      _ r4: R4)
+                                                        _ r2: R2,
+                                                        _ r3: R3,
+                                                        _ r4: R4)
     -> ComposedReducer<ComposedReducer<ComposedReducer<R1, R2>, R3>, R4> {
-        r1.compose(with: r2)
-            .compose(with: r3)
-            .compose(with: r4)
+        buildBlock(r1, r2, r3).compose(with: r4)
     }
     
     public static func buildBlock<R1 : ReducerProtocol,
@@ -49,15 +46,12 @@ public enum ReducerBuilder {
                                   R3 : ReducerProtocol,
                                   R4 : ReducerProtocol,
                                   R5 : ReducerProtocol>(_ r1: R1,
-                                                      _ r2: R2,
-                                                      _ r3: R3,
-                                                      _ r4: R4,
-                                                      _ r5: R5)
+                                                        _ r2: R2,
+                                                        _ r3: R3,
+                                                        _ r4: R4,
+                                                        _ r5: R5)
     -> ComposedReducer<ComposedReducer<ComposedReducer<ComposedReducer<R1, R2>, R3>, R4>, R5> {
-        r1.compose(with: r2)
-            .compose(with: r3)
-            .compose(with: r4)
-            .compose(with: r5)
+        buildBlock(r1, r2, r3, r4).compose(with: r5)
     }
     
     public static func buildBlock<R1 : ReducerProtocol,
@@ -66,17 +60,13 @@ public enum ReducerBuilder {
                                   R4 : ReducerProtocol,
                                   R5 : ReducerProtocol,
                                   R6 : ReducerProtocol>(_ r1: R1,
-                                                      _ r2: R2,
-                                                      _ r3: R3,
-                                                      _ r4: R4,
-                                                      _ r5: R5,
-                                                      _ r6: R6)
+                                                        _ r2: R2,
+                                                        _ r3: R3,
+                                                        _ r4: R4,
+                                                        _ r5: R5,
+                                                        _ r6: R6)
     -> ComposedReducer<ComposedReducer<ComposedReducer<ComposedReducer<ComposedReducer<R1, R2>, R3>, R4>, R5>, R6> {
-        r1.compose(with: r2)
-            .compose(with: r3)
-            .compose(with: r4)
-            .compose(with: r5)
-            .compose(with: r6)
+        buildBlock(r1, r2, r3, r4, r5).compose(with: r6)
     }
     
     public static func buildBlock<State>(_ r1: VoidReducer<State>,
@@ -85,7 +75,7 @@ public enum ReducerBuilder {
                                          _ r4: VoidReducer<State>,
                                          _ r5: VoidReducer<State>,
                                          _ r6: VoidReducer<State>,
-                                         components: VoidReducer<State>...) -> VoidReducer<State> {
+                                         _ components: VoidReducer<State>...) -> VoidReducer<State> {
         VoidReducer{for component in [r1, r2, r3, r4, r5, r6] + components {component.apply((), to: &$0)}}
     }
     

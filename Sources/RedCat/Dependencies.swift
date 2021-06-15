@@ -77,6 +77,10 @@ public struct Dependencies {
         }
     }
     
+    func hasStoredValue<Key : Config>(for key: Key.Type) -> Bool {
+        dict.dict[String(describing: key)] != nil
+    }
+    
 }
 
 @usableFromInline
@@ -111,13 +115,13 @@ public extension Bind {
         self.update = {env in env[keyPath: keyPath] = value}
     }
     
-    init<GivenValue>(given: KeyPath<Dependencies, GivenValue>,
-                     _ update: @escaping (GivenValue) -> Bind) {
-        self.update = {env in update(env[keyPath: given]).update(&env)}
+    init(@EnvironmentBuilder _ transform: @escaping (Dependencies) -> Bind) {
+        self.update = {env in transform(env).update(&env)}
     }
     
-    init(_ transform: @escaping (Dependencies) -> Bind) {
-        self.update = {env in transform(env).update(&env)}
+    init<GivenValue>(given: KeyPath<Dependencies, GivenValue>,
+                     @EnvironmentBuilder _ update: @escaping (GivenValue) -> Bind) {
+        self = Bind{env in update(env[keyPath: given])}
     }
     
     func then(_ transform: @escaping (Dependencies) -> Bind) -> Bind {
@@ -146,15 +150,11 @@ public enum EnvironmentBuilder {
     }
     
     public static func buildOptional(_ component: Bind?) -> Bind {
-        Bind.init {_ in }
+        component ?? Bind(update: {_ in })
     }
     
     public static func buildArray(_ components: [Bind]) -> Bind {
-        Bind {(env: inout Dependencies) in
-            for bind in components {
-                bind.update(&env)
-            }
-        }
+        components.reduce(Bind(update: {_ in }), {b1, b2 in b1.then{_ in b2}})
     }
     
     public static func buildLimitedAvailability(_ component: Bind) -> Bind {
@@ -177,12 +177,12 @@ extension Dependencies : ExpressibleByArrayLiteral {
 
 public extension Dependencies {
     
-    init(@EnvironmentBuilder content: () -> Bind) {
-        content().update(&self)
-    }
-    
     init(@EnvironmentBuilder content: (Dependencies) -> Bind) {
         content(self).update(&self)
+    }
+    
+    init(@EnvironmentBuilder content: () -> Bind) {
+        self = Dependencies{_ in content()}
     }
     
 }

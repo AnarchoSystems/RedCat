@@ -8,6 +8,46 @@
 import Foundation
 
 
+public struct StoreStub<State, Action> {
+    
+    fileprivate let base : AnyStore<State, Action>
+    
+    public var state : State {base.state}
+    
+    public func send(_ action: Action) {
+        base.send(action)
+    }
+    
+    public func send(_ list: ActionGroup<Action>) {
+        base.send(list)
+    }
+    
+}
+
+public extension StoreProtocol {
+    func stub() -> StoreStub<State, Action> {
+        StoreStub(base: ConcreteStore(base: self))
+    }
+}
+
+fileprivate class AnyStore<State, Action> {
+    var state : State {fatalError()}
+    func send(_ action: Action) {fatalError()}
+    func send(_ list: ActionGroup<Action>) {fatalError()}
+}
+
+fileprivate final class ConcreteStore<Store : StoreProtocol> : AnyStore<Store.State, Store.Action> {
+    let base : Store
+    init(base: Store) {self.base = base}
+    override var state : Store.State {base.state}
+    override func send(_ action: Store.Action) {
+        base.send(action)
+    }
+    override func send(_ list: ActionGroup<Store.Action>) {
+        base.send(list)
+    }
+}
+
 /// A ```Service``` wraps itself around the reducer to enable side-effects.
 ///
 /// Before each application of the App's main reducer, each service will receive a ```beforeUpdate``` message and has the opportunity to react to the action and interact with the store and its state before the action is dispatched.
@@ -17,13 +57,13 @@ open class Service<State, Action> {
     
     public init() {}
     
-    open func onAppInit(store: Store<State, Action>, environment: Dependencies) {}
+    open func onAppInit(store: StoreStub<State, Action>, environment: Dependencies) {}
     
-    open func beforeUpdate(store: Store<State, Action>, action: Action, environment: Dependencies) {}
+    open func beforeUpdate(store: StoreStub<State, Action>, action: Action, environment: Dependencies) {}
     
-    open func afterUpdate(store: Store<State, Action>, action: Action, environment: Dependencies) {}
+    open func afterUpdate(store: StoreStub<State, Action>, action: Action, environment: Dependencies) {}
     
-    open func onShutdown(store: Store<State, Action>, environment: Dependencies) {}
+    open func onShutdown(store: StoreStub<State, Action>, environment: Dependencies) {}
     
 }
 
@@ -35,8 +75,8 @@ open class DetailService<State, Detail : Equatable, Action> : Service<State, Act
     public final let detail : (State) -> Detail
     
     @inlinable
-    public final var oldValue : Detail? {
-        _oldValue
+    public final var oldValue : Detail {
+        _oldValue!
     }
     
     @usableFromInline
@@ -45,13 +85,20 @@ open class DetailService<State, Detail : Equatable, Action> : Service<State, Act
     @inlinable
     public init(detail: @escaping (State) -> Detail) {self.detail = detail}
     
-    public final override func beforeUpdate(store: Store<State, Action>,
+    public final override func onAppInit(store: StoreStub<State, Action>, environment: Dependencies) {
+        _oldValue = detail(store.state)
+        otherAppInitTasks(store: store, environment: environment)
+    }
+    
+    open func otherAppInitTasks(store: StoreStub<State, Action>, environment: Dependencies) {}
+    
+    public final override func beforeUpdate(store: StoreStub<State, Action>,
                                             action: Action,
                                             environment: Dependencies) {
         
     }
     
-    public final override func afterUpdate(store: Store<State, Action>,
+    public final override func afterUpdate(store: StoreStub<State, Action>,
                                            action: Action,
                                            environment: Dependencies) {
         let detail = self.detail(store.state)
@@ -60,7 +107,7 @@ open class DetailService<State, Detail : Equatable, Action> : Service<State, Act
         _oldValue = detail
     }
     
-    open func onUpdate(newValue: Detail, store: Store<State, Action>, environment: Dependencies) {
+    open func onUpdate(newValue: Detail, store: StoreStub<State, Action>, environment: Dependencies) {
         
     }
     

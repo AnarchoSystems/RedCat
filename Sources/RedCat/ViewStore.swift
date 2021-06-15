@@ -6,7 +6,7 @@
 //
 
 
-extension __StoreProtocol {
+extension StoreProtocol {
     
     public func map<NewState, NewAction>(_ transform: @escaping (State) -> NewState,
                                          onAction: @escaping (NewAction) -> Action) -> MapStore<Self, NewState, NewAction> {
@@ -18,65 +18,51 @@ extension __StoreProtocol {
     }
     
     public subscript<NewState>(dynamicMember keyPath: KeyPath<State, NewState>) -> MapStore<Self, NewState, Action> {
-        MapStore(base: self, transform: { $0[keyPath: keyPath] }, embed: {$0})
+        map({ $0[keyPath: keyPath] }, onAction: {$0})
     }
 }
 
 
-public final class MapStore<Base: __StoreProtocol, State, Action>: Store<State, Action> {
+public struct MapStore<Base: StoreProtocol, State, Action>: StoreWrapper {
     
-    @usableFromInline
-    let base : Base
+    public let wrapped : Base
     @usableFromInline
     let transform : (Base.State) -> State
     @usableFromInline
     let embed : (Action) -> Base.Action
     
     @inlinable
-    public override var state : State {
-        transform(base.state)
-    }
-    
-    init(base: Base,
-         transform: @escaping (Base.State) -> State,
-         embed: @escaping (Action) -> Base.Action) {
-        self.base = base
-        self.transform = transform
-        self.embed = embed
-        super.init()
+    public var state : State {
+        transform(wrapped.state)
     }
     
     @inlinable
-    public override func send(_ action: Action) {
-        base.send(embed(action))
+    public func recovererFromWrapped() -> Recoverer<Base, MapStore<Base, State, Action>> {
+        let trafo = self.transform
+        let embed = self.embed
+        return Recoverer {MapStore(base: $0, transform: trafo, embed: embed)}
+    }
+    
+    @usableFromInline 
+    init(base: Base,
+         transform: @escaping (Base.State) -> State,
+         embed: @escaping (Action) -> Base.Action) {
+        self.wrapped = base
+        self.transform = transform
+        self.embed = embed
+    }
+    
+    @inlinable
+    public func send(_ action: Action) {
+        wrapped.send(embed(action))
+    }
+    
+    @inlinable
+    public func send(_ list: ActionGroup<Action>) {
+        wrapped.send(list, embed: embed)
     }
     
 }
-
-extension MapStore: __ObservableStoreProtocol where Base: __ObservableStoreProtocol {
-    
-    public func addObserver<S>(_ observer: S) -> StoreUnsubscriber where S : StoreDelegate {
-        base.addObserver(observer)
-    }
-    
-    public func addObserver<S>(_ observer: S) where S : AnyObject, S : StoreDelegate {
-        base.addObserver(observer)
-    }
-    
-}
-
-#if os(iOS) || os(macOS) || os(tvOS) || os(watchOS)
-#if canImport(Combine)
-
-import Combine
-
-@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
-extension MapStore: ObservableObject where Base: ObservableObject {
-    public typealias ObjectWillChangePublisher = Base.ObjectWillChangePublisher
-    public var objectWillChange: Base.ObjectWillChangePublisher { base.objectWillChange }
-}
-#endif
-#endif
 
 
 #if (os(iOS) && arch(arm64)) || os(macOS) || os(tvOS) || os(watchOS)
@@ -84,11 +70,11 @@ extension MapStore: ObservableObject where Base: ObservableObject {
 
 import SwiftUI
 
-public extension Store {
+public extension StoreProtocol {
     
     func withViewStore<A, T, U>(_ transform: @escaping (State) -> T,
                                 onAction: @escaping (A) -> Action,
-                                @ViewBuilder completion: (MapStore<Store<State, Action>, T, A>) -> U) -> U {
+                                @ViewBuilder completion: (MapStore<Self, T, A>) -> U) -> U {
         completion(map(transform, onAction: onAction))
     }
     

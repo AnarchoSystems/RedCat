@@ -13,7 +13,7 @@
 import SwiftUI
 
 @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
-public extension Store {
+public extension StoreProtocol {
     
     /// Exposes a value as a binding, if provided with an action that serves as a setter.
     func binding<Value>(for value: @escaping (State) -> Value,

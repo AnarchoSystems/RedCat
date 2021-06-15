@@ -20,7 +20,7 @@ extension RedCatTests {
         var s5 : ExplicitObserver? = ExplicitObserver()
         var s6 : ImplicitObserver? = ImplicitObserver()
         
-        let store = Store.create(initialState: (), reducer: VoidReducer{_ in })
+        let store = Store(initialState: (), reducer: VoidReducer{_ in })
         
         s1!.unsubscriber = store.addObserver(s1!)
         store.addObserver(s2!)
@@ -68,7 +68,7 @@ extension RedCatTests {
     
     func testClosureObservers() {
         
-        let store = Store.create(initialState: false, reducer: VoidReducer{$0 = true})
+        let store = Store(initialState: false, reducer: VoidReducer{$0 = true})
         
         var called = false
         

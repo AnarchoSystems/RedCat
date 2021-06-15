@@ -74,7 +74,7 @@ public final class Observers {
     }
     
     @usableFromInline
-    internal func notifyAll(warnInefficientObservers: Bool) {
+    internal func notifyAll(warnInefficientObservers: @autoclosure () -> Bool) {
         
         if let observer = firstObserver?.delegate {
             if observer.isAlive {
@@ -82,7 +82,7 @@ public final class Observers {
             }
         }
         else {
-            if warnInefficientObservers && otherObservers.count > 0 {
+            if otherObservers.count > 0 && warnInefficientObservers() {
                 Swift.print("RedCat: Implementation invariant broken in Observers.swift: first observer doesn't get special treatment. Please file a bug.\nIf your app works fine otherwise, you can silence this warning by setting internalFlags.warnInefficientObservers to false in the environment.")
             }
         }

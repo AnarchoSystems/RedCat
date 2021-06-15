@@ -22,9 +22,7 @@ public extension StoreObjectWillChangePublisher {
 
 import Combine
 
-/// ```CombineStore``` is the preferred spelling of ```ObservableStore``` if you intend to use Combine. It is, however, the exact same type.
 public typealias CombineStore = ObservableStore
-
 
 @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
 extension StoreObjectWillChangePublisher: Publisher {
@@ -40,14 +38,14 @@ extension StoreObjectWillChangePublisher: Publisher {
 }
 
 @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
-extension ObservableStore: ObservableObject {
+extension Store: ObservableObject {
 	public typealias ObjectWillChangePublisher = StoreObjectWillChangePublisher
 }
 
 @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
-extension __ObservableStoreProtocol {
+extension StoreProtocol {
 	
-	public var publisher: StatePublisher<Self> { StatePublisher(base: self) }
+	public var publisher: StatePublisher<Self> { StatePublisher(wrapped: self) }
 	
 	public var subscriber: AnySubscriber<Action, Never> {
 		AnySubscriber(
@@ -65,26 +63,26 @@ extension __ObservableStoreProtocol {
 
 
 @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
-public struct StatePublisher<Store: __ObservableStoreProtocol>: Publisher {
+public struct StatePublisher<StoreStub: StoreProtocol>: Publisher {
 	public typealias Failure = Never
-	let base: Store
+	let wrapped: StoreStub
 	
 	public func receive<S: Subscriber>(subscriber: S) where Never == S.Failure, Output == S.Input {
-		let unsubscriber = base.addObserver { base in
-			_ = subscriber.receive(Output(store: base))
+		let unsubscriber = wrapped.addObserver { wrapped in
+			_ = subscriber.receive(Output(store: wrapped))
 		}
 		subscriber.receive(subscription: StoreSubscription(unsubscriber))
-		_ = subscriber.receive(Output(store: base))
+		_ = subscriber.receive(Output(store: wrapped))
 	}
 	
 	@dynamicMemberLookup
 	public struct Output {
         
 		@usableFromInline
-        internal let store: Store
-		public var state: Store.State { store.state }
+        internal let store: StoreStub
+		public var state: StoreStub.State { store.state }
 		
-		public subscript<T>(dynamicMember keyPath: KeyPath<Store.State, T>) -> T {
+		public subscript<T>(dynamicMember keyPath: KeyPath<StoreStub.State, T>) -> T {
 			store.state[keyPath: keyPath]
 		}
         

@@ -141,7 +141,7 @@ public class Sensor<State, Config : SensorWatchConfig, Kind : BasicSensor, Actio
     }
     
     public override func onUpdate(newValue: Config?,
-                                   store: Store<State, Action>,
+                                   store: StoreStub<State, Action>,
                                    environment: Dependencies) {
         
         let mgr = Kind(mgr: environment.native.motionManager)
@@ -208,7 +208,7 @@ public final class DeviceMotionSensor<State, Config : DeviceMotionWatchConfig, A
     }
     
     public override func onUpdate(newValue: Config?,
-                                  store: Store<State, Action>,
+                                  store: StoreStub<State, Action>,
                                   environment: Dependencies) {
         
         let mgr = environment.native.motionManager

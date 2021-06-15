@@ -7,13 +7,22 @@
 
 import Foundation
 
-public protocol __StoreProtocol : AnyObject {
+/// ```StoreProtocol``` is the ideal place to extend the functionality of all stores.
+/// Conforming to this protocol directly is, however, not advised. ```Store``` should provide all functionality that you need.
+/// If you want to write *decorators* for existing store types, conform to ```StoreWrapper``` instead.
+public protocol StoreProtocol {
     
+    associatedtype RootStore : StoreProtocol & AnyObject
     associatedtype State
     associatedtype Action
     
+    var rootStore : RootStore {get}
+    func getRecoverer() -> Recoverer<RootStore, Self>
+    
     /// The "global" state of the application.
     var state: State { get }
+    
+    var objectWillChange : StoreObjectWillChangePublisher {get}
     
     /// Applies an action to the state using the App's main reducer.
     /// - Parameters:
@@ -34,7 +43,31 @@ public protocol __StoreProtocol : AnyObject {
     
 }
 
-public extension __StoreProtocol {
+public struct Recoverer<Root, Value> {
+    @usableFromInline
+    let _recover : (Root) -> Value
+    public init(_ recover: @escaping (Root) -> Value) {
+        self._recover = recover
+    }
+    public func recover(from root: Root) -> Value {
+        _recover(root)
+    }
+}
+
+public extension StoreProtocol where Self : AnyObject {
+    
+    @inlinable
+    var rootStore : Self {self}
+    
+    @inlinable
+    func getRecoverer() -> Recoverer<Self, Self> {
+        Recoverer{$0}
+    }
+    
+    
+}
+
+public extension StoreProtocol {
     
     /// Applies a group of actions to the state using the App's main reducer.
     /// - Parameters:
@@ -47,7 +80,7 @@ public extension __StoreProtocol {
     
 }
 
-public extension __StoreProtocol {
+public extension StoreProtocol {
     
     /// Applies an undoable action to the state using the App's main reducer and registers the inverted action at the specified ```UndoManager```.
     /// - Parameters:
@@ -63,13 +96,14 @@ public extension __StoreProtocol {
                                         redoTitle: String? = nil,
                                         undoManager: UndoManager?,
                                         embed: @escaping (Action) -> Self.Action) {
+        let recoverer = getRecoverer()
         send(embed(action))
-        undoManager?.registerUndo(withTarget: self) {target in
-            target.sendWithUndo(action.inverted(),
-                                undoTitle: redoTitle,
-                                redoTitle: undoTitle,
-                                undoManager: undoManager,
-                                embed: embed)
+        undoManager?.registerUndo(withTarget: rootStore) {target in
+            recoverer.recover(from: target).sendWithUndo(action.inverted(),
+                                                         undoTitle: redoTitle,
+                                                         redoTitle: undoTitle,
+                                                         undoManager: undoManager,
+                                                         embed: embed)
         }
         if let undoTitle = undoTitle {
             undoManager?.setActionName(undoTitle)
@@ -90,13 +124,14 @@ public extension __StoreProtocol {
                                         redoTitle: String? = nil,
                                         undoManager: UndoManager?,
                                         embed: @escaping (Action) -> Self.Action) {
+        let recoverer = getRecoverer()
         send(ActionGroup(values: list.values), embed: embed)
-        undoManager?.registerUndo(withTarget: self) {target in
-            target.sendWithUndo(list.inverted(),
-                                undoTitle: redoTitle,
-                                redoTitle: undoTitle,
-                                undoManager: undoManager,
-                                embed: embed)
+        undoManager?.registerUndo(withTarget: rootStore) {target in
+            recoverer.recover(from: target).sendWithUndo(list.inverted(),
+                                                         undoTitle: redoTitle,
+                                                         redoTitle: undoTitle,
+                                                         undoManager: undoManager,
+                                                         embed: embed)
         }
         if let undoTitle = undoTitle {
             undoManager?.setActionName(undoTitle)
@@ -106,7 +141,7 @@ public extension __StoreProtocol {
 }
 
 
-public extension __StoreProtocol where Action : Undoable {
+public extension StoreProtocol where Action : Undoable {
     
     /// Applies an undoable action to the state using the App's main reducer and registers the inverted action at the specified ```UndoManager```.
     /// - Parameters:
@@ -120,16 +155,11 @@ public extension __StoreProtocol where Action : Undoable {
                       undoTitle: String? = nil,
                       redoTitle: String? = nil,
                       undoManager: UndoManager?) {
-        send(action)
-        undoManager?.registerUndo(withTarget: self) {target in
-            target.sendWithUndo(action.inverted(),
-                                undoTitle: redoTitle,
-                                redoTitle: undoTitle,
-                                undoManager: undoManager)
-        }
-        if let undoTitle = undoTitle {
-            undoManager?.setActionName(undoTitle)
-        }
+        sendWithUndo(action,
+                     undoTitle: undoTitle,
+                     redoTitle: redoTitle,
+                     undoManager: undoManager,
+                     embed: {$0})
     }
     
     /// Applies an undoable action to the state using the App's main reducer and registers the inverted action at the specified ```UndoManager```.
@@ -144,16 +174,11 @@ public extension __StoreProtocol where Action : Undoable {
                       undoTitle: String? = nil,
                       redoTitle: String? = nil,
                       undoManager: UndoManager?) {
-        send(ActionGroup(values: list.values))
-        undoManager?.registerUndo(withTarget: self) {target in
-            target.sendWithUndo(list.inverted(),
-                                undoTitle: redoTitle,
-                                redoTitle: undoTitle,
-                                undoManager: undoManager)
-        }
-        if let undoTitle = undoTitle {
-            undoManager?.setActionName(undoTitle)
-        }
+        sendWithUndo(list,
+                     undoTitle: undoTitle,
+                     redoTitle: redoTitle,
+                     undoManager: undoManager,
+                     embed: {$0})
     }
     
 }

@@ -114,7 +114,7 @@ DetailService<Whole, Orchestration.Request?, Orchestration.Response> {
     }
     
     public override func onUpdate(newValue: Orchestration.Request?,
-                                  store: Store<Whole, Orchestration.Response>,
+                                  store: StoreStub<Whole, Orchestration.Response>,
                                   environment: Dependencies) {
         
         lastRequest?.handler.cancel()

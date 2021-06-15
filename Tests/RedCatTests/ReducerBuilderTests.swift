@@ -49,10 +49,44 @@ extension RedCatTests {
         
     }
     
+    func testBuildBlock() {
+        
+        var state1 = 0
+        var state2 = 0
+        RedCatTests.sixIncs.apply((), to: &state1)
+        RedCatTests.sevencIncs.apply((), to: &state2)
+        XCTAssert(state1 == 6)
+        XCTAssert(state2 == 7)
+        
+    }
+    
 }
 
 
 fileprivate extension RedCatTests {
+    
+    static let baseInc = VoidReducer {(state: inout Int) in state += 1}
+    
+    @ReducerBuilder
+    static var sixIncs : ComposedReducer<ComposedReducer<ComposedReducer<ComposedReducer<ComposedReducer<VoidReducer<Int>, VoidReducer<Int>>, VoidReducer<Int>>, VoidReducer<Int>>, VoidReducer<Int>>, VoidReducer<Int>> {
+        baseInc
+        baseInc
+        baseInc
+        baseInc
+        baseInc
+        baseInc
+    }
+    
+    @ReducerBuilder
+    static var sevencIncs : VoidReducer<Int> {
+        baseInc
+        baseInc
+        baseInc
+        baseInc
+        baseInc
+        baseInc
+        baseInc
+    }
     
     static let arrayIncDecReducer = Reducers.Native.dispatch{(action: Int?) in
         action.map {action in
@@ -67,7 +101,7 @@ fileprivate extension RedCatTests {
         case .inc:
             inc.send(.inc).send().asVoidReducer() // just for code coverage
         case .dec:
-            dec.send(.dec)
+            dec.send(.dec).bindAction(to: Int.self).send(42) // just for code coverage  
         case .inc2:
             inc.send(.inc)
             inc.send(.inc)

@@ -62,12 +62,12 @@ public final class LocationService<State, Action> : DetailService<State, Locatio
         super.init(detail: configure)
     }
     
-    override public func onAppInit(store: Store<State, Action>, environment: Dependencies) {
+    override public func onAppInit(store: StoreStub<State, Action>, environment: Dependencies) {
         delegate.store = store
         environment.native.locationManager.delegate = delegate
     }
     
-    override public func onUpdate(newValue: LocationObservationConfiguration, store: Store<State, Action>, environment: Dependencies) {
+    override public func onUpdate(newValue: LocationObservationConfiguration, store: StoreStub<State, Action>, environment: Dependencies) {
         
         if
             let authRequest = newValue.requestedAuthorization,
@@ -122,7 +122,7 @@ public final class LocationService<State, Action> : DetailService<State, Locatio
 
 open class LocationManagerDelegate<State, Action> : NSObject, CLLocationManagerDelegate {
     
-    public final weak var store : Store<State, Action>?
+    public final weak var store : StoreStub<State, Action>?
     
 }
 
