@@ -6,16 +6,17 @@
 //
 
 import XCTest
-import RedCat
+@testable import RedCat
 
 
 extension RedCatTests {
     
     func testServiceSendList() {
         
-        let store = Store(initialState: 40,
+        let store = Store(initialState: 38,
                           reducer: VoidReducer {$0 += 1},
-                          services: [Service()])
+                          services: [Service(detail: {$0}),
+                                     Service(detail: {$0})])
         
         XCTAssert(store.state == 42)
         
@@ -24,8 +25,9 @@ extension RedCatTests {
 }
 
 
-fileprivate final class Service : RedCat.Service<Int, Void> {
-    override func onAppInit(store: StoreStub<Int, Void>, environment: Dependencies) {
+fileprivate final class Service : DetailService<Int, Int, Void> {
+    override func otherAppInitTasks(store: StoreStub<Int, Void>, environment: Dependencies) {
+        XCTAssert(_oldValue != nil)
         store.send([(), ()])
     }
 }

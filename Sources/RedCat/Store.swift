@@ -51,6 +51,10 @@ public final class Store<Reducer : ReducerProtocol>: StoreProtocol {
         for service in services {
             service.onAppInit(store: stub(), environment: environment)
         }
+        hasInitialized = true
+        if !enqueuedActions.isEmpty {
+            dispatchActions(expectedActions: enqueuedActions.count)
+        }
     }
     
     @inlinable
@@ -78,6 +82,10 @@ public final class Store<Reducer : ReducerProtocol>: StoreProtocol {
     
     @usableFromInline
     internal func dispatchActions(expectedActions: Int) {
+        
+        guard hasInitialized else {
+            return
+        }
         
         guard enqueuedActions.count == expectedActions else {
             // All calls to this method are assumed to happen on
