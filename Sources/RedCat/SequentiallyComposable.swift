@@ -40,11 +40,15 @@ public struct ActionGroup<Action> : RandomAccessCollection {
     }
     
     public func then(_ next: Action) -> ActionGroup {
-        ActionGroup(values: values + [next])
+        var result = self
+        result.append(next)
+        return result
     }
     
     public func then(_ group: Self) -> Self {
-        ActionGroup(values: values + group.values)
+        var result = self
+        result.append(contentsOf: group)
+        return result 
     }
     
     public var startIndex : Int {values.startIndex}
@@ -58,22 +62,31 @@ extension ActionGroup : Equatable where Action : Equatable {}
 
 @resultBuilder
 public enum ActionBuilder {
-    public static func buildBlock<Action>(_ elements: Action...) -> ActionGroup<Action> {
-        ActionGroup(values: elements)
+    
+    public static func buildExpression<Action>(_ expression: Action) -> ActionGroup<Action> {
+        ActionGroup(values: [expression])
     }
+    
+    public static func buildBlock<Action>(_ elements: ActionGroup<Action>...) -> ActionGroup<Action> {
+        ActionGroup(values: elements.flatMap(\.values))
+    }
+    
     public static func buildEither<Action>(first: ActionGroup<Action>) -> ActionGroup<Action> {
         first
     }
+    
     public static func buildEither<Action>(second: ActionGroup<Action>) -> ActionGroup<Action> {
         second
     }
+    
     public static func buildIf<Action>(_ content: Action?) -> ActionGroup<Action> {
         content.map {[$0]} ?? []
     }
     
-    public static func buildArray<Action>(_ components: [Action]) -> ActionGroup<Action> {
-        ActionGroup(values: components)
+    public static func buildArray<Action>(_ components: [ActionGroup<Action>]) -> ActionGroup<Action> {
+        ActionGroup(values: components.flatMap(\.values))
     }
+    
 }
 
 extension ActionGroup : ExpressibleByArrayLiteral {

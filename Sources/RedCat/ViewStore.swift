@@ -18,7 +18,7 @@ extension StoreProtocol {
     }
     
     public subscript<NewState>(dynamicMember keyPath: KeyPath<State, NewState>) -> MapStore<Self, NewState, Action> {
-        map({ $0[keyPath: keyPath] }, onAction: {$0})
+        map {$0[keyPath: keyPath]}
     }
 }
 

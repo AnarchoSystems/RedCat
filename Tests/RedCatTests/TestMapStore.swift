@@ -25,7 +25,7 @@ extension RedCatTests {
         
         XCTAssert(store.objectWillChange.firstObserver != nil)
         
-        store.send(())
+        mapped.send(())
         
         XCTAssert(hasRun)
         
@@ -33,6 +33,10 @@ extension RedCatTests {
         
         XCTAssert(store.objectWillChange.firstObserver == nil)
         XCTAssert(mapped.state == 43)
+        
+        mapped.send([(), ()])
+        
+        XCTAssert(mapped.state == 45)
         
     }
     

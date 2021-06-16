@@ -93,22 +93,31 @@ extension UndoGroup : Equatable where Action : Equatable {}
 
 @resultBuilder
 public enum UndoBuilder {
-    public static func buildBlock<U : Undoable>(_ elements: U...) -> UndoGroup<U> {
-        UndoGroup(values: elements)
+    
+    public static func buildExpression<Action>(_ expression: Action) -> UndoGroup<Action> {
+        UndoGroup(values: [expression])
     }
-    public static func buildEither<U : Undoable>(first: UndoGroup<U>) -> UndoGroup<U> {
+    
+    public static func buildBlock<Action>(_ elements: UndoGroup<Action>...) -> UndoGroup<Action> {
+        UndoGroup(values: elements.flatMap(\.values))
+    }
+    
+    public static func buildEither<Action>(first: UndoGroup<Action>) -> UndoGroup<Action> {
         first
     }
-    public static func buildEither<U : Undoable>(second: UndoGroup<U>) -> UndoGroup<U> {
+    
+    public static func buildEither<Action>(second: UndoGroup<Action>) -> UndoGroup<Action> {
         second
     }
-    public static func buildIf<U : Undoable>(_ content: U?) -> UndoGroup<U> {
+    
+    public static func buildIf<Action>(_ content: Action?) -> UndoGroup<Action> {
         content.map {[$0]} ?? []
     }
     
-    public func buildArray<U : Undoable>(_ components: [U]) -> UndoGroup<U> {
-        UndoGroup(values: components)
+    public static func buildArray<Action>(_ components: [UndoGroup<Action>]) -> UndoGroup<Action> {
+        UndoGroup(values: components.flatMap(\.values))
     }
+    
 }
 
 extension UndoGroup : ExpressibleByArrayLiteral {
