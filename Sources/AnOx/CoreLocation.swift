@@ -56,64 +56,66 @@ public final class LocationService<State, Action> : DetailService<State, Locatio
     
     private let delegate : LocationManagerDelegate<State, Action>
     
+    @Injected(\.native.locationManager) var locationManager
+    
     public init(_ delegate: LocationManagerDelegate<State, Action>,
                 configure: @escaping (State) -> LocationObservationConfiguration) {
         self.delegate = delegate
         super.init(detail: configure)
     }
     
-    override public func otherAppInitTasks(store: StoreStub<State, Action>, environment: Dependencies) {
+    override public func otherAppInitTasks() {
         delegate.store = store
-        environment.native.locationManager.delegate = delegate
+        locationManager.delegate = delegate
     }
     
-    override public func onUpdate(newValue: LocationObservationConfiguration, store: StoreStub<State, Action>, environment: Dependencies) {
+    override public func onUpdate(newValue: LocationObservationConfiguration) {
         
         if
             let authRequest = newValue.requestedAuthorization,
             authRequest != oldValue.requestedAuthorization {
             switch authRequest {
             case .always:
-                environment.native.locationManager.requestAlwaysAuthorization()
+                locationManager.requestAlwaysAuthorization()
             case .whenInUse:
-                environment.native.locationManager.requestWhenInUseAuthorization()
+                locationManager.requestWhenInUseAuthorization()
             }
         }
         
         if newValue.observingLocation != oldValue.observingLocation {
             switch newValue.observingLocation {
             case true:
-                environment.native.locationManager.startUpdatingLocation()
+                locationManager.startUpdatingLocation()
             case false:
-                environment.native.locationManager.stopUpdatingLocation()
+                locationManager.stopUpdatingLocation()
             }
         }
         
         if newValue.observingHeading != oldValue.observingHeading {
             switch newValue.observingHeading {
             case true:
-                environment.native.locationManager.startUpdatingHeading()
+                locationManager.startUpdatingHeading()
             case false:
-                environment.native.locationManager.stopUpdatingHeading()
+                locationManager.stopUpdatingHeading()
             }
         }
         
         if newValue.observingVisits != oldValue.observingVisits {
             switch newValue.observingVisits {
             case true:
-                environment.native.locationManager.startMonitoringVisits()
+                locationManager.startMonitoringVisits()
             case false:
-                environment.native.locationManager.stopMonitoringVisits()
+                locationManager.stopMonitoringVisits()
             }
         }
         
         let removedRegions = oldValue.observedRegions.subtracting(newValue.observedRegions)
         for region in removedRegions {
-            environment.native.locationManager.stopMonitoring(for: region)
+            locationManager.stopMonitoring(for: region)
         }
         let addedRegions = newValue.observedRegions.subtracting(oldValue.observedRegions)
         for region in addedRegions {
-            environment.native.locationManager.startMonitoring(for: region)
+            locationManager.startMonitoring(for: region)
         }
         
     }

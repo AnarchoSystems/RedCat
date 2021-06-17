@@ -29,4 +29,22 @@ extension RedCatTests {
         
     }
     
+    func testOtherShutdownWarning() {
+        
+        let store = Store(initialState: (), erasing: VoidReducer {_ in })
+        
+        store.send(())
+        
+        XCTAssert(!store.environment.hasStoredValue(for: InternalFlags.self))
+        
+        store.shutDown()
+        
+        XCTAssert(!store.environment.hasStoredValue(for: InternalFlags.self))
+        
+        store.shutDown()
+        
+        XCTAssert(store.environment.hasStoredValue(for: InternalFlags.self))
+        
+    }
+    
 }

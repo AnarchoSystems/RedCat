@@ -132,6 +132,8 @@ public class Sensor<State, Config : SensorWatchConfig, Kind : BasicSensor, Actio
     var currentState : Config.ReducerState?
     let convert : (Result<Config.ResultAction, Error>) -> Action
     
+    @Injected(\.native.motionManager) var motionManager
+    
     public init(on queue: OperationQueue,
                 configure: @escaping (State) -> Config?,
                 onEvent: @escaping (Result<Config.ResultAction, Error>) -> Action) {
@@ -140,11 +142,9 @@ public class Sensor<State, Config : SensorWatchConfig, Kind : BasicSensor, Actio
         super.init(detail: configure)
     }
     
-    public override func onUpdate(newValue: Config?,
-                                   store: StoreStub<State, Action>,
-                                   environment: Dependencies) {
+    public override func onUpdate(newValue: Config?) {
         
-        let mgr = Kind(mgr: environment.native.motionManager)
+        let mgr = Kind(mgr: motionManager)
         mgr.stopUpdates()
         
         guard let newValue = newValue else {
@@ -158,8 +158,8 @@ public class Sensor<State, Config : SensorWatchConfig, Kind : BasicSensor, Actio
             
             guard let data = data else {
                 return DispatchQueue.main.async {
-                    guard self.detail(store.state) == newValue else {return}
-                    store.send(self.convert(.failure(error ?? UnknownError())))
+                    guard self.detail(self.store.state) == newValue else {return}
+                    self.store.send(self.convert(.failure(error ?? UnknownError())))
                 }
             }
             
@@ -170,8 +170,8 @@ public class Sensor<State, Config : SensorWatchConfig, Kind : BasicSensor, Actio
             
             if let update = newValue.onUpdate(&currentState, action: data) {
                 DispatchQueue.main.async {
-                    guard self.detail(store.state) == newValue else {return}
-                    store.send(self.convert(.success(update)))
+                    guard self.detail(self.store.state) == newValue else {return}
+                    self.store.send(self.convert(.success(update)))
                 }
             }
             
@@ -198,6 +198,8 @@ public final class DeviceMotionSensor<State, Config : DeviceMotionWatchConfig, A
     var currentState : Config.ReducerState?
     let convert : (Result<Config.ResultAction, Error>) -> Action
     
+    @Injected(\.native.motionManager) var motionManager
+    
     public init(on queue: OperationQueue,
                 configure: @escaping (State) -> Config?,
                 onEvent: @escaping (Result<Config.ResultAction, Error>) -> Action) {
@@ -206,11 +208,9 @@ public final class DeviceMotionSensor<State, Config : DeviceMotionWatchConfig, A
         super.init(detail: configure)
     }
     
-    public override func onUpdate(newValue: Config?,
-                                  store: StoreStub<State, Action>,
-                                  environment: Dependencies) {
+    public override func onUpdate(newValue: Config?) {
         
-        let mgr = environment.native.motionManager
+        let mgr = motionManager
         mgr.stopDeviceMotionUpdates()
         
         guard let newValue = newValue else {
@@ -225,8 +225,8 @@ public final class DeviceMotionSensor<State, Config : DeviceMotionWatchConfig, A
             
             guard let data = data else {
                 return DispatchQueue.main.async {
-                    guard self.detail(store.state) == newValue else {return}
-                    store.send(self.convert(.failure(error ?? UnknownError())))
+                    guard self.detail(self.store.state) == newValue else {return}
+                    self.store.send(self.convert(.failure(error ?? UnknownError())))
                 }
             }
             
@@ -237,8 +237,8 @@ public final class DeviceMotionSensor<State, Config : DeviceMotionWatchConfig, A
             
             if let update = newValue.onUpdate(&currentState, action: data) {
                 DispatchQueue.main.async {
-                    guard self.detail(store.state) == newValue else {return}
-                    store.send(self.convert(.success(update)))
+                    guard self.detail(self.store.state) == newValue else {return}
+                    self.store.send(self.convert(.success(update)))
                 }
             }
             

@@ -49,7 +49,11 @@ public final class Store<Reducer : ReducerProtocol>: StoreProtocol {
         self.environment = environment
         self.services = services
         for service in services {
-            service.onAppInit(store: stub(), environment: environment)
+            injectStore(self, to: service)
+            inject(environment: environment, to: service)
+        }
+        for service in services {
+            service.onAppInit()
         }
         hasInitialized = true
         if !enqueuedActions.isEmpty {
@@ -96,10 +100,7 @@ public final class Store<Reducer : ReducerProtocol>: StoreProtocol {
         }
         
         guard !hasShutdown else {
-            if environment.internalFlags.warnActionsAfterShutdown {
-                print("RedCat: The store has been invalidated, actions are no longer accepted.\n If sending actions to a dead store is somehow acceptable for your app, you can silence this warning  by setting internalFlags.warnActionsAfterShutdown to false in the environment.")
-            }
-            return
+            return maybeWarnShutdown()
         }
         
         objectWillChange.notifyAll(warnInefficientObservers: environment.internalFlags.warnInefficientObservers)
@@ -111,7 +112,7 @@ public final class Store<Reducer : ReducerProtocol>: StoreProtocol {
             let action = enqueuedActions[idx]
             
             for service in services {
-                service.beforeUpdate(store: stub(), action: action, environment: environment)
+                service.beforeUpdate(action: action)
             }
             
             reducer.apply(action, to: &_state)
@@ -119,7 +120,7 @@ public final class Store<Reducer : ReducerProtocol>: StoreProtocol {
             // services have an outermost to innermost semantics, hence second loop is reversed order
             
             for service in services.reversed() {
-                service.afterUpdate(store: stub(), action: action, environment: environment)
+                service.afterUpdate(action: action)
             }
             
             idx += 1
@@ -130,14 +131,26 @@ public final class Store<Reducer : ReducerProtocol>: StoreProtocol {
         
     }
     public final func shutDown() {
+        guard !hasShutdown else {
+            return maybeWarnShutdown()
+        }
         for service in services {
-            service.onShutdown(store: stub(), environment: environment)
+            service.onShutdown()
         }
         hasShutdown = true
     }
     
 }
 
+private extension Store {
+    
+    func maybeWarnShutdown() {
+        if environment.internalFlags.warnActionsAfterShutdown {
+            print("RedCat: The store has been invalidated, actions are no longer accepted.\n If sending actions to a dead store is somehow acceptable for your app, you can silence this warning  by setting internalFlags.warnActionsAfterShutdown to false in the environment.")
+        }
+    }
+    
+}
 
 public extension Store {
     

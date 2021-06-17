@@ -107,15 +107,15 @@ DetailService<Whole, Orchestration.Request?, Orchestration.Response> {
     let orchestration : Orchestration
     var lastRequest : (value: Orchestration.Request, handler: URLDataTask)?
     
+    @Injected(\.native.networkHandler) var networkHandler
+    
     public init(_ orchestration: Orchestration,
                 request: @escaping (Whole) -> Orchestration.Request) {
         self.orchestration = orchestration
         super.init(detail: request)
     }
     
-    public override func onUpdate(newValue: Orchestration.Request?,
-                                  store: StoreStub<Whole, Orchestration.Response>,
-                                  environment: Dependencies) {
+    public override func onUpdate(newValue: Orchestration.Request?) {
         
         lastRequest?.handler.cancel()
         lastRequest = nil
@@ -123,15 +123,15 @@ DetailService<Whole, Orchestration.Request?, Orchestration.Response> {
         guard let request = newValue else {return}
         
         let requestHandler = orchestration.onRequest(request)
-            .dataTask(networkHandler: environment.native.networkHandler) {
+            .dataTask(networkHandler: networkHandler) {
             result in
             DispatchQueue.main.async {
                 guard self.lastRequest?.value == request else {return}
                 switch result {
                 case .success(let response):
-                    store.send(self.orchestration.onSuccess(response, request: request))
+                    self.store.send(self.orchestration.onSuccess(response, request: request))
                 case .failure(let error):
-                    store.send(self.orchestration.onFailure(error, request: request))
+                    self.store.send(self.orchestration.onFailure(error, request: request))
                 }
             }
         }

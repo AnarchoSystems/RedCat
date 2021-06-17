@@ -167,9 +167,7 @@ public enum EnvironmentBuilder {
 extension Dependencies : ExpressibleByArrayLiteral {
     
     public init(arrayLiteral elements: Bind...) {
-        for elm in elements {
-            elm.update(&self)
-        }
+        EnvironmentBuilder.buildArray(elements).update(&self)
     }
     
 }

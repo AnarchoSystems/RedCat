@@ -44,22 +44,22 @@ fileprivate extension RedCatTests {
     class OuterService : Service<[Action], Action> {
         var beforeCalled = false
         var afterCalled = false
-        override func onAppInit(store: StoreStub<[RedCatTests.Action], RedCatTests.Action>, environment: Dependencies) {
+        override func onAppInit() {
             store.send(.appInit)
         }
-        override func beforeUpdate(store: StoreStub<[RedCatTests.Action], RedCatTests.Action>, action: RedCatTests.Action, environment: Dependencies) {
+        override func beforeUpdate(action: RedCatTests.Action) {
             if !beforeCalled {
                 beforeCalled = true
                 store.send(.before1)
             }
         }
-        override func afterUpdate(store: StoreStub<[RedCatTests.Action], RedCatTests.Action>, action: RedCatTests.Action, environment: Dependencies) {
+        override func afterUpdate(action: RedCatTests.Action) {
             if !afterCalled {
                 afterCalled = true
                 store.send(.after2)
             }
         }
-        override func onShutdown(store: StoreStub<[RedCatTests.Action], RedCatTests.Action>, environment: Dependencies) {
+        override func onShutdown() {
             store.send(.shutdown)
         }
     }
@@ -67,13 +67,13 @@ fileprivate extension RedCatTests {
     class InnerService : Service<[Action], Action> {
         var beforeCalled = false
         var afterCalled = false
-        override func beforeUpdate(store: StoreStub<[RedCatTests.Action], RedCatTests.Action>, action: RedCatTests.Action, environment: Dependencies) {
+        override func beforeUpdate(action: RedCatTests.Action) {
             if !beforeCalled {
                 beforeCalled = true
                 store.send(.before2)
             }
         }
-        override func afterUpdate(store: StoreStub<[RedCatTests.Action], RedCatTests.Action>, action: RedCatTests.Action, environment: Dependencies) {
+        override func afterUpdate(action: RedCatTests.Action) {
             if !afterCalled {
                 afterCalled = true
                 store.send(.after1)

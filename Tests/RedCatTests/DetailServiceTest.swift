@@ -14,15 +14,19 @@ extension RedCatTests {
     
     func testDetailService() {
         
-        for _ in 0..<100 {
-        
-            let store = Store(initialState: TestState(value: Int.random(in: -100...100)),
-                                    reducer: VoidReducer {$0.value += 1},
-                                    services: [TestService(detail: \.value)])
+        for idx in 0..<100 {
+            
+            let start = Int.random(in: -100...100)
+            
+            let store = Store(initialState: TestState(value: start),
+                              reducer: VoidReducer {if idx % 2 == 0 {$0.value += 1}},
+                              services: [TestService(detail: \.value)])
             
             for _ in 0..<10 {
                 store.send(())
             }
+            
+            XCTAssertEqual(store.state.value, idx % 2 == 0 ? start + 10 : start)
             
         }
         
@@ -38,7 +42,7 @@ fileprivate extension RedCatTests {
     }
     
     final class TestService : DetailService<TestState, Int, Void> {
-        override func onUpdate(newValue: Int, store: StoreStub<TestState, Void>, environment: Dependencies) {
+        override func onUpdate(newValue: Int) {
             XCTAssert(newValue == oldValue + 1)
         }
     }

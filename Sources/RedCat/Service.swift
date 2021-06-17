@@ -24,12 +24,6 @@ public struct StoreStub<State, Action> {
     
 }
 
-public extension StoreProtocol where Self : AnyObject {
-    func stub() -> StoreStub<State, Action> {
-        StoreStub(base: ConcreteStore(base: self))
-    }
-}
-
 fileprivate class AnyStore<State, Action> {
     var state : State {fatalError()}
     func send(_ action: Action) {fatalError()}
@@ -49,25 +43,45 @@ fileprivate final class ConcreteStore<Store : StoreProtocol & AnyObject> : AnySt
     }
 }
 
-/// A ```Service``` wraps itself around the reducer to enable side-effects.
+/// A ```Service``` wraps itself around the ```Reducer``` to enable side-effects.
 ///
-/// Before each application of the App's main reducer, each service will receive a ```beforeUpdate``` message and has the opportunity to react to the action and interact with the store and its state before the action is dispatched.
-/// After each application, the services receive ```afterUpdate``` *in reversed order*.
-/// Services cannot modify the actions already being enqueued, nor can they prevent execution. This should be done by high level reducers.
+/// Before each application of the App's main ```Reducer```, each ```Service``` will receive a ```beforeUpdate``` message and has the opportunity to react to the action and interact with the ```Store``` and its state before the action is dispatched.
+/// After each application, the ```Service```s receive ```afterUpdate``` *in reversed order*.
+/// Additionally, ```Service```s get the oportunity to react to the event that the store finished its initialization process and the event that the store is shutting down.
+/// ```Service```s cannot modify the actions already being enqueued, nor can they prevent execution. This should be done by high level reducers.
 open class Service<State, Action> {
+    
+    /// A stub of the app's ```Store``` that only allows you to inspect the state and dispatch actions.
+    /// - Important: Do not assume that this property is present at the end of the ```Service```'s initializer. It will, however, be present in each open method of the ```Service```.
+    public final var store : StoreStub<State, Action> {
+        StoreStub(base: _store)
+    }
+    
+    fileprivate final var _store : AnyStore<State, Action>!
     
     public init() {}
     
-    open func onAppInit(store: StoreStub<State, Action>, environment: Dependencies) {}
+    /// Implement this method to react to the event that the ```Store``` has been fully initialized and is ready to dispatch actions.
+    open func onAppInit() {}
     
-    open func beforeUpdate(store: StoreStub<State, Action>, action: Action, environment: Dependencies) {}
+    /// Implement this method to be notified about actions that are about to be processed.
+    /// - Parameters:
+    ///     - action: The action to be processed.
+    open func beforeUpdate(action: Action) {}
     
-    open func afterUpdate(store: StoreStub<State, Action>, action: Action, environment: Dependencies) {}
+    /// Implement this method to be notified about actions that have been processed.
+    /// - Parameters:
+    ///     - action: The action that has been processed.
+    open func afterUpdate(action: Action) {}
     
-    open func onShutdown(store: StoreStub<State, Action>, environment: Dependencies) {}
+    /// Implement this method to be notified about the event that the ```Store``` will soon no longer accept any new actions. Use this method to dispatch some final cleanup actions synchronously.
+    open func onShutdown() {}
     
 }
 
+public func injectStore<Store : StoreProtocol & AnyObject>(_ store: Store, to service: Service<Store.State, Store.Action>) {
+    service._store = ConcreteStore(base: store)
+}
 
 /// A ```DetailService``` watches some part of the state for changes and if it detects one, it calls the open method ```onUpdate```.
 open class DetailService<State, Detail : Equatable, Action> : Service<State, Action> {
@@ -75,6 +89,8 @@ open class DetailService<State, Detail : Equatable, Action> : Service<State, Act
     
     public final let detail : (State) -> Detail
     
+    /// The last value the watched property had.
+    /// - Important: Do not assume that this property is present at the end of the ```Service```'s initializer. It will, however, be present in each open method of the ```Service```.
     @inlinable
     public final var oldValue : Detail {
         _oldValue!
@@ -86,29 +102,27 @@ open class DetailService<State, Detail : Equatable, Action> : Service<State, Act
     @inlinable
     public init(detail: @escaping (State) -> Detail) {self.detail = detail}
     
-    public final override func onAppInit(store: StoreStub<State, Action>, environment: Dependencies) {
+    public final override func onAppInit() {
         _oldValue = detail(store.state)
-        otherAppInitTasks(store: store, environment: environment)
+        otherAppInitTasks()
     }
     
-    open func otherAppInitTasks(store: StoreStub<State, Action>, environment: Dependencies) {}
+    /// Implement this method to react to the event that the ```Store``` has been fully initialized and is ready to dispatch actions.
+    open func otherAppInitTasks() {}
     
-    public final override func beforeUpdate(store: StoreStub<State, Action>,
-                                            action: Action,
-                                            environment: Dependencies) {
-        
-    }
+    public final override func beforeUpdate(action: Action) {}
     
-    public final override func afterUpdate(store: StoreStub<State, Action>,
-                                           action: Action,
-                                           environment: Dependencies) {
+    public final override func afterUpdate(action: Action) {
         let detail = self.detail(store.state)
         guard detail != oldValue else {return}
-        onUpdate(newValue: detail, store: store, environment: environment)
+        onUpdate(newValue: detail)
         _oldValue = detail
     }
     
-    open func onUpdate(newValue: Detail, store: StoreStub<State, Action>, environment: Dependencies) {
+    /// Implement this method to be notified whenever the watched property actually changes according to the implementation of ```==```.
+    /// - Parameters:
+    ///     - newValue: The new value of the watched property.
+    open func onUpdate(newValue: Detail) {
         
     }
     
