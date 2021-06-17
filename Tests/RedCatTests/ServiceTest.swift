@@ -6,7 +6,7 @@
 //
 
 import XCTest
-import RedCat
+@testable import RedCat
 
 
 extension RedCatTests {
@@ -34,8 +34,6 @@ fileprivate extension RedCatTests {
     
     enum Action : Equatable, CaseIterable {
         case appInit
-        case before1
-        case before2
         case after1
         case after2
         case shutdown
@@ -44,22 +42,17 @@ fileprivate extension RedCatTests {
     class OuterService : Service<[Action], Action> {
         var beforeCalled = false
         var afterCalled = false
-        override func onAppInit() {
+        override func _onAppInit() {
             store.send(.appInit)
         }
-        override func beforeUpdate(action: RedCatTests.Action) {
-            if !beforeCalled {
-                beforeCalled = true
-                store.send(.before1)
-            }
-        }
-        override func afterUpdate(action: RedCatTests.Action) {
+        
+        override func _afterUpdate() {
             if !afterCalled {
                 afterCalled = true
-                store.send(.after2)
+                store.send(.after1)
             }
         }
-        override func onShutdown() {
+        override func _onShutdown() {
             store.send(.shutdown)
         }
     }
@@ -67,16 +60,10 @@ fileprivate extension RedCatTests {
     class InnerService : Service<[Action], Action> {
         var beforeCalled = false
         var afterCalled = false
-        override func beforeUpdate(action: RedCatTests.Action) {
-            if !beforeCalled {
-                beforeCalled = true
-                store.send(.before2)
-            }
-        }
-        override func afterUpdate(action: RedCatTests.Action) {
+        override func _afterUpdate() {
             if !afterCalled {
                 afterCalled = true
-                store.send(.after1)
+                store.send(.after2)
             }
         }
     }

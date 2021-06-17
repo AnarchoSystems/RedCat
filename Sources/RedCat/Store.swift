@@ -53,7 +53,7 @@ public final class Store<Reducer : ReducerProtocol>: StoreProtocol {
             inject(environment: environment, to: service)
         }
         for service in services {
-            service.onAppInit()
+            service._onAppInit()
         }
         hasInitialized = true
         if !enqueuedActions.isEmpty {
@@ -111,16 +111,12 @@ public final class Store<Reducer : ReducerProtocol>: StoreProtocol {
             
             let action = enqueuedActions[idx]
             
-            for service in services {
-                service.beforeUpdate(action: action)
-            }
-            
             reducer.apply(action, to: &_state)
             
             // services have an outermost to innermost semantics, hence second loop is reversed order
             
-            for service in services.reversed() {
-                service.afterUpdate(action: action)
+            for service in services {
+                service._afterUpdate()
             }
             
             idx += 1
@@ -135,7 +131,7 @@ public final class Store<Reducer : ReducerProtocol>: StoreProtocol {
             return maybeWarnShutdown()
         }
         for service in services {
-            service.onShutdown()
+            service._onShutdown()
         }
         hasShutdown = true
     }

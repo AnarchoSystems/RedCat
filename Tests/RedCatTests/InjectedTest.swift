@@ -6,7 +6,7 @@
 //
 
 import XCTest
-import RedCat
+@testable import RedCat
 
 
 extension RedCatTests {
@@ -42,26 +42,21 @@ fileprivate extension Dependencies {
 fileprivate final class TestService : Service<Void, Void> {
     
     @Injected(\.testValue) var value
-    var tested = [false, false, false, false]
+    var tested = [false, false, false]
     
-    override func onAppInit() {
+    override func _onAppInit() {
         XCTAssert(value == 42)
         tested[0] = true
     }
     
-    override func beforeUpdate(action: Void) {
+    override func _afterUpdate() {
         XCTAssert(value == 42)
         tested[1] = true
     }
     
-    override func afterUpdate(action: Void) {
+    override func _onShutdown() {
         XCTAssert(value == 42)
         tested[2] = true
-    }
-    
-    override func onShutdown() {
-        XCTAssert(value == 42)
-        tested[3] = true
     }
     
 }

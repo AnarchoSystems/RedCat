@@ -26,7 +26,7 @@ extension RedCatTests {
 
 
 fileprivate final class Service : DetailService<Int, Int, Void> {
-    override func otherAppInitTasks() {
+    override func onAppInit() {
         XCTAssert(_oldValue != nil)
         store.send([(), ()])
     }

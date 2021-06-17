@@ -64,7 +64,7 @@ public final class LocationService<State, Action> : DetailService<State, Locatio
         super.init(detail: configure)
     }
     
-    override public func otherAppInitTasks() {
+    override public func onAppInit() {
         delegate.store = store
         locationManager.delegate = delegate
     }

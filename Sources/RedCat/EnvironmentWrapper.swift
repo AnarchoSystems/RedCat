@@ -17,7 +17,7 @@ public struct Injected<Value> : Reader {
         _wrappedValue.value
     }
     @usableFromInline
-    var _wrappedValue : Box<Value>
+    var _wrappedValue : Box
     private let _read : (Dependencies) -> Value
     
     public init(_ read: @escaping (Dependencies) -> Value) {
@@ -28,14 +28,14 @@ public struct Injected<Value> : Reader {
     func readValue(from environment: Dependencies) {
         _wrappedValue.value = _read(environment)
     }
-    
-}
-
-@usableFromInline
-internal class Box<Value> {
+ 
     @usableFromInline
-    var value : Value
-    init(value: Value) {self.value = value}
+    internal final class Box {
+        @usableFromInline
+        var value : Value
+        init(value: Value) {self.value = value}
+    }
+    
 }
 
 

@@ -82,7 +82,7 @@ fileprivate extension RedCatTests {
     
     class HasShutDownService : Service<Int, Void> {
         var hasShutdown = false
-        override func onShutdown() {
+        override func _onShutdown() {
             hasShutdown = true
         }
     }
