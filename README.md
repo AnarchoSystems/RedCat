@@ -159,7 +159,9 @@ This way, you can create an API that makes it look like you are referring to a d
 
 ### Services
 
-Every app has to handle side effects somehow. For this, RedCat has a dedicated ```Service``` class. This class exposes four methods that can be overridden: ```onAppInit```,  ```beforeUpdate```, ```afterUpdate``` and ```onShutdown```. The two methods reacting to updates take the dispatched action, the app's ```Dependencies``` (see below) and the state before or after the action is applied. The other two methods only take the store and the app's ```Dependencies```.
+Every app has to handle side effects somehow. For this, RedCat has a dedicated ```Service``` class. This class exposes four methods that can be overridden: ```onAppInit```,  ```beforeUpdate```, ```afterUpdate``` and ```onShutdown```. The two methods reacting to updates take the dispatched action, the other two methods are purely informational.
+
+In each of the above methods, you are able to access the ```Service```'s ```store``` property which allows you to send actions to the store or inspect the state. Additionally, you can use the ```Injected``` property wrapper to access the App's ```Dependencies``` (see below) during those methods.
 
 The services are the perfect place to orchestrate further actions, either immediately or by registering an event listener and hopping back to the main queue whenever an event arrives. The ```Dependencies``` passed to the service are the ideal place to configure, e.g, the source of asynchronous events.
 
