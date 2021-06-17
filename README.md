@@ -143,14 +143,19 @@ For discoverability, we recommend adding reducer types, "namespaced" by their ``
 
 If you're done composing the reducer, you may wonder how to make it do something useful. Unidirectional data flow frameworks are opinionated about this: There should only be one "global" app state, and the view should be a function of this. In order to make this work, there is a ```Store``` type.
 
-In RedCat, this comes in two main flavours:
+In RedCat, this comes in three main flavours:
 
-1. The erased ```Store<State, Action>``` type seen by the services (see below).
-2. The ```ObservableStore<State, Action>``` that can be observed using ```addObserver```. If Combine can be imported, this store is also known as ```CombineStore<State, Action>```.
+1. The ```ObservableStore<State, Action>``` that can be observed using ```addObserver```. If Combine can be imported, this store is also known as ```CombineStore<State, Action>```.
+2. The ```Store<Reducer>``` that is aware of the used recuder. This too is observable, in fact, ```ObservableStore<State, Action>``` is really just a type alias for ```Store<AnyReducer<State, Action>```.
+3. The ```StoreStub<State, Action>``` which is seen by ```Service```s. This one has very limited functionalities in order to constrain the ```Services```.
 
 Actions are sent to the store via its ```send``` or ```sendWithUndo``` methods. This is assumed to happen on the main thread. The action will then be enqueued, sent to the services (which may or may not enqueue further actions), sent to the reducer (which mutates the global state) and then sent to the services again (which may again enqueue further actions). This process is repeated until no service has further actions to enqueue (or they enqueue them asynchronously). For this whole process, the observers are notified exactly once.
 
-For discoverability, we recommend adding action types as nested types to ```Actions```, a public "namespace" provided by RedCat.
+Note that there is a ```StoreProtocol``` that ```ObservableStore``` and ```Store``` conform to. This one provides a whole lot of functionaility. It is not recommended though to conform to this directly. Instead, conform to ```StoreWrapper``` which plays the role of a decorator and comes with a lot of default implementations.
+
+One noteworthy technicality: Store decorators (like e.g. the ```MapStore```) are designed in a way that they share their identity with some ```rootStore```. In order to make that possible, types conforming to ```StoreWrapper``` have to provide not only a ```wrapped``` store (which has the semantics of "the store with this decorator removed"), but also a method to recover this store from the ```wrapped``` store. Usually, you just hand the instance properties to a closure by value for that. The ```StoreWrapper``` protocol will then derive the ```rootStore``` with all decorators removed and a way to reconstruct the entire chain of decorators.
+
+This way, you can create an API that makes it look like you are referring to a decorated store with a fixed identity while in reality, the decorated store may be created and destroyed all the time. RedCat uses this to implement ```sendWithUndo``` without making any assumptions about the lifecycle of decorated stores.
 
 ### Services
 
