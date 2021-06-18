@@ -82,9 +82,11 @@ public final class Observers {
             }
         }
         else {
+            #if DEBUG
             if otherObservers.count > 0 && warnInefficientObservers() {
-                Swift.print("RedCat: Implementation invariant broken in Observers.swift: first observer doesn't get special treatment. Please file a bug.\nIf your app works fine otherwise, you can silence this warning by setting internalFlags.warnInefficientObservers to false in the environment.")
+                Swift.print("RedCat: Implementation invariant broken in Observers.swift: first observer doesn't get special treatment. Please file a bug.\nIf your app works fine otherwise, you can silence this warning by setting internalFlags.warnInefficientObservers to false in the environment or by compiling in release mode.")
             }
+            #endif
         }
         
         var invalidIDs : Set<UUID> = []
