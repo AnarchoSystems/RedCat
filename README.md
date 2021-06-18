@@ -227,7 +227,7 @@ In ```Package.swift```, add the following:
 
 ```swift
 dependencies: [
-        .package(url: "https://github.com/AnarchoSystems/RedCat.git", from: "0.3.1")
+        .package(url: "https://github.com/AnarchoSystems/RedCat.git", from: "0.5.0")
     ]
 ```
 
