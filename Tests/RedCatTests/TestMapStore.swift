@@ -60,7 +60,7 @@ extension RedCatTests {
         
         mapped.shutDown()
         
-        XCTAssert(service.hasShutdown)
+        XCTAssert(service.hasShutdown && service.hasInited)
         
     }
     
@@ -80,9 +80,13 @@ fileprivate extension RedCatTests {
         }
     }
     
-    class HasShutDownService : Service<Int, Void> {
+    class HasShutDownService : AppEventService<Int, Void> {
+        var hasInited = false
         var hasShutdown = false
-        override func _onShutdown() {
+        override func onAppInit() {
+            hasInited = true
+        }
+        override func onShutdown() {
             hasShutdown = true
         }
     }

@@ -45,8 +45,8 @@ internal final class ConcreteStore<Store : StoreProtocol & AnyObject> : AnyStore
     }
 }
 
-/// A ```Service``` is an erasure type for ```DetailService```s.
-/// Do not attempt to subclass ```Service``` directly. Instead, subclass ```DetailService```.
+/// A ```Service``` is an erasure type for ```DetailService```s and ```AppEventService```s.
+/// Do not attempt to subclass ```Service``` directly. Instead, subclass ```DetailService``` or ```AppEventService```.
 open class Service<State, Action> {
     
     /// A stub of the app's ```Store``` that only allows you to inspect the state and dispatch actions.
@@ -74,6 +74,32 @@ open class Service<State, Action> {
 
 public func injectStore<Store : StoreProtocol & AnyObject>(_ store: Store, to service: Service<Store.State, Store.Action>) {
     service._store = ConcreteStore(base: store)
+}
+
+/// An ```AppEventService``` is a specialized ```Service``` class that only reacts to app events.
+open class AppEventService<State, Action> : Service<State, Action> {
+    
+    public override init() {}
+    
+    @usableFromInline
+    internal final override func _onAppInit() {
+        onAppInit()
+    }
+    
+    /// Implement this method to react to the event that the ```Store``` has been fully initialized and is ready to dispatch actions.
+    open func onAppInit() {}
+    
+    @usableFromInline
+    internal final override func _afterUpdate() {}
+    
+    @usableFromInline
+    internal final override func _onShutdown() {
+        onShutdown()
+    }
+    
+    /// Implement this method to be notified about the event that the ```Store``` will soon no longer accept any new actions. Use this method to dispatch some final cleanup actions synchronously.
+    open func onShutdown() {}
+    
 }
 
 
