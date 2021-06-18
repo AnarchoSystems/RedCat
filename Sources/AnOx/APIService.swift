@@ -102,20 +102,25 @@ public extension APIHandler {
 
 
 public final class APIService<Whole, Orchestration : APIHandler> :
-DetailService<Whole, Orchestration.Request?, Orchestration.Response> {
-    
+    DetailService<Whole, Orchestration.Request?, Orchestration.Response> {
+     
     let orchestration : Orchestration
     var lastRequest : (value: Orchestration.Request, handler: URLDataTask)?
+    let request : (Whole) -> Orchestration.Request
     
     @Injected(\.native.networkHandler) var networkHandler
     
     public init(_ orchestration: Orchestration,
                 request: @escaping (Whole) -> Orchestration.Request) {
         self.orchestration = orchestration
-        super.init(detail: request)
+        self.request = request
     }
     
-    public override func onUpdate(newValue: Orchestration.Request?) {
+    public func extractDetail(from state: Whole) -> Orchestration.Request? {
+        request(state)
+    }
+    
+    public func onUpdate(newValue: Orchestration.Request?) {
         
         lastRequest?.handler.cancel()
         lastRequest = nil

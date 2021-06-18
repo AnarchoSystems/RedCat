@@ -116,7 +116,7 @@ public final class Store<Reducer : ReducerProtocol>: StoreProtocol {
             // services have an outermost to innermost semantics, hence second loop is reversed order
             
             for service in services {
-                service._afterUpdate()
+                service._onUpdate()
             }
             
             idx += 1
@@ -131,7 +131,7 @@ public final class Store<Reducer : ReducerProtocol>: StoreProtocol {
             return maybeWarnShutdown()
         }
         for service in services {
-            service._onShutdown()
+            service.onShutdown()
         }
         hasShutdown = true
     }

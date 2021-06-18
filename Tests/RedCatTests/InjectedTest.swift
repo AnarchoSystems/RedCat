@@ -44,17 +44,17 @@ fileprivate final class TestService : Service<Void, Void> {
     @Injected(\.testValue) var value
     var tested = [false, false, false]
     
-    override func _onAppInit() {
+    func _onAppInit() {
         XCTAssert(value == 42)
         tested[0] = true
     }
     
-    override func _afterUpdate() {
+    func _onUpdate() {
         XCTAssert(value == 42)
         tested[1] = true
     }
     
-    override func _onShutdown() {
+    func onShutdown() {
         XCTAssert(value == 42)
         tested[2] = true
     }

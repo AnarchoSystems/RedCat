@@ -15,8 +15,8 @@ extension RedCatTests {
         
         let store = Store(initialState: 38,
                           reducer: VoidReducer {$0 += 1},
-                          services: [Service(detail: {$0}),
-                                     Service(detail: {$0})])
+                          services: [Service(),
+                                     Service()])
         
         XCTAssert(store.state == 42)
         
@@ -26,8 +26,14 @@ extension RedCatTests {
 
 
 fileprivate final class Service : DetailService<Int, Int, Void> {
-    override func onAppInit() {
+    func onAppInit() {
         XCTAssert(_oldValue != nil)
         store.send([(), ()])
+    }
+    func extractDetail(from state: Int) -> Int {
+        state
+    }
+    func onUpdate(newValue: Int) {
+        
     }
 }

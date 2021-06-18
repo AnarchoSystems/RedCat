@@ -7,6 +7,7 @@
 
 import Foundation
 
+// MARK: STORE STUB
 
 public struct StoreStub<State, Action> {
     
@@ -45,9 +46,20 @@ internal final class ConcreteStore<Store : StoreProtocol & AnyObject> : AnyStore
     }
 }
 
-/// A ```Service``` is an erasure type for ```DetailService```s and ```AppEventService```s.
-/// Do not attempt to subclass ```Service``` directly. Instead, subclass ```DetailService``` or ```AppEventService```.
-open class Service<State, Action> {
+// MARK: SERVICE
+
+public protocol ServiceProtocol : AnyObject {
+    
+    /// This method is called when the ```Store``` has been fully initialized and is ready to dispatch actions. Do *not* attempt to implement it in ```DetailStore``` or ```AppEventStore```. Instead, trust the default implementation (which calls ```onAppInit``` without underscore).
+    func _onAppInit()
+    /// This method is called when the ```Store``` dispatched an action. Do *not* attempt to implement it in ```DetailStore``` or ```AppEventStore```. ```AppEventStore``` exists specifically to only watch app events, while the default implementation for ```DetailStore``` calls ```onUpdate``` without underscore.
+    func _onUpdate()
+    /// Implement this method to be notified about the event that the ```Store``` will soon no longer accept any new actions. Use this method to dispatch some final cleanup actions synchronously.
+    func onShutdown()
+    
+}
+
+open class _Service<State, Action> {
     
     /// A stub of the app's ```Store``` that only allows you to inspect the state and dispatch actions.
     /// - Important: Do not assume that this property is present at the end of the ```Service```'s initializer. It will, however, be present in each open method of the ```Service```.
@@ -58,47 +70,125 @@ open class Service<State, Action> {
     @usableFromInline
     final var _store : AnyStore<State, Action>!
     
-    @usableFromInline
-    internal init() {}
-    
-    @usableFromInline
-    internal func _onAppInit() {}
-    
-    @usableFromInline
-    internal func _afterUpdate() {}
-    
-    @usableFromInline
-    internal func _onShutdown() {}
+    @inlinable
+    public init() {}
     
 }
 
-public func injectStore<Store : StoreProtocol & AnyObject>(_ store: Store, to service: Service<Store.State, Store.Action>) {
+/// A ```Service``` is an erasure type for ```DetailService```s and ```AppEventService```s.
+/// Do not attempt to subclass ```Service``` directly. Instead, subclass ```DetailService``` or ```AppEventService```.
+public typealias Service<State, Action> = _Service<State, Action> & ServiceProtocol
+
+public func injectStore<Store : StoreProtocol & AnyObject>(_ store: Store, to service: _Service<Store.State, Store.Action>) {
     service._store = ConcreteStore(base: store)
 }
 
-/// An ```AppEventService``` is a specialized ```Service``` class that only reacts to app events.
-open class AppEventService<State, Action> : Service<State, Action> {
+// MARK: APP EVENT SERVICE
+
+public protocol AppEventServiceProtocol : ServiceProtocol {
     
-    public override init() {}
+    /// Implement this method to react to the event that the ```Store``` has been fully initialized and is ready to dispatch actions.
+    func onAppInit()
     
-    @usableFromInline
-    internal final override func _onAppInit() {
+}
+
+open class _AppEventService<State, Action> : _Service<State, Action> {
+    
+    /// This method is called when the ```Store``` dispatched an action. Do *not* attempt to implement it in ```DetailStore``` or ```AppEventStore```. ```AppEventStore``` exists specifically to only watch app events, while the default implementation for ```DetailStore``` calls ```onUpdate``` without underscore.
+    public final func _onUpdate() {}
+    
+}
+
+public extension AppEventServiceProtocol {
+    
+    /// This method is called when the ```Store``` has been fully initialized and is ready to dispatch actions. Do *not* attempt to implement it in ```DetailStore``` or ```AppEventStore```. Instead, trust the default implementation (which calls ```onAppInit``` without underscore).
+    @inlinable
+    func _onAppInit() {
         onAppInit()
     }
     
+}
+
+/// An ```AppEventService``` is a specialized ```Service``` class that only reacts to app events.
+public typealias AppEventService<State, Action> = _AppEventService<State, Action> & AppEventServiceProtocol
+
+
+// MARK: DETAIL SERVICE
+
+public protocol DetailServiceProtocol : ServiceProtocol {
+    
+    associatedtype AppState
+    associatedtype Action
+    associatedtype Detail : Equatable
+    
     /// Implement this method to react to the event that the ```Store``` has been fully initialized and is ready to dispatch actions.
-    open func onAppInit() {}
+    func onAppInit()
     
-    @usableFromInline
-    internal final override func _afterUpdate() {}
+    /// Implement this method to extract the part of the app that you want to watch.
+    /// - Parameters:
+    ///     - state: The current state of the app.
+    func extractDetail(from state: AppState) -> Detail
     
-    @usableFromInline
-    internal final override func _onShutdown() {
-        onShutdown()
+    /// Implement this method to be notified whenever the watched property actually changes according to the implementation of ```==```.
+    /// - Parameters:
+    ///     - newValue: The new value of the watched property.
+    func onUpdate(newValue: Detail)
+    
+    /// A stub of the app's ```Store``` that only allows you to inspect the state and dispatch actions.
+    /// - Important: Do not assume that this property is present at the end of the ```Service```'s initializer. It will, however, be present in each open method of the ```Service```.
+    var store : StoreStub<AppState, Action> {get}
+    
+    /// The last value the watched property had.
+    /// - Important: Do not assume that this property is present at the end of the ```Service```'s initializer. It will, however, be present in each open method of the ```Service```.
+    var oldValue : Detail {get}
+    
+    /// This method is used to set the old value. It is public only for technical reasons. Do *not* attempt to call this method, otherwise you will get inconsistent results.
+    func _setOldValue(_ detail: Detail)
+    
+}
+
+open class _DetailService<State, Detail : Equatable, Action> : _Service<State, Action> {
+    
+    /// The last value the watched property had.
+    /// - Important: Do not assume that this property is present at the end of the ```Service```'s initializer. It will, however, be present in each open method of the ```Service```.
+    @inlinable
+    public final var oldValue : Detail {
+        _oldValue!
     }
     
-    /// Implement this method to be notified about the event that the ```Store``` will soon no longer accept any new actions. Use this method to dispatch some final cleanup actions synchronously.
-    open func onShutdown() {}
+    @usableFromInline
+    final var _oldValue : Detail?
+    
+    /// This method is used to set the old value. It is public only for technical reasons. Do *not* attempt to call this method, otherwise you will get inconsistent results.
+    @inlinable
+    public final func _setOldValue(_ detail: Detail) {
+        _oldValue = detail
+    }
+    
+}
+
+public extension DetailServiceProtocol {
+    
+    /// Implement this method to react to the event that the ```Store``` has been fully initialized and is ready to dispatch actions.
+    @inlinable
+    func _onAppInit() {
+        _setOldValue(extractDetail(from: store.state))
+        onAppInit()
+    }
+    
+    @inlinable
+    func onAppInit() {}
+    
+    @inlinable
+    func _onUpdate() {
+        let detail = self.extractDetail(from: store.state)
+        guard detail != oldValue else {return}
+        onUpdate(newValue: detail)
+        _setOldValue(detail)
+    }
+    
+    @inlinable
+    func onShutdown() {}
     
 }
 
@@ -109,55 +199,7 @@ open class AppEventService<State, Action> : Service<State, Action> {
 /// The ```onUpdate``` method won't run when the ```Store``` has just been set up. If it is important for you to react to the completion of the ```Store```'s initializer even if no actions have been dispatched yet, you can implement ```onAppInit```.
 /// In case your service needs to react to the termination of the app, e.g. to store some data, you can implement ```onShutdown```.
 /// Just being informed about those events wouldn't be terribly useful. Therefore, ```DetailService```s give you access to a simplified version of the ```Store``` so you can dispatch actions as needed. Also, you can use the ```Injected``` property wrapper to read the app's ```Dependencies```.
-open class DetailService<State, Detail : Equatable, Action> : Service<State, Action> {
-    
-    public final let detail : (State) -> Detail
-    
-    /// The last value the watched property had.
-    /// - Important: Do not assume that this property is present at the end of the ```Service```'s initializer. It will, however, be present in each open method of the ```Service```.
-    @inlinable
-    public final var oldValue : Detail {
-        _oldValue!
-    }
-    
-    @usableFromInline
-    var _oldValue : Detail?
-    
-    @inlinable
-    public init(detail: @escaping (State) -> Detail) {self.detail = detail}
-    
-    /// Implement this method to react to the event that the ```Store``` has been fully initialized and is ready to dispatch actions.
-    @usableFromInline
-    internal final override func _onAppInit() {
-        _oldValue = detail(store.state)
-        onAppInit()
-    }
-    
-    /// Implement this method to react to the event that the ```Store``` has been fully initialized and is ready to dispatch actions.
-    open func onAppInit() {}
-    
-    @usableFromInline
-    internal final override func _afterUpdate() {
-        let detail = self.detail(store.state)
-        guard detail != oldValue else {return}
-        onUpdate(newValue: detail)
-        _oldValue = detail
-    }
-    
-    /// Implement this method to be notified whenever the watched property actually changes according to the implementation of ```==```.
-    /// - Parameters:
-    ///     - newValue: The new value of the watched property.
-    open func onUpdate(newValue: Detail) {}
-    
-    @usableFromInline
-    internal final override func _onShutdown() {
-        onShutdown()
-    }
-    
-    /// Implement this method to be notified about the event that the ```Store``` will soon no longer accept any new actions. Use this method to dispatch some final cleanup actions synchronously.
-    open func onShutdown() {}
-    
-}
+public typealias DetailService<AppState, Detail : Equatable, Action> = _DetailService<AppState, Detail, Action> & DetailServiceProtocol
 
 
 public enum Services {}

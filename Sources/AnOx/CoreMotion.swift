@@ -126,23 +126,28 @@ public protocol GyroWatchConfig : SensorWatchConfig where
 public protocol MagnetometerWatchConfig : SensorWatchConfig where
     TriggerAction == CMMagnetometerData {}
 
-public class Sensor<State, Config : SensorWatchConfig, Kind : BasicSensor, Action> : DetailService<State, Config?, Action> where Kind.UpdateData == Config.TriggerAction {
+public final class Sensor<State, Config : SensorWatchConfig, Kind : BasicSensor, Action> : DetailService<State, Config?, Action> where Kind.UpdateData == Config.TriggerAction {
     
     let queue : OperationQueue
     var currentState : Config.ReducerState?
     let convert : (Result<Config.ResultAction, Error>) -> Action
     
     @Injected(\.native.motionManager) var motionManager
+    let configure : (State) -> Config?
     
     public init(on queue: OperationQueue,
                 configure: @escaping (State) -> Config?,
                 onEvent: @escaping (Result<Config.ResultAction, Error>) -> Action) {
         self.queue = queue
         self.convert = onEvent
-        super.init(detail: configure)
+        self.configure = configure
     }
     
-    public override func onUpdate(newValue: Config?) {
+    public func extractDetail(from state: State) -> Config? {
+        configure(state)
+    }
+    
+    public func onUpdate(newValue: Config?) {
         
         let mgr = Kind(mgr: motionManager)
         mgr.stopUpdates()
@@ -158,7 +163,7 @@ public class Sensor<State, Config : SensorWatchConfig, Kind : BasicSensor, Actio
             
             guard let data = data else {
                 return DispatchQueue.main.async {
-                    guard self.detail(self.store.state) == newValue else {return}
+                    guard self.extractDetail(from: self.store.state) == newValue else {return}
                     self.store.send(self.convert(.failure(error ?? UnknownError())))
                 }
             }
@@ -170,7 +175,7 @@ public class Sensor<State, Config : SensorWatchConfig, Kind : BasicSensor, Actio
             
             if let update = newValue.onUpdate(&currentState, action: data) {
                 DispatchQueue.main.async {
-                    guard self.detail(self.store.state) == newValue else {return}
+                    guard self.extractDetail(from: self.store.state) == newValue else {return}
                     self.store.send(self.convert(.success(update)))
                 }
             }
@@ -199,16 +204,21 @@ public final class DeviceMotionSensor<State, Config : DeviceMotionWatchConfig, A
     let convert : (Result<Config.ResultAction, Error>) -> Action
     
     @Injected(\.native.motionManager) var motionManager
+    let configure : (State) -> Config?
     
     public init(on queue: OperationQueue,
                 configure: @escaping (State) -> Config?,
                 onEvent: @escaping (Result<Config.ResultAction, Error>) -> Action) {
         self.queue = queue
         self.convert = onEvent
-        super.init(detail: configure)
+        self.configure = configure
     }
     
-    public override func onUpdate(newValue: Config?) {
+    public func extractDetail(from state: State) -> Config? {
+        configure(state)
+    }
+    
+    public func onUpdate(newValue: Config?) {
         
         let mgr = motionManager
         mgr.stopDeviceMotionUpdates()
@@ -225,7 +235,7 @@ public final class DeviceMotionSensor<State, Config : DeviceMotionWatchConfig, A
             
             guard let data = data else {
                 return DispatchQueue.main.async {
-                    guard self.detail(self.store.state) == newValue else {return}
+                    guard self.extractDetail(from: self.store.state) == newValue else {return}
                     self.store.send(self.convert(.failure(error ?? UnknownError())))
                 }
             }
@@ -237,7 +247,7 @@ public final class DeviceMotionSensor<State, Config : DeviceMotionWatchConfig, A
             
             if let update = newValue.onUpdate(&currentState, action: data) {
                 DispatchQueue.main.async {
-                    guard self.detail(self.store.state) == newValue else {return}
+                    guard self.extractDetail(from: self.store.state) == newValue else {return}
                     self.store.send(self.convert(.success(update)))
                 }
             }

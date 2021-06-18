@@ -14,8 +14,8 @@ extension RedCatTests {
     func testStoreEventOrder() {
         
         let store = Store(initialState: [Action](),
-                                reducer: Reducer{($1.append($0))},
-                                services: [OuterService(), InnerService()])
+                          reducer: Reducer{($1.append($0))},
+                          services: [OuterService(), InnerService()])
         
         store.shutDown()
         
@@ -42,25 +42,27 @@ fileprivate extension RedCatTests {
     class OuterService : Service<[Action], Action> {
         var beforeCalled = false
         var afterCalled = false
-        override func _onAppInit() {
+        func _onAppInit() {
             store.send(.appInit)
         }
         
-        override func _afterUpdate() {
+        func _onUpdate() {
             if !afterCalled {
                 afterCalled = true
                 store.send(.after1)
             }
         }
-        override func _onShutdown() {
+        func onShutdown() {
             store.send(.shutdown)
         }
     }
     
     class InnerService : Service<[Action], Action> {
+        func _onAppInit() {}
+        func onShutdown() {}
         var beforeCalled = false
         var afterCalled = false
-        override func _afterUpdate() {
+        func _onUpdate() {
             if !afterCalled {
                 afterCalled = true
                 store.send(.after2)

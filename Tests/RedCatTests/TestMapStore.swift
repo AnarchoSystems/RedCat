@@ -80,13 +80,13 @@ fileprivate extension RedCatTests {
         }
     }
     
-    class HasShutDownService : AppEventService<Int, Void> {
+    final class HasShutDownService : AppEventService<Int, Void> {
         var hasInited = false
         var hasShutdown = false
-        override func onAppInit() {
+        func onAppInit() {
             hasInited = true
         }
-        override func onShutdown() {
+        func onShutdown() {
             hasShutdown = true
         }
     }

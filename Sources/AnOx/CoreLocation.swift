@@ -57,19 +57,24 @@ public final class LocationService<State, Action> : DetailService<State, Locatio
     private let delegate : LocationManagerDelegate<State, Action>
     
     @Injected(\.native.locationManager) var locationManager
+    let configure : (State) -> LocationObservationConfiguration
     
     public init(_ delegate: LocationManagerDelegate<State, Action>,
                 configure: @escaping (State) -> LocationObservationConfiguration) {
         self.delegate = delegate
-        super.init(detail: configure)
+        self.configure = configure
     }
     
-    override public func onAppInit() {
+    public func extractDetail(from state: State) -> LocationObservationConfiguration {
+        configure(state)
+    }
+    
+    public func onAppInit() {
         delegate.store = store
         locationManager.delegate = delegate
     }
     
-    override public func onUpdate(newValue: LocationObservationConfiguration) {
+    public func onUpdate(newValue: LocationObservationConfiguration) {
         
         if
             let authRequest = newValue.requestedAuthorization,
