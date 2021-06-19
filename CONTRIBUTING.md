@@ -16,18 +16,16 @@ PRs have a significantly better chance to be accepted, if they don't break the A
 
 - If there are any implementation invariants that can't be proven by the compiler, do not ```fatalerror```. Instead, do your best to still return something meaningful and print a message to the console with the following format:
 
-*RedCat: <Description of broken invariant>. Please file a bug report.\nIf your app works fine otherwise, you can silence this warning by setting internalFlags.<Your flag that will silence that warning> to <value> in the environment.*
+*RedCat: <Description of broken invariant>. Please file a bug report.\nIf your app works fine otherwise, you can silence this warning by setting internalFlags.<Your flag that will silence that warning> to <value> in the environment or by compiling in release mode.*
 
-- Make sure that actions services and reducers can be discovered from the proper namespace (```Actions```, ```Reducers```, ```Services```).
+- Make sure that reducers can be discovered from the proper namespace (```Reducers```).
 
 - Use static features over dynamic features where meaningfully possible.
 
-- Core functionality goes into RedCat (new reducer types, new ways to compose things,...), more specialized features (e.g. concrete services) go into AnOx.
-
-- Don't publicly expose things that are better kept private. If some feature that is not designed for the public needs to be public for technical reasons, name it with two leading underscores.
+- Don't publicly expose things that are better kept private. If some feature that is not designed for the public needs to be public for technical reasons, name it with a leading underscore.
 
 # That's It!
 
 Happy coding!
 
-PS contributions in form of artwork are also welcome. I'd be glad to have a red cat icon (for the readme), an ox icon (for AnOx) and a red cat in the "uncle sam needs you" pose to replace the :point_up: emoji at the top of this document.
+PS contributions in form of artwork are also welcome. I'd be glad to have a red cat icon (for the readme) and a red cat in the "uncle sam needs you" pose to replace the :point_up: emoji at the top of this document.
