@@ -214,10 +214,11 @@ Another key feature of ```Dependencies``` is memoization. Whenever the ```Depend
 
 ## Proofs of Concept
 
-There are two toy projects showcasing how RedCat is used.
+There are some toy projects showcasing how RedCat can be used.
 
 - [RedCatTicTacToe](https://github.com/AnarchoSystems/RedCatTicTacToe): a Tic-Tac-Toe implementation using RedCat.
-- [RedCatWeather](https://github.com/AnarchoSystems/RedCatWeather.git): a weather app communicating with a fake backend.
+- [RedCatWeather](https://github.com/AnarchoSystems/RedCatWeather): a weather app communicating with a fake backend.
+- [RedCatChat](https://github.com/AnarchoSystems/RedCatChat): a chat app with two factor authentication and a fake backend.
 
 # Installation
 
