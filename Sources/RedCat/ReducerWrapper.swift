@@ -26,7 +26,7 @@ public extension ReducerWrapper {
     
     @inlinable
     func apply(_ action: Body.Action,
-               to state: inout Body.State) {
+               to state: inout Body.State) -> Body.Response {
         body.apply(action,
                    to: &state)
     }
@@ -45,19 +45,28 @@ public struct Reducer<Body : ReducerProtocol> : ReducerWrapper {
     }
     
     @inlinable
-    public init<State, Action>(_ closure: @escaping (Action, inout State) -> Void)
-    where Body == ClosureReducer<State, Action> {
+    public init<State, Action, Response>(_ closure: @escaping (Action, inout State) -> Response)
+    where Body == ClosureReducer<State, Action, Response> {
         self = Reducer {
             ClosureReducer(closure)
         }
     }
     
     @inlinable
-    public init<State : Releasable, R : ReducerProtocol>(_ aspect: CasePath<State, R.State>,
+    public init<State : Releasable, R : ReducerProtocol>(responsePreserving aspect: CasePath<State, R.State>,
                                                                  _ body: () -> R)
     where Body == AspectReducer<State, R> {
         self = Reducer {
             AspectReducer(aspect, build: body)
+        }
+    }
+    
+    @inlinable
+    public init<State : Releasable, R : ReducerProtocol>(_ aspect: CasePath<State, R.State>,
+                                                                 _ body: () -> R)
+    where Body == ResponseMapReducer<AspectReducer<State, R>, Void>, R.Response == Void {
+        self = Reducer {
+            AspectReducer(aspect, build: body).mapResponse{_ in }
         }
     }
     

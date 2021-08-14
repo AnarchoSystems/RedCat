@@ -7,7 +7,7 @@
 
 import Foundation
 
-public typealias ObservableStore<State, Action> = Store<AnyReducer<State, Action>>
+public typealias ObservableStore<State, Action> = Store<AnyReducer<State, Action, Void>>
 
 /// A ```Store``` contains the "global" AppState and exposes the main methods to mutate the state.
 @dynamicMemberLookup
@@ -157,7 +157,7 @@ public extension Store {
                                           environment: Dependencies = [],
                                           services: [Service<R.State, R.Action>] = [],
                                           configure: (Dependencies) -> R.State)
-    where Reducer == AnyReducer<R.State, R.Action> {
+    where Reducer == AnyReducer<R.State, R.Action, R.Response> {
         self.init(reducer: erasing.erased(),
                   environment: environment,
                   services: services,
@@ -169,7 +169,7 @@ public extension Store {
                                           erasing: R,
                                           environment: Dependencies = [],
                                           services: [Service<R.State, R.Action>] = [])
-    where Reducer == AnyReducer<R.State, R.Action> {
+    where Reducer == AnyReducer<R.State, R.Action, R.Response> {
         self.init(erasing: erasing,
                   environment: environment,
                   services: services,

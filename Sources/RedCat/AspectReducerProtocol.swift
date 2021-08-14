@@ -13,6 +13,7 @@ public protocol AspectReducerProtocol : ReducerProtocol {
     
     associatedtype State
     associatedtype Action
+    associatedtype MaybeResponse
     associatedtype Aspect
     
     /// The enum case of the enum-typed ```State``` for which this reducer is used.
@@ -27,7 +28,7 @@ public protocol AspectReducerProtocol : ReducerProtocol {
     ///
     /// Typically, you don't write one large app reducer for your global state, but compose it up from smaller reducers using partial actions and partial state. ```AspectReducerProtocol``` is a way to mutate an enum-typed state whenever it is in a specific case.
     func apply(_ action: Action,
-               to aspect: inout Aspect)
+               to aspect: inout Aspect) -> MaybeResponse
     
 }
 
@@ -36,7 +37,7 @@ public extension AspectReducerProtocol where State : Releasable {
     
     @inlinable
     func apply(_ action: Action,
-               to state: inout State) {
+               to state: inout State) -> MaybeResponse? {
         casePath.mutate(&state) {aspect in
             apply(action, to: &aspect)
         }
@@ -63,7 +64,7 @@ public extension AspectReducerWrapper where State : Releasable {
     
     @inlinable
     func apply(_ action: Body.Action,
-               to state: inout State) {
+               to state: inout State) -> Body.Response? {
         casePath.mutate(&state) {aspect in
             body.apply(action, to: &aspect)
         }
@@ -92,9 +93,9 @@ public struct AspectReducer<State : Releasable, Reducer : ReducerProtocol> : Asp
     }
     
     @inlinable
-    public init<Aspect, Action>(_ aspect: CasePath<State, Aspect>,
-                        closure: @escaping (Action, inout Aspect) -> Void)
-    where Reducer == ClosureReducer<Aspect, Action> {
+    public init<Aspect, Action, Response>(_ aspect: CasePath<State, Aspect>,
+                        closure: @escaping (Action, inout Aspect) -> Response)
+    where Reducer == ClosureReducer<Aspect, Action, Response> {
         self = AspectReducer(aspect) {
             ClosureReducer(closure)
         }
@@ -114,9 +115,9 @@ public extension ReducerProtocol {
 
 public extension Reducers.Native {
     
-    static func aspectReducer<State : Releasable, Aspect, Action>(_ aspect: CasePath<State, Aspect>,
-                                                               _ closure: @escaping (Action, inout Aspect) -> Void)
-    -> AspectReducer<State, ClosureReducer<Aspect, Action>> {
+    static func aspectReducer<State : Releasable, Aspect, Action, Response>(_ aspect: CasePath<State, Aspect>,
+                                                               _ closure: @escaping (Action, inout Aspect) -> Response)
+    -> AspectReducer<State, ClosureReducer<Aspect, Action, Response>> {
         AspectReducer(aspect, closure: closure)
     }
     

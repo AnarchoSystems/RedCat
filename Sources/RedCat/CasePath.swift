@@ -58,7 +58,7 @@ public extension Optional {
 
 public extension CasePath where Root : Releasable {
     
-    func mutate(_ whole: inout Root, closure: (inout Value) -> Void) {
+    func mutate<T>(_ whole: inout Root, closure: (inout Value) -> T) -> T? {
         mutate(&whole, optionalDefault: nil, closure: closure)
     }
     
@@ -72,18 +72,19 @@ public extension CasePath where Root : Releasable {
 extension CasePath where Root : Releasable {
     
     @inlinable
-    func mutate(_ whole: inout Root, optionalDefault fallback: Root?, closure: (inout Value) -> Void) {
+    func mutate<T>(_ whole: inout Root, optionalDefault fallback: Root?, closure: (inout Value) -> T) -> T? {
         
         guard var part = extract(from: whole) else {
             if let fallback = fallback {
                 whole = fallback
             }
-            return
+            return nil
         }
         
         whole.releaseCopy()
-        closure(&part)
+        let result = closure(&part)
         whole = embed(part)
+        return result 
         
     }
     

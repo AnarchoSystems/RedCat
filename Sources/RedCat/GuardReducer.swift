@@ -30,11 +30,11 @@ public struct GuardReducer<Wrapped : ReducerProtocol> : ReducerProtocol {
     
     @inlinable
     public func apply(_ action: Wrapped.Action,
-                      to state: inout Wrapped.State) {
+                      to state: inout Wrapped.State) -> Wrapped.Response? {
         guard condition(state) else {
-            return
+            return nil
         }
-        wrapped.apply(action, to: &state)
+        return wrapped.apply(action, to: &state)
     }
     
 }
@@ -61,11 +61,20 @@ public extension Reducer {
     }
     
     
-    init<State, Wrapped : ReducerProtocol>(_ aspect: CasePath<State, Wrapped.State>,
+    init<State, Wrapped : ReducerProtocol>(preservingResponse aspect: CasePath<State, Wrapped.State>,
                                            where condition: @escaping (State) -> Bool,
                                            build: @escaping () -> Wrapped) where Body == GuardReducer<AspectReducer<State, Wrapped>> {
         self = Reducer {
             AspectReducer(aspect, build: build).filter(condition)
+        }
+    }
+    
+    
+    init<State, Wrapped : ReducerProtocol>(_ aspect: CasePath<State, Wrapped.State>,
+                                           where condition: @escaping (State) -> Bool,
+                                           build: @escaping () -> Wrapped) where Body == GuardReducer<ResponseMapReducer<AspectReducer<State, Wrapped>, Void>> {
+        self = Reducer {
+            AspectReducer(aspect, build: build).mapResponse{_ in }.filter(condition)
         }
     }
     

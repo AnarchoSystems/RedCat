@@ -69,13 +69,13 @@ public enum ReducerBuilder {
         buildBlock(r1, r2, r3, r4, r5).compose(with: r6)
     }
     
-    public static func buildBlock<State>(_ r1: VoidReducer<State>,
-                                         _ r2: VoidReducer<State>,
-                                         _ r3: VoidReducer<State>,
-                                         _ r4: VoidReducer<State>,
-                                         _ r5: VoidReducer<State>,
-                                         _ r6: VoidReducer<State>,
-                                         _ components: VoidReducer<State>...) -> VoidReducer<State> {
+    public static func buildBlock<State>(_ r1: VoidReducer<State, Void>,
+                                         _ r2: VoidReducer<State, Void>,
+                                         _ r3: VoidReducer<State, Void>,
+                                         _ r4: VoidReducer<State, Void>,
+                                         _ r5: VoidReducer<State, Void>,
+                                         _ r6: VoidReducer<State, Void>,
+                                         _ components: VoidReducer<State, Void>...) -> VoidReducer<State, Void> {
         VoidReducer{for component in [r1, r2, r3, r4, r5, r6] + components {component.apply((), to: &$0)}}
     }
     
@@ -83,15 +83,15 @@ public enum ReducerBuilder {
         ReducersChain(components)
     }
     
-    public static func buildEither<R1 : ReducerProtocol>(first component: R1) -> AnyReducer<R1.State, R1.Action> {
+    public static func buildEither<R1 : ReducerProtocol>(first component: R1) -> AnyReducer<R1.State, R1.Action, R1.Response> {
         component.erased()
     }
     
-    public static func buildEither<R2 : ReducerProtocol>(second component: R2) -> AnyReducer<R2.State, R2.Action> {
+    public static func buildEither<R2 : ReducerProtocol>(second component: R2) -> AnyReducer<R2.State, R2.Action, R2.Response> {
         Reducers.Native.anyReducer(component)
     }
     
-    public static func buildLimitedAvailability<R : ReducerProtocol>(_ component: R) -> AnyReducer<R.State, R.Action> {
+    public static func buildLimitedAvailability<R : ReducerProtocol>(_ component: R) -> AnyReducer<R.State, R.Action, R.Response> {
         AnyReducer(component)
     }
     
@@ -106,10 +106,13 @@ public struct ReducersChain<R : ReducerProtocol> : ReducerProtocol {
     public init(_ array: [R]){self.array = array}
     
     @inlinable
-    public func apply(_ action: R.Action, to state: inout R.State) {
+    @discardableResult
+    public func apply(_ action: R.Action, to state: inout R.State) -> [R.Response] {
+        var result = [R.Response]()
         for r in array {
-            r.apply(action, to: &state)
+            result.append(r.apply(action, to: &state))
         }
+        return result
     }
     
 }

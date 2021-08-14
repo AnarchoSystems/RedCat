@@ -16,7 +16,7 @@ public struct ActionBinding<R : ReducerProtocol, NewAction> : ReducerProtocol {
     
     @inlinable
     public func apply(_ action: NewAction,
-                      to state: inout R.State) {
+                      to state: inout R.State) -> R.Response {
         reducer.apply(embed(action), to: &state)
     }
     

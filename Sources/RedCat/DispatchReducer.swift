@@ -50,7 +50,7 @@ public protocol DispatchReducerProtocol : ReducerProtocol where State == Dispatc
 public extension DispatchReducerProtocol {
     
     @inlinable
-    func apply(_ action: Action, to state: inout Dispatched.State) {
+    func apply(_ action: Action, to state: inout Dispatched.State) -> Dispatched.Response {
         dispatch(action).apply(convert(action), to: &state)
     }
     
@@ -94,10 +94,10 @@ extension Optional : ReducerProtocol, DispatchReducerProtocol where Wrapped : Re
     
     public typealias State = Wrapped.State
     public typealias Action = Wrapped.Action
-    public typealias Dispatched = IfReducer<Wrapped, NopReducer<Wrapped.State, Wrapped.Action>> 
+    public typealias Dispatched = IfReducer<Wrapped, NopReducer<Wrapped.State, Wrapped.Action, Wrapped.Response>>
     
     @inlinable
-    public func dispatch(_ action: Wrapped.Action) -> IfReducer<Wrapped, NopReducer<Wrapped.State, Wrapped.Action>> {
+    public func dispatch(_ action: Wrapped.Action) -> IfReducer<Wrapped, NopReducer<Wrapped.State, Wrapped.Action, Wrapped.Response>> {
         map(IfReducer.ifReducer) ?? .elseReducer()
     }
     

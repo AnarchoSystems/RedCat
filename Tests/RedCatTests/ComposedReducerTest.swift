@@ -108,7 +108,7 @@ fileprivate extension RedCatTests {
         
     }
     
-    var incDecReducer : ClosureReducer<TestState, IncDec> {
+    var incDecReducer : ClosureReducer<TestState, IncDec, Void> {
         Reducers.Native.withClosure {RedCatTests.apply($0, to: &$1.value)}
     }
     

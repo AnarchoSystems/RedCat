@@ -68,7 +68,7 @@ fileprivate extension RedCatTests {
     static let baseInc = VoidReducer {(state: inout Int) in state += 1}
     
     @ReducerBuilder
-    static var sixIncs : ComposedReducer<ComposedReducer<ComposedReducer<ComposedReducer<ComposedReducer<VoidReducer<Int>, VoidReducer<Int>>, VoidReducer<Int>>, VoidReducer<Int>>, VoidReducer<Int>>, VoidReducer<Int>> {
+    static var sixIncs : ComposedReducer<ComposedReducer<ComposedReducer<ComposedReducer<ComposedReducer<VoidReducer<Int, Void>, VoidReducer<Int, Void>>, VoidReducer<Int, Void>>, VoidReducer<Int, Void>>, VoidReducer<Int, Void>>, VoidReducer<Int, Void>> {
         baseInc
         baseInc
         baseInc
@@ -78,7 +78,7 @@ fileprivate extension RedCatTests {
     }
     
     @ReducerBuilder
-    static var sevencIncs : VoidReducer<Int> {
+    static var sevencIncs : VoidReducer<Int, Void> {
         baseInc
         baseInc
         baseInc

@@ -25,7 +25,7 @@ public enum IfReducer<R1 : ReducerProtocol, R2 : ReducerProtocol> : ReducerProto
     }
     
     @inlinable
-    public static func elseReducer<State, Action>() -> Self where R2 == NopReducer<State, Action> {
+    public static func elseReducer<State, Action, Response>() -> Self where R2 == NopReducer<State, Action, Response> {
         .elseReducer(Reducers.Native.nop())
     }
     

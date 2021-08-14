@@ -27,15 +27,15 @@ extension DetailReducer : VoidReducerProtocol where Action == Void {}
 extension AspectReducer : VoidReducerProtocol where Action == Void {}
 extension Reducer : VoidReducerProtocol where Action == Void {}
 
-public struct VoidReducer<State> : VoidReducerProtocol {
+public struct VoidReducer<State, Response> : VoidReducerProtocol {
     
-    let apply : (inout State) -> Void
+    let apply : (inout State) -> Response
     
-    public init(_ closure: @escaping (inout State) -> Void) {
+    public init(_ closure: @escaping (inout State) -> Response) {
         apply = closure
     }
     
-    public func apply(_ action: (), to state: inout State) {
+    public func apply(_ action: (), to state: inout State) -> Response {
         apply(&state)
     }
     
@@ -44,7 +44,7 @@ public struct VoidReducer<State> : VoidReducerProtocol {
 
 public extension VoidReducer {
     
-    init<R : ReducerProtocol>(_ reducer: R, action: R.Action) where State == R.State {
+    init<R : ReducerProtocol>(_ reducer: R, action: R.Action) where State == R.State, R.Response == Response {
         apply = {reducer.apply(action, to: &$0)}
     }
     
@@ -53,7 +53,7 @@ public extension VoidReducer {
 
 public extension ReducerProtocol {
     
-    func send(_ action: Action) -> VoidReducer<State> {
+    func send(_ action: Action) -> VoidReducer<State, Response> {
         VoidReducer(self, action: action)
     }
     
@@ -62,11 +62,11 @@ public extension ReducerProtocol {
 
 public extension ReducerProtocol where Action == Void {
     
-    func send() -> VoidReducer<State> {
+    func send() -> VoidReducer<State, Response> {
         VoidReducer(self, action: ())
     }
     
-    func asVoidReducer() -> VoidReducer<State> {
+    func asVoidReducer() -> VoidReducer<State, Response> {
         send()
     }
     

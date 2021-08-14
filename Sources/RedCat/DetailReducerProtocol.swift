@@ -15,6 +15,7 @@ public protocol DetailReducerProtocol : ReducerProtocol {
     associatedtype State
     associatedtype Detail
     associatedtype Action
+    associatedtype Response
     
     /// The property of ```State``` for which this reducer is used.
     var keyPath : WritableKeyPath<State, Detail> {get}
@@ -28,7 +29,7 @@ public protocol DetailReducerProtocol : ReducerProtocol {
     ///
     /// Typically, you don't write one large app reducer for your global state, but compose it up from smaller reducers using partial actions and partial state. ```DetailReducerProtocol``` is a way to mutate just one property of a more global state type.
     func apply(_ action: Action,
-               to detail: inout Detail)
+               to detail: inout Detail) -> Response
     
 }
 
@@ -37,14 +38,14 @@ public extension DetailReducerProtocol {
     
     @inlinable
     func apply(_ action: Action,
-               to state: inout State) {
+               to state: inout State) -> Response {
         apply(action, to: &state[keyPath: keyPath])
     }
     
 }
 
 /// A ```DetailReducerWrapper``` is a type used for indirect composition. The implementation of what should happen to the state given an ```Action``` is given via the ```body``` property, and the wrapper's single responsibility is delegating the given keypath.
-public protocol DetailReducerWrapper : ReducerProtocol where Action == Body.Action {
+public protocol DetailReducerWrapper : ReducerProtocol where Action == Body.Action, Response == Body.Response {
     
     associatedtype State
     associatedtype Action = Body.Action
@@ -63,7 +64,7 @@ public extension DetailReducerWrapper {
     
     @inlinable
     func apply(_ action: Body.Action,
-                     to state: inout State) {
+               to state: inout State) -> Body.Response {
             body.apply(action, to: &state[keyPath: keyPath])
     }
     
@@ -90,9 +91,9 @@ public struct DetailReducer<State, Reducer : ReducerProtocol> : DetailReducerWra
     }
     
     @inlinable
-    public init<Detail, Action>(_ detail: WritableKeyPath<State, Detail>,
-                                closure: @escaping (Action, inout Detail) -> Void)
-    where Reducer == ClosureReducer<Detail, Action> {
+    public init<Detail, Action, Response>(_ detail: WritableKeyPath<State, Detail>,
+                                closure: @escaping (Action, inout Detail) -> Response)
+    where Reducer == ClosureReducer<Detail, Action, Response> {
         self = DetailReducer(detail) {
             ClosureReducer(closure)
         }
@@ -113,9 +114,9 @@ public extension ReducerProtocol {
 
 public extension Reducers.Native {
     
-    static func detailReducer<State, Detail, Action>(_ detail: WritableKeyPath<State, Detail>,
-                                             _ closure: @escaping (Action, inout Detail) -> Void)
-    -> DetailReducer<State, ClosureReducer<Detail, Action>> {
+    static func detailReducer<State, Detail, Action, Response>(_ detail: WritableKeyPath<State, Detail>,
+                                             _ closure: @escaping (Action, inout Detail) -> Response)
+    -> DetailReducer<State, ClosureReducer<Detail, Action, Response>> {
         DetailReducer(detail, closure: closure)
     }
     

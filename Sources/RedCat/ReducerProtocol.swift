@@ -13,6 +13,7 @@ public protocol ReducerProtocol {
     
     associatedtype State 
     associatedtype Action
+    associatedtype Response = Void
     
     /// Applies an action to the state.
     /// - Parameters:
@@ -22,18 +23,22 @@ public protocol ReducerProtocol {
     /// The main idea of unidirectional dataflow architectures is that everything that happens in an application can be viewed as a long list of actions applied over time to one global app state, as the new actions become available. For this, you need some function with a signature similar to that of ```Sequence```'s ```reduce```method -- hence the name "reducer".
     ///
     /// Typically, you don't write one large app reducer for your global state, but compose it up from smaller reducers using partial actions and partial state. ```ReducerProtocol``` and inheriting protocols are the main way to implement what it means concretely to apply a specific action. Everything else is really about composition.
+    @discardableResult
     func apply(_ action: Action,
-               to state: inout State)
+               to state: inout State) -> Response
     
 }
 
 public extension ReducerProtocol {
     
+    @discardableResult
     func applyAll<S : Sequence>(_ actions: S,
-                                to state: inout State) where S.Element == Action {
+                                to state: inout State) -> [Response] where S.Element == Action {
+        var result = [Response]()
         for action in actions {
-            apply(action, to: &state)
+            result.append(apply(action, to: &state))
         }
+        return result
     }
     
 }

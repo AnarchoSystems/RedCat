@@ -26,7 +26,7 @@ extension RedCatTests {
             
             RedCatTests.explicitDetailReducer.applyAll(list, to: &state1)
             RedCatTests.implicitDetailReducer.applyAll(list, to: &state2)
-            NopReducer().compose(with: RedCatTests.directReducer, property: \StructState.value).applyAll(list, to: &state3)
+            NopReducer<StructState, IncDec, Void>().compose(with: RedCatTests.directReducer, property: \StructState.value).applyAll(list, to: &state3)
             RedCatTests.erasedDetailReducer.applyAll(list, to: &state4)
             
             XCTAssertEqual(state1, state2)
@@ -50,7 +50,7 @@ extension RedCatTests {
             
             RedCatTests.explicitAspectReducer.applyAll(list, to: &state1)
             RedCatTests.implicitAspectReducer.applyAll(list, to: &state2)
-            NopReducer().compose(with: RedCatTests.directReducer, aspect: /EnumState.value).applyAll(list, to: &state3)
+            NopReducer<EnumState, IncDec, Void>().compose(with: RedCatTests.directReducer, aspect: /EnumState.value).applyAll(list, to: &state3)
             RedCatTests.erasedAspectReducer.applyAll(list, to: &state4)
             
             XCTAssertEqual(state1, state2)
