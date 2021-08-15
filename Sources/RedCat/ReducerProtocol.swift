@@ -45,6 +45,12 @@ public extension ReducerProtocol {
 
 public extension ReducerProtocol {
     
+    
+    @inlinable
+    func flatMap<Next : ReducerProtocol>(_ transform: @escaping (Response) -> Next) -> ComposedReducer<Self, Next> {
+        ComposedReducer(self, transform)
+    }
+    
     /// Composes this reducer with another one.
     /// - Parameters:
     ///     - next: The other reducer.
@@ -52,7 +58,7 @@ public extension ReducerProtocol {
     @inlinable
     func compose<Next: ReducerProtocol>(with next: Next) -> ComposedReducer<Self, Next> where
         Next.State == State, Next.Action == Action {
-        ComposedReducer(self, next)
+        ComposedReducer(self, {_ in next})
     }
     
     /// Composes this reducer with another one.
@@ -87,15 +93,14 @@ public struct ComposedReducer<R1 : ReducerProtocol, R2 : ReducerProtocol> : Redu
     @usableFromInline
     let re1 : R1
     @usableFromInline
-    let re2 : R2
+    let transform : (R1.Response) -> R2
     
     @usableFromInline
-    init(_ re1: R1, _ re2: R2) {(self.re1, self.re2) = (re1, re2)}
+    init(_ re1: R1, _ transform: @escaping (R1.Response) -> R2) {(self.re1, self.transform) = (re1, transform)}
     
     @inlinable
-    public func apply(_ action: R1.Action, to state: inout R1.State) {
-        re1.apply(action, to: &state)
-        re2.apply(action, to: &state)
+    public func apply(_ action: R1.Action, to state: inout R1.State) -> R2.Response {
+        transform(re1.apply(action, to: &state)).apply(action, to: &state)
     }
     
 }
