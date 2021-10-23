@@ -23,6 +23,10 @@ public struct StoreStub<State, Action> {
         base.send(list)
     }
     
+    public func shutDown() {
+        base.shutDown()
+    }
+    
 }
 
 @usableFromInline
@@ -30,6 +34,7 @@ internal class AnyStore<State, Action> {
     var state : State {fatalError()}
     func send(_ action: Action) {fatalError()}
     func send(_ list: ActionGroup<Action>) {fatalError()}
+    func shutDown(){fatalError()}
 }
 
 @usableFromInline
@@ -43,6 +48,9 @@ internal final class ConcreteStore<Store : StoreProtocol & AnyObject> : AnyStore
     }
     override func send(_ list: ActionGroup<Store.Action>) {
         base?.send(list)
+    }
+    override func shutDown() {
+        base?.shutDown()
     }
 }
 
