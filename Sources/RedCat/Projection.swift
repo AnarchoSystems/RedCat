@@ -5,6 +5,7 @@
 //  Created by Markus Kasperczyk on 21.10.21.
 //
 
+import Foundation
 
 /// Projections of the store's state can be used to focus on certain parts of the state.
 /// - Important: This type is not meant to be used for composing the state, but for rearranging its properties in a manner suitable for, e.g., a view.
@@ -51,6 +52,44 @@ public protocol RestrictedAction {
     associatedtype BroaderAction
     
     var contextualized : BroaderAction {get}
+    
+}
+
+
+public extension StoreProtocol {
+    
+    func send<Action : RestrictedAction>(_ action: Action) where Action.BroaderAction == Self.Action {
+        self.send(action.contextualized)
+    }
+    
+    func send<Action : RestrictedAction>(_ list: ActionGroup<Action>) where Action.BroaderAction == Self.Action {
+        self.send(ActionGroup(values: list.values.map(\.contextualized)))
+    }
+    
+    @available(macOS 10.11, *)
+    func sendWithUndo<Action : RestrictedAction & Undoable>(_ action: Action,
+                                                            undoTitle: String? = nil,
+                                                            redoTitle: String? = nil,
+                                                            undoManager: UndoManager?)
+    where Action.BroaderAction == Self.Action {
+        self.sendWithUndo(action,
+                          undoTitle: undoTitle,
+                          redoTitle: redoTitle,
+                          undoManager: undoManager,
+                          embed: \.contextualized)
+    }
+    
+    @available(macOS 10.11, *)
+    func sendWithUndo<Action : RestrictedAction & Undoable>(_ list: UndoGroup<Action>,
+                                                            undoTitle: String? = nil,
+                                                            redoTitle: String? = nil,
+                                                            undoManager: UndoManager?) where Action.BroaderAction == Self.Action {
+        self.sendWithUndo(list,
+                          undoTitle: undoTitle,
+                          redoTitle: redoTitle,
+                          undoManager: undoManager,
+                          embed: \.contextualized)
+    }
     
 }
 
