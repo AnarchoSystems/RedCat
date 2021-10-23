@@ -25,6 +25,10 @@ public struct _Lens<Whole, Value> : Reader {
         self._wrappedValue = Box()
     }
     
+    public init() where Whole == Value {
+        self = _Lens({$0})
+    }
+    
     func readValue(from environment: Any) {
         _wrappedValue.value = _read(environment as! Whole)
     }
@@ -36,6 +40,7 @@ public struct _Lens<Whole, Value> : Reader {
     }
     
 }
+
 
 public typealias Injected<Value> = _Lens<Dependencies, Value>
 

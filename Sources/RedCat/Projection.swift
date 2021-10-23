@@ -22,6 +22,7 @@ public protocol Projection {
 public extension Projection {
     
     typealias Lens<Part> = _Lens<WholeState, Part>
+    typealias Ask = _Lens<WholeState, WholeState>
     
     mutating func inject(from whole: WholeState){}
     

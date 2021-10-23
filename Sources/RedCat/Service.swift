@@ -169,6 +169,8 @@ open class _DetailService<State, Detail : Equatable, Action> : _Service<State, A
 
 public extension DetailServiceProtocol {
     
+    typealias Ask = _Lens<Dependencies, Dependencies>
+    
     /// Implement this method to react to the event that the ```Store``` has been fully initialized and is ready to dispatch actions.
     @inlinable
     func _onAppInit() {

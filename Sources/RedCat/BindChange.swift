@@ -37,6 +37,19 @@ public struct BindChange<Root, Changer : PropertyChange> : DetailReducerProtocol
     
 }
 
+public struct KeyPathReducer<Root, Value> : DetailReducerProtocol {
+    
+    public let keyPath: WritableKeyPath<Root, Value>
+    
+    public init(_ keyPath: WritableKeyPath<Root, Value>) {
+        self.keyPath = keyPath
+    }
+    
+    public func apply(_ action: Value, to detail: inout Value) {
+        detail = action
+    }
+    
+}
 
 public struct BindCase<Root : Releasable, Changer : PropertyChange> : AspectReducerProtocol {
     

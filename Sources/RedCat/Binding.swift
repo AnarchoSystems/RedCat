@@ -22,6 +22,11 @@ public extension StoreProtocol {
                 set: {self.send(action($0))})
     }
     
+    func binding(_ action: @escaping (State) -> Action) -> Binding<State> {
+        binding(for: {$0},
+                   action: action)
+    }
+    
     /// Exposes a value as a binding, if provided with an action that serves as a setter.
     func binding<Value, A : Undoable>(for value: @escaping (State) -> Value,
                                       withUndoManager: UndoManager?,
@@ -47,6 +52,49 @@ public extension StoreProtocol {
                                         undoTitle: undoTitle,
                                         redoTitle: redoTitle,
                                         undoManager: withUndoManager)})
+    }
+    
+    /// Exposes a value as a binding, if provided with an action that serves as a setter.
+    func binding<A : Undoable>(withUndoManager: UndoManager?,
+                               undoTitle: String? = nil,
+                               redoTitle: String? = nil,
+                               embed: @escaping (A) -> Action,
+                               action: @escaping (State) -> A) -> Binding<State> {
+        Binding(get: {self.state},
+                set: {self.sendWithUndo(action($0),
+                                        undoTitle: undoTitle,
+                                        redoTitle: redoTitle,
+                                        undoManager: withUndoManager,
+                                        embed: embed)})
+    }
+    
+    func binding(withUndoManager: UndoManager?,
+                 undoTitle: String? = nil,
+                 redoTitle: String? = nil,
+                 action: @escaping (State) -> Action) -> Binding<State> where Action : Undoable {
+        Binding(get: {self.state},
+                set: {self.sendWithUndo(action($0),
+                                        undoTitle: undoTitle,
+                                        redoTitle: redoTitle,
+                                        undoManager: withUndoManager)})
+    }
+    
+}
+
+
+@dynamicMemberLookup
+public protocol StoreView {
+    
+    associatedtype Store : StoreProtocol
+    
+    var store : Store {get}
+    
+}
+
+public extension StoreView {
+    
+    subscript<T>(dynamicMember member: KeyPath<Store.State, T>) -> T {
+        store.state[keyPath: member]
     }
     
 }
