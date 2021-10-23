@@ -83,7 +83,8 @@ public extension StoreProtocol {
 
 
 @dynamicMemberLookup
-public protocol StoreView {
+@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+public protocol StoreView : View {
     
     associatedtype Store : StoreProtocol
     
@@ -91,6 +92,7 @@ public protocol StoreView {
     
 }
 
+@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
 public extension StoreView {
     
     subscript<T>(dynamicMember member: KeyPath<Store.State, T>) -> T {
