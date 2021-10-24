@@ -36,7 +36,22 @@ public extension StoreWrapper {
     
     var state: Wrapped.State { wrapped.state }
     
-    var objectWillChange : StoreObjectWillChangePublisher { wrapped.objectWillChange }
+}
+
+public extension StoreWrapper {
+    
+    func shutDown() {
+        wrapped.shutDown()
+    }
+    
+    var objectWillChange: StoreObjectWillChangePublisher {
+        rootStore.objectWillChange
+    }
+    
+}
+
+public extension StoreWrapper {
+    
     
     func send(_ action: Wrapped.Action) {
         wrapped.send(action)
@@ -46,7 +61,4 @@ public extension StoreWrapper {
         wrapped.send(list)
     }
     
-    func shutDown() {
-        wrapped.shutDown()
-    }
 }

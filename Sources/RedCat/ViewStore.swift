@@ -23,7 +23,7 @@ extension StoreProtocol {
 }
 
 
-public struct MapStore<Base: StoreProtocol, State, Action>: StoreWrapper {
+public final class MapStore<Base: StoreProtocol, State, Action>: StoreWrapper {
     
     public let wrapped : Base
     @usableFromInline
@@ -62,6 +62,10 @@ public struct MapStore<Base: StoreProtocol, State, Action>: StoreWrapper {
         wrapped.send(list, embed: embed)
     }
     
+    public var objectWillChange: StoreObjectWillChangePublisher {
+        rootStore.objectWillChange
+    }
+    
 }
 
 
@@ -69,6 +73,11 @@ public struct MapStore<Base: StoreProtocol, State, Action>: StoreWrapper {
 #if canImport(SwiftUI)
 
 import SwiftUI
+
+
+@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+extension MapStore : ObservableObject {}
+
 
 public extension StoreProtocol {
     

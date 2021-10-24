@@ -19,7 +19,7 @@ public extension StoreProtocol {
 
 public extension MapStore {
     
-    static func ??<T>(_ lhs: Self, rhs: @escaping @autoclosure () -> T) -> MapStore<Wrapped, T, Action> where State == T? {
+    static func ??<T>(_ lhs: MapStore, rhs: @escaping @autoclosure () -> T) -> MapStore<Wrapped, T, Action> where State == T? {
         let trafo = lhs.transform
         let onAction = lhs.embed
         return lhs.wrapped.map({trafo($0) ?? rhs()},
