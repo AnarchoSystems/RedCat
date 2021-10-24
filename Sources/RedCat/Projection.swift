@@ -136,6 +136,19 @@ public extension StoreProtocol {
 }
 
 
+public extension MapStore {
+    
+    func map<Module : StoreModule>(_ module: Module) -> MapStore<Wrapped, Module.State, Module.Action>
+    where Module.StateToProject == State, Module.ContextualizedAction == Action {
+        let trafo = self.transform
+        let onAction = self.embed
+        return wrapped.map({module.project(trafo($0))},
+                           onAction: {onAction(module.contextualize($0))})
+    }
+    
+}
+
+
 #if (os(iOS) && arch(arm64)) || os(macOS) || os(tvOS) || os(watchOS)
 #if canImport(SwiftUI)
 
