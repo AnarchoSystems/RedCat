@@ -15,6 +15,35 @@
 
 // no good solution :( even on compiler >= 5.5 and canImport(_Concurrency), SwiftUI does not force the closures of bindings to run on main thread
 
+
+#if os(macOS) || os(watchOS) || os(tvOS) || (os(iOS) && arch(arm64))
+#if canImport(SwiftUI)
+
+import SwiftUI
+
+@dynamicMemberLookup
+@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+public protocol StoreView : View {
+    
+    associatedtype Store : StoreProtocol
+    
+    var store : Store {get}
+    
+}
+
+@available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.0, *)
+public extension StoreView {
+    
+    @MainActor
+    subscript<T>(dynamicMember member: KeyPath<Store.State, T>) -> T {
+        store.state[keyPath: member]
+    }
+    
+}
+
+#endif
+#endif
+
 #else
 
 
