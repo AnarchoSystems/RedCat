@@ -37,6 +37,77 @@ public extension Dependency {
 }
 
 
+#if compiler(>=5.5) && canImport(_Concurrency)
+
+
+/// ```Dependencies``` Wrap the app's constants configured from outside. Values can be accessed via a subscript taking a type that conforms to ```Config```:
+/// ```
+/// public extension Dependencies {
+///
+///   var myValue : MyType {
+///         get {self[MyKey.self]}
+///         set {self[MyKey.self] = newValue}
+///   }
+///
+/// }
+/// ```
+/// - Note: If you read a value that isn't stored in the underlying dictionary, the default value is assumed. The value will then be memoized and shared across all copies. As a result, if the dependency itself has reference semantics, it will be retained after the first read.
+/// - Important: The way memoization is implemented requires properties to be read on the main thread. Failing to read not-yet memoized dependencies on the main thread is undefined behavior and may lead to crashes due to overlapping memory access.
+@MainActor
+public struct Dependencies {
+    
+    @usableFromInline
+    var dict = SwiftMutableDict()
+    
+    @inlinable
+    @MainActor
+    public subscript<Key : Config>(key: Key.Type) -> Key.Value {
+        get {
+            if let result = dict.dict[String(describing: key)] as? Key.Value {
+                return result
+            }
+            else {
+                let result = Key.value(given: self)
+                //memoization -- reference semantics is appropriate
+                dict.dict[String(describing: key)] = result
+                return result
+            }
+        }
+        set {
+            if
+                !isKnownUniquelyReferenced(&dict) {
+                self.dict = dict.copy()
+            }
+            dict.dict[String(describing: key)] = newValue
+        }
+    }
+    
+    @MainActor
+    func hasStoredValue<Key : Config>(for key: Key.Type) -> Bool {
+        dict.dict[String(describing: key)] != nil
+    }
+    
+}
+
+@usableFromInline
+class SwiftMutableDict {
+    @usableFromInline
+    @MainActor
+    var dict : [String : Any] = [:]
+    @inlinable
+    init(){}
+    @inlinable
+    @MainActor
+    func copy() -> SwiftMutableDict {
+        let result = SwiftMutableDict()
+        result.dict = dict
+        return result
+    }
+}
+
+
+#else
+
 /// ```Dependencies``` Wrap the app's constants configured from outside. Values can be accessed via a subscript taking a type that conforms to ```Config```:
 /// ```
 /// public extension Dependencies {
@@ -96,6 +167,8 @@ class SwiftMutableDict {
         return result
     }
 }
+
+#endif
 
 public struct Bind {
     
@@ -166,7 +239,7 @@ public enum EnvironmentBuilder {
 
 extension Dependencies : ExpressibleByArrayLiteral {
     
-    public init(arrayLiteral elements: Bind...) {
+    nonisolated public init(arrayLiteral elements: Bind...) {
         EnvironmentBuilder.buildArray(elements).update(&self)
     }
     

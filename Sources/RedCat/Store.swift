@@ -10,18 +10,6 @@ import Foundation
 public typealias ObservableStore<State, Action> = Store<AnyReducer<State, Action>>
 
 
-private extension Store {
-    
-    func maybeWarnShutdown() {
-        #if DEBUG
-        if environment.internalFlags.warnActionsAfterShutdown {
-            print("RedCat: The store has been invalidated, actions are no longer accepted.\n If sending actions to a dead store is somehow acceptable for your app, you can silence this warning  by setting internalFlags.warnActionsAfterShutdown to false in the environment or by compiling in release mode.")
-        }
-        #endif
-    }
-    
-}
-
 #if compiler(>=5.5) && canImport(_Concurrency)
 
 
@@ -157,6 +145,20 @@ public final class Store<Reducer : ReducerProtocol>: StoreProtocol {
             service.onShutdown()
         }
         hasShutdown = true
+    }
+    
+}
+
+
+private extension Store {
+    
+    @MainActor
+    func maybeWarnShutdown() {
+        #if DEBUG
+        if environment.internalFlags.warnActionsAfterShutdown {
+            print("RedCat: The store has been invalidated, actions are no longer accepted.\n If sending actions to a dead store is somehow acceptable for your app, you can silence this warning  by setting internalFlags.warnActionsAfterShutdown to false in the environment or by compiling in release mode.")
+        }
+        #endif
     }
     
 }
@@ -324,6 +326,18 @@ public final class Store<Reducer : ReducerProtocol>: StoreProtocol {
     
 }
 
+
+private extension Store {
+    
+    func maybeWarnShutdown() {
+        #if DEBUG
+        if environment.internalFlags.warnActionsAfterShutdown {
+            print("RedCat: The store has been invalidated, actions are no longer accepted.\n If sending actions to a dead store is somehow acceptable for your app, you can silence this warning  by setting internalFlags.warnActionsAfterShutdown to false in the environment or by compiling in release mode.")
+        }
+        #endif
+    }
+    
+}
 
 public extension Store {
     
