@@ -56,6 +56,52 @@ public protocol RestrictedAction {
     
 }
 
+#if compiler(>=5.5) && canImport(_Concurrency)
+
+
+public extension StoreProtocol {
+    
+    @MainActor
+    func send<Action : RestrictedAction>(_ action: Action) where Action.BroaderAction == Self.Action {
+        self.send(action.contextualized)
+    }
+    
+    @MainActor
+    func send<Action : RestrictedAction>(_ list: ActionGroup<Action>) where Action.BroaderAction == Self.Action {
+        self.send(ActionGroup(values: list.values.map(\.contextualized)))
+    }
+    
+    @available(macOS 10.11, *)
+    @MainActor
+    func sendWithUndo<Action : RestrictedAction & Undoable>(_ action: Action,
+                                                            undoTitle: String? = nil,
+                                                            redoTitle: String? = nil,
+                                                            undoManager: UndoManager?)
+    where Action.BroaderAction == Self.Action {
+        self.sendWithUndo(action,
+                          undoTitle: undoTitle,
+                          redoTitle: redoTitle,
+                          undoManager: undoManager,
+                          embed: \.contextualized)
+    }
+    
+    @available(macOS 10.11, *)
+    @MainActor
+    func sendWithUndo<Action : RestrictedAction & Undoable>(_ list: UndoGroup<Action>,
+                                                            undoTitle: String? = nil,
+                                                            redoTitle: String? = nil,
+                                                            undoManager: UndoManager?) where Action.BroaderAction == Self.Action {
+        self.sendWithUndo(list,
+                          undoTitle: undoTitle,
+                          redoTitle: redoTitle,
+                          undoManager: undoManager,
+                          embed: \.contextualized)
+    }
+    
+}
+
+
+#else
 
 public extension StoreProtocol {
     
@@ -94,6 +140,7 @@ public extension StoreProtocol {
     
 }
 
+#endif
 
 public protocol StoreModule {
     

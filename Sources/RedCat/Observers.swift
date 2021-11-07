@@ -74,6 +74,7 @@ public final class Observers {
     }
     
     @usableFromInline
+    @MainActor
     internal func notifyAll(warnInefficientObservers: @autoclosure () -> Bool) {
         
         if let observer = firstObserver?.delegate {

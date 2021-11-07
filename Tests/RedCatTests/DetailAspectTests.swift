@@ -98,8 +98,8 @@ fileprivate extension RedCatTests {
         }
     }
     
-    static func incDec(_ action: IncDec, _ state: inout Int) {
-        RedCatTests.apply(action, to: &state)
-    }
-    
+}
+
+fileprivate func incDec(_ action: IncDec, _ state: inout Int) {
+   RedCatTests.apply(action, to: &state)
 }

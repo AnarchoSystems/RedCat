@@ -32,6 +32,48 @@ public extension StoreWrapper {
     
 }
 
+
+#if compiler(>=5.5) && canImport(_Concurrency)
+
+
+public extension StoreWrapper {
+    
+    @MainActor
+    var state: Wrapped.State { wrapped.state }
+    
+}
+
+public extension StoreWrapper {
+    
+    @MainActor
+    func shutDown() {
+        wrapped.shutDown()
+    }
+    
+    var objectWillChange: StoreObjectWillChangePublisher {
+        rootStore.objectWillChange
+    }
+    
+}
+
+public extension StoreWrapper {
+    
+    
+    @MainActor
+    func send(_ action: Wrapped.Action) {
+        wrapped.send(action)
+    }
+    
+    @MainActor
+    func send(_ list: ActionGroup<Wrapped.Action>) {
+        wrapped.send(list)
+    }
+    
+}
+
+
+#else
+
 public extension StoreWrapper {
     
     var state: Wrapped.State { wrapped.state }
@@ -62,3 +104,5 @@ public extension StoreWrapper {
     }
     
 }
+
+#endif

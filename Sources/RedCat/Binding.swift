@@ -5,7 +5,18 @@
 //  Created by Markus Pfeifer on 15.05.21.
 //
 
-//https://stackoverflow.com/questions/66716119/cannot-find-swiftui-or-combine-types-when-building-swift-package-for-any-ios-de/67853022#67853022
+
+
+// see also:
+// https://stackoverflow.com/questions/66716119/cannot-find-swiftui-or-combine-types-when-building-swift-package-for-any-ios-de/67853022#67853022
+
+
+#if compiler(>=5.5) && canImport(_Concurrency)
+
+// no good solution :( even on compiler >= 5.5 and canImport(_Concurrency), SwiftUI does not force the closures of bindings to run on main thread
+
+#else
+
 
 #if os(macOS) || os(watchOS) || os(tvOS) || (os(iOS) && arch(arm64))
 #if canImport(SwiftUI)
@@ -102,4 +113,6 @@ public extension StoreView {
 }
 
 #endif
+#endif
+
 #endif
