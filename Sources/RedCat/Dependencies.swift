@@ -16,6 +16,7 @@ public protocol Config {
     /// Computes an appropriate default value given the rest of the environment.
     /// - Parameters:
     ///     - environment: The dependency graph that needs a default value.
+    @MainActor
     static func value(given environment: Dependencies) -> Value
     
 }
@@ -31,6 +32,7 @@ public protocol Dependency : Config where StaticValue == Value {
 
 
 public extension Dependency {
+    @MainActor
     static func value(given: Dependencies) -> Value {
         defaultValue
     }
